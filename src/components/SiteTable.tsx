@@ -54,8 +54,8 @@ export default function SiteTable({ sites }: { sites: Site[] }) {
         </tbody>
       </table>
       <p className="table-foot">
-        <span className="mono">n/s</span> means our coverage did not state the figure. It is not
-        a zero and it is not an estimate.
+        <span className="mono">n/s</span> means the article never gave a figure. Nobody counted,
+        so we do not print a number.
       </p>
     </div>
   );

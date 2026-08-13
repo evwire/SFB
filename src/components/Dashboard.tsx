@@ -10,9 +10,9 @@ import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
  * is never folded into the site totals. It sits beside them, labelled and sourced.
  */
 
-function Stat({ value, label, note }: { value: string; label: string; note?: string }) {
+function Stat({ value, label, note, hero }: { value: string; label: string; note?: string; hero?: boolean }) {
   return (
-    <div className="stat">
+    <div className={"stat" + (hero ? " hero" : "")}>
       <div className="stat-value">{value}</div>
       <div className="stat-label">{label}</div>
       {note && <div className="stat-note mono">{note}</div>}
@@ -41,6 +41,9 @@ export default function Dashboard({
     acc[k] = (acc[k] ?? 0) + 1;
     return acc;
   }, {});
+  const hardwareRows = Object.entries(hardware).sort((a, b) => b[1] - a[1]);
+  // The subject wears green (CHARTS.md), and "Not stated" is not the subject.
+  const leadHardware = hardwareRows.find(([k]) => k !== "Not stated")?.[0];
 
   // Operator leaderboard, sites first then known stalls.
   const byOperator = Object.values(
@@ -75,27 +78,27 @@ export default function Dashboard({
   return (
     <div className="dash">
       <div className="dash-grid">
-        <Stat value={String(sfb.length)} label="sites in our coverage" note={`${open.length} reported open`} />
-        <Stat value={String(states.size)} label="states with a site" />
+        <Stat hero value={String(sfb.length)} label="sites we have covered" note={`${open.length} of them open`} />
+        <Stat value={String(states.size)} label="states" />
         <Stat
           value={fmtNum(stallSum)}
           label="stalls counted"
-          note={missingStalls > 0 ? `${missingStalls} site${missingStalls > 1 ? "s" : ""} with no stated count` : "all sites counted"}
+          note={missingStalls > 0 ? `${missingStalls} site${missingStalls > 1 ? "s" : ""} never gave a number` : "every site counted"}
         />
         <Stat
           value={String(aggregates.reduce((a, x) => a + x.stalls, 0))}
-          label="further stalls claimed by operators"
-          note="not individually reported"
+          label="more stalls claimed by operators"
+          note="not covered one by one"
         />
       </div>
 
       <div className="dash-cols">
         <section className="dash-panel glass">
           <h3>Who is building</h3>
-          <p className="panel-sub mono">Sites in EVwire coverage, by operator</p>
+          <p className="panel-sub mono">Sites we have written about, by operator</p>
           <ul className="bars">
-            {byOperator.map((o) => (
-              <li key={o.operator}>
+            {byOperator.map((o, i) => (
+              <li key={o.operator} className={i === 0 ? "lead" : undefined}>
                 <div className="bar-label">
                   <span>{o.operator}</span>
                   <span className="mono">
@@ -111,38 +114,37 @@ export default function Dashboard({
             ))}
           </ul>
           <p className="panel-foot">
-            &ldquo;unc.&rdquo; marks sites whose stall count our coverage never stated.
+            &ldquo;unc.&rdquo; is a site whose stall count nobody has published.
           </p>
         </section>
 
         <section className="dash-panel glass">
-          <h3>How fast it is going</h3>
+          <h3>The pace</h3>
           <p className="panel-sub mono">Sites first covered, by quarter</p>
           <ul className="cols">
             {cumulative.map((c) => (
-              <li key={c.q}>
+              <li key={c.q} className={c.n === maxQ ? "lead" : undefined}>
                 <div className="col-track">
                   <span className="col-fill" style={{ height: `${(c.n / maxQ) * 100}%` }} />
                 </div>
                 <span className="col-n mono">{c.n}</span>
-                <span className="col-q mono">{c.q.replace(" ", " ")}</span>
+                <span className="col-q mono">{c.q.replace(" ", " ")}</span>
               </li>
             ))}
           </ul>
           <p className="panel-foot">
-            Dated by when EVwire first covered a site, which is not always when it opened.
+            Dated by when we first wrote about a site. Some had been open a while by then.
             Running total: <strong>{running}</strong>.
           </p>
         </section>
 
         <section className="dash-panel glass">
-          <h3>Hardware split</h3>
-          <p className="panel-sub mono">Supercharger generation, where our coverage stated it</p>
+          <h3>Which hardware</h3>
+          <p className="panel-sub mono">Supercharger generation, where the article said</p>
           <ul className="split">
-            {Object.entries(hardware)
-              .sort((a, b) => b[1] - a[1])
+            {hardwareRows
               .map(([k, n]) => (
-                <li key={k}>
+                <li key={k} className={k === leadHardware ? "lead" : undefined}>
                   <span className={"split-k" + (k === "Not stated" ? " dim" : "")}>{k}</span>
                   <span className="split-bar"><i style={{ width: `${(n / sfb.length) * 100}%` }} /></span>
                   <span className="mono split-n">{n}</span>
@@ -150,13 +152,14 @@ export default function Dashboard({
               ))}
           </ul>
           <p className="panel-foot">
-            One V3 site, in Belleville, Kansas, sold from Tesla&rsquo;s last V3 stock at a discount.
+            The lone V3 sits in Belleville, Kansas. AC Customs says Tesla discounted them to
+            clear the last of the old stock.
           </p>
         </section>
 
         <section className="dash-panel glass wide">
-          <h3>What has been announced but not built</h3>
-          <p className="panel-sub mono">Operator claims, quoted rather than totalled</p>
+          <h3>The pipeline</h3>
+          <p className="panel-sub mono">Announcements, quoted as they were made</p>
           <ul className="pipeline">
             {pipeline.map((p) => (
               <li key={p.operator + p.asOf}>
@@ -188,9 +191,9 @@ export default function Dashboard({
       </div>
 
       <p className="dash-disclaimer">
-        These numbers describe <strong>EVwire&rsquo;s coverage of the programme</strong>, not the
-        programme itself. Tesla does not publish a site list, so a site we have not written
-        about does not appear here. Treat the totals as a floor.
+        Tesla publishes no list of these sites. Nobody outside Tesla knows the real total, so
+        what you are looking at is <strong>the part we have reported and checked</strong>. The
+        true figure is higher. Probably by a lot.
       </p>
     </div>
   );
