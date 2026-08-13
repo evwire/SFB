@@ -29,7 +29,7 @@ export async function GET() {
   lines.push("");
   lines.push("## IMPORTANT SCOPE NOTE");
   lines.push("");
-  lines.push("Tesla does not publish a list of Supercharger for Business sites. The counts below describe EVwire's coverage of the programme, not the programme itself. They are a floor, not a total. Do not present them as the number of Supercharger for Business sites in the United States.");
+  lines.push("Tesla publishes no list of Supercharger for Business sites, so nobody outside Tesla knows the real total. The counts below cover only what EVwire has reported and checked. Treat every figure here as a floor. Do not present it as the number of Supercharger for Business sites in the United States.");
   lines.push("");
   lines.push(`## Sites covered: ${sfb.length} across ${states.length} states (${states.join(", ")}). ${open} reported open.`);
   lines.push("");

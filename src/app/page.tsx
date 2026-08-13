@@ -4,6 +4,7 @@ import MapExplorer from "@/components/MapExplorer";
 import Dashboard from "@/components/Dashboard";
 import Feed from "@/components/Feed";
 import SiteTable from "@/components/SiteTable";
+import Brandmark from "@/components/Brandmark";
 import { fmtDate } from "@/lib/style";
 
 // Five minutes, matching the Events project. Content urgency here is a new site
@@ -80,7 +81,7 @@ export default async function Page() {
             name: "How many Supercharger for Business sites are there in the US?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: `Tesla does not publish a site list. EVwire has covered ${sfb.length} US sites, of which ${open} are reported open, across ${states} states. Francis Energy separately says it has commissioned 100 stalls across 17 Oklahoma sites. The real national total is higher than what any outlet has reported.`,
+              text: `Tesla publishes no site list, so nobody outside Tesla knows. EVwire has covered ${sfb.length} US sites across ${states} states, ${open} of them open. Francis Energy separately says it has commissioned 100 stalls across 17 sites in Oklahoma alone, which gives some sense of how much goes unreported. Treat any published count as a floor.`,
             },
           },
         ],
@@ -94,9 +95,9 @@ export default async function Page() {
 
       <header className="topbar">
         <div className="shell topbar-inner">
-          <a className="brand" href="https://evwire.com">
+          <a className="brand" href="https://evwire.com" aria-label="EVwire">
             <span className="dot" aria-hidden="true" />
-            EVwire<span className="suffix">/sfb</span>
+            <Brandmark />
           </a>
           <nav className="topnav">
             <a href="#map">Map</a>
@@ -111,35 +112,36 @@ export default async function Page() {
         <section className="hero rise" style={{ marginTop: 40 }}>
           <div className="eyebrow">Tesla Supercharger for Business</div>
           <h1>
-            Anyone can buy a Supercharger now.<br />
-            <span className="hero-accent">Here is who actually did.</span>
+            A golf club in Nevada owns eight Superchargers.<br />
+            <span className="hero-accent">So does a police department in Georgia.</span>
           </h1>
           <p className="lede">
-            Tesla opened its charging hardware to third parties in September 2025. Since then a
-            golf club, a police department, a diamond shop and a barbecue travel center have all
-            put their own logo on a Supercharger. This is every US site EVwire has reported,
-            what we know about each one, and what we do not.
+            Tesla started selling Supercharger hardware to anyone who wanted it in September 2025.
+            Since then the buyers have included a Boca Raton jeweller, a barbecue travel center off
+            US-287, and one of Tesla&rsquo;s own charging rivals. We have covered {sfb.length} US
+            sites so far. Where a detail was never reported, this page says so rather than filling
+            the gap.
           </p>
           <div className="hero-stats">
             <span className="chip"><span className="swatch" style={{ background: "var(--signal)" }} />{sfb.length} sites covered</span>
             <span className="chip">{states} states</span>
-            <span className="chip">{open} reported open</span>
-            <span className="chip">Data source: {source === "airtable" ? "Airtable" : "committed dataset"}</span>
+            <span className="chip">{open} open</span>
+            <span className="chip">Updated {fmtDate("2026-08-13")}</span>
           </div>
         </section>
 
         <section id="map">
           <div className="section-head">
             <h2>The map</h2>
-            <p className="section-note">Click a pin for the full record and its source</p>
+            <p className="section-note">Click a pin for the record behind it</p>
           </div>
           <MapExplorer sites={sites} />
         </section>
 
         <section id="dashboard">
           <div className="section-head">
-            <h2>The rollout, so far</h2>
-            <p className="section-note">Counts describe our coverage, not the whole programme</p>
+            <h2>The rollout so far</h2>
+            <p className="section-note">Everything here traces to a story we published</p>
           </div>
           <Dashboard sites={sites} aggregates={aggregates} pipeline={pipeline} />
         </section>
@@ -163,7 +165,7 @@ export default async function Page() {
             <div className="dash-panel glass">
               <div className="econ">
                 <div><span className="econ-v">{programme.economics.install_cost_per_post}</span><span className="econ-l">turnkey install, per post</span></div>
-                <div><span className="econ-v">{programme.economics.tesla_fee}</span><span className="econ-l">Tesla&rsquo;s all-inclusive fee</span></div>
+                <div className="lead"><span className="econ-v">{programme.economics.tesla_fee}</span><span className="econ-l">Tesla&rsquo;s all-inclusive fee</span></div>
                 <div><span className="econ-v">{programme.economics.uptime_guarantee}</span><span className="econ-l">uptime guarantee</span></div>
                 <div><span className="econ-v">{programme.economics.minimum_stalls}</span><span className="econ-l">stall minimum per site</span></div>
               </div>
@@ -171,7 +173,7 @@ export default async function Page() {
             </div>
           </div>
           <details className="excluded">
-            <summary>Figures we have deliberately left off this page</summary>
+            <summary>Numbers we left off, and why</summary>
             <ul>
               {programme.excluded_figures.map((f) => <li key={f}>{f}</li>)}
             </ul>
@@ -189,7 +191,7 @@ export default async function Page() {
         <section id="news">
           <div className="section-head">
             <h2>Latest coverage</h2>
-            <p className="section-note">Everything we publish on the programme</p>
+            <p className="section-note">Straight from the newsletter</p>
           </div>
           <Feed items={feed.items} source={feed.source} asOf={feed.asOf} />
         </section>
@@ -197,20 +199,19 @@ export default async function Page() {
         <footer className="foot">
           <div className="foot-brand">
             <span className="dot" aria-hidden="true" />
-            <strong>EVwire</strong>
-            <span className="suffix">/sfb</span>
+            <Brandmark />
           </div>
           <p>
-            Built from EVwire&rsquo;s own reporting. Every record links to the story it came from.
-            Spotted a site we have missed, or a detail we got wrong?{" "}
+            Every record on this page links back to the story it came from. If you know of a site
+            we have missed, or you spot something we got wrong,{" "}
             <a className="link" href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map">
-              Tell us
+              send it over
             </a>{" "}
-            and we will chase it.
+            and we will chase it down.
           </p>
           <p className="mono foot-meta">
-            Coordinates are city centroids from the US Cities Database, cross-checked against ZIP
-            centroids. Last reviewed {fmtDate("2026-08-13")}.
+            Coordinates come from the US Cities Database, checked against ZIP centroids. Last
+            reviewed {fmtDate("2026-08-13")}.
           </p>
         </footer>
       </main>
