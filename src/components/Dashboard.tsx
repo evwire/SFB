@@ -128,7 +128,7 @@ export default function Dashboard({
                   <span className="col-fill" style={{ height: `${(c.n / maxQ) * 100}%` }} />
                 </div>
                 <span className="col-n mono">{c.n}</span>
-                <span className="col-q mono">{c.q.replace(" ", " ")}</span>
+                <span className="col-q mono">{c.q}</span>
               </li>
             ))}
           </ul>
