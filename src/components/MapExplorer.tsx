@@ -143,13 +143,13 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
 
         <figcaption className="map-caption">
           <span className="mono">
-            Every pin is a city centroid, not a street address. The soft ring means the
-            location is accurate to the town, not the parcel.
+            Pins sit at the middle of each town. Close enough to find the place, too coarse
+            to park by. The dashed ring is what marks that.
           </span>
           {unplotted.length > 0 && (
             <span className="mono warn">
-              {unplotted.length} site{unplotted.length > 1 ? "s" : ""} cannot be plotted because the
-              article never named a city: {unplotted.map((s) => s.name).join(", ")}.
+              No pin for {unplotted.map((s) => s.name).join(", ")}. The article gave a state and
+              nothing finer, so there is nowhere honest to put {unplotted.length > 1 ? "them" : "it"}.
             </span>
           )}
         </figcaption>
@@ -164,6 +164,7 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
             aria-labelledby="panel-title"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="panel-scroll">
             <div className="panel-chrome">
               <span className="dots" aria-hidden="true"><i /><i /><i /></span>
               <span className="mono chrome-label">SITE RECORD</span>
@@ -198,7 +199,7 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
                 </div>
                 {selected.unstated.length > 0 && (
                   <p className="unstated">
-                    <strong>Not stated in our coverage:</strong>{" "}
+                    <strong>Never reported:</strong>{" "}
                     {selected.unstated.map(humaniseUnstated).join(", ")}.
                   </p>
                 )}
@@ -206,8 +207,9 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
               </div>
 
               <a className="cta" href={selected.sourceUrl} target="_blank" rel="noopener">
-                Read the EVwire story
+                Read the story
               </a>
+            </div>
             </div>
           </div>
         </div>,
