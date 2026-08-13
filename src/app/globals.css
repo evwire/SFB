@@ -187,13 +187,71 @@ section { margin-top: 56px; scroll-margin-top: 20px; }
 .map-caption .warn { color: var(--amber); }
 
 /* ---------- panel ---------- */
-.scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(11,17,22,.25); backdrop-filter: blur(6px); animation: fade .2s ease both; }
+/* Scrim is barely tinted on purpose. Tuning law 3: the glass transmits the page
+   as darkened by the scrim, so a heavy scrim leaves the panel nothing to show. */
+.scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(11,17,22,0.04); backdrop-filter: blur(8px) saturate(115%); -webkit-backdrop-filter: blur(8px) saturate(115%); animation: fade .2s ease both; }
+@media (prefers-color-scheme: dark) { .scrim { background: rgba(0,0,0,0.32); backdrop-filter: blur(14px) saturate(115%); -webkit-backdrop-filter: blur(14px) saturate(115%); } }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
-.panel { width: min(560px, 100%); max-height: min(86vh, 760px); overflow: auto; background: rgba(255,255,255,.72); backdrop-filter: blur(40px) saturate(180%); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 0 0 1px var(--hairline), 0 30px 70px rgba(11,17,22,.28); animation: rise .3s var(--enter) both; }
-@media (prefers-color-scheme: dark) { .panel { background: rgba(16,21,27,.86); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px var(--hairline), 0 30px 70px rgba(0,0,0,.6); } }
-.panel-chrome { position: sticky; top: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--hairline); background: inherit; backdrop-filter: inherit; }
+/* The settled light-glass recipe (BRAND.md section 6, tuned over six rounds on the
+   Events modal). Do not raise the fill alpha to brighten it: that is tuning law 1,
+   and it turns the glass into a tinted div. Adjust brightness or the scrim instead. */
+.panel {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(86vh, 760px);
+  border-radius: 24px;
+  animation: rise .3s var(--enter) both;
+  background:
+    radial-gradient(130% 100% at 6% -14%, rgba(255,255,255,.98), rgba(255,255,255,0) 64%),
+    radial-gradient(80% 60% at 110% 108%, rgba(214,232,240,.2), rgba(214,232,240,0)),
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04) 46%, rgba(255,255,255,0)),
+    rgba(255,255,255,0.30);
+  backdrop-filter: blur(26px) saturate(200%) brightness(1.30);
+  -webkit-backdrop-filter: blur(26px) saturate(200%) brightness(1.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(255,255,255,.5),
+    0 1px 2px rgba(11,17,22,.06),
+    0 10px 24px -12px rgba(11,17,22,.3),
+    0 40px 90px -30px rgba(11,17,22,.55),
+    0 0 90px -18px rgba(255,255,255,.85);
+}
+/* Gradient rim: bright top-left, dying mid-panel, picking up at the bottom as bounced light. */
+.panel::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
+  background: linear-gradient(142deg, rgba(255,255,255,1), rgba(255,255,255,.55) 16%, rgba(255,255,255,.06) 40%, rgba(11,17,22,.09) 66%, rgba(255,255,255,.85));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none; z-index: 3;
+}
+/* Micro-texture. Perfectly smooth gradients read as CSS rather than as glass. */
+.panel::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: .5; mix-blend-mode: overlay; pointer-events: none; z-index: 2;
+}
+.panel-scroll { position: relative; z-index: 1; max-height: inherit; overflow: auto; border-radius: inherit; }
+@media (prefers-color-scheme: dark) {
+  .panel {
+    background:
+      radial-gradient(130% 100% at -18% -42%, rgba(255,255,255,.98), rgba(255,255,255,0) 64%),
+      radial-gradient(80% 60% at 110% 108%, rgba(27,145,82,.22), rgba(27,145,82,0)),
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04) 46%, rgba(255,255,255,0)),
+      rgba(30,38,47,0.48);
+    backdrop-filter: blur(46px) saturate(200%) brightness(1.9);
+    -webkit-backdrop-filter: blur(46px) saturate(200%) brightness(1.9);
+  }
+}
+/* Text through a 30% panel with no blur is unreadable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel { background: rgba(255,255,255,.96); }
+  .scrim { background: rgba(11,17,22,.45); }
+  @media (prefers-color-scheme: dark) { .panel { background: rgba(16,21,27,.96); } }
+}
+.panel-chrome { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 13px 16px; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.06)); }
 .dots { display: inline-flex; gap: 6px; }
 .dots i { width: 9px; height: 9px; border-radius: 999px; background: rgba(11,17,22,.15); }
+.panel-body { position: relative; z-index: 1; }
 @media (prefers-color-scheme: dark) { .dots i { background: rgba(255,255,255,.32); } }
 .chrome-label { font-size: 11px; letter-spacing: .18em; color: var(--signal); text-transform: uppercase; }
 .close { justify-self: end; font-size: 22px; line-height: 1; width: 30px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
@@ -218,7 +276,8 @@ section { margin-top: 56px; scroll-margin-top: 20px; }
 .dash { display: grid; gap: 18px; }
 .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .stat { padding: 20px; border-radius: var(--r-tile); background: var(--panel); backdrop-filter: blur(22px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hairline); }
-.stat-value { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 40px; line-height: 1; color: var(--signal); }
+.stat-value { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 40px; line-height: 1; color: var(--fg); }
+.stat.hero .stat-value { color: var(--signal); }
 .stat-label { margin-top: 8px; font-size: 13px; font-weight: 600; }
 .stat-note { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
 .dash-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
@@ -231,12 +290,14 @@ section { margin-top: 56px; scroll-margin-top: 20px; }
 .bar-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
 .bar-label .mono { color: var(--faint); font-weight: 400; font-size: 11.5px; white-space: nowrap; }
 .bar-track { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--signal), var(--forest)); }
+.bar-fill { height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--fg) 34%, transparent); }
+.bars li.lead .bar-fill { background: linear-gradient(90deg, var(--signal), var(--forest)); }
 
 .cols { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; align-items: flex-end; }
 .cols li { flex: 1; display: grid; justify-items: center; gap: 5px; min-width: 0; }
 .col-track { width: 100%; height: 92px; display: flex; align-items: flex-end; }
-.col-fill { width: 100%; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--signal), var(--forest)); min-height: 3px; }
+.col-fill { width: 100%; border-radius: 6px 6px 2px 2px; background: color-mix(in srgb, var(--fg) 26%, transparent); min-height: 3px; }
+.cols li.lead .col-fill { background: linear-gradient(180deg, var(--signal), var(--forest)); }
 .col-n { font-size: 12px; font-weight: 700; }
 .col-q { font-size: 10px; color: var(--faint); white-space: nowrap; }
 
@@ -245,14 +306,15 @@ section { margin-top: 56px; scroll-margin-top: 20px; }
 .split-k { font-weight: 600; }
 .split-k.dim { color: var(--faint); font-weight: 400; }
 .split-bar { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
-.split-bar i { display: block; height: 100%; background: var(--signal); border-radius: 999px; }
+.split-bar i { display: block; height: 100%; background: color-mix(in srgb, var(--fg) 30%, transparent); border-radius: 999px; }
+.split li.lead .split-bar i { background: var(--signal); }
 .split-n { text-align: right; color: var(--faint); font-size: 11.5px; }
 
 .pipeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
 .pipeline li { padding: 16px 18px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--fg) 3.5%, transparent); }
 .pl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .pl-op { font-weight: 700; font-size: 13.5px; }
-.pl-num { font-family: var(--display); font-style: italic; font-weight: 600; color: var(--signal); font-size: 17px; white-space: nowrap; }
+.pl-num { font-family: var(--display); font-style: italic; font-weight: 600; color: var(--muted); font-size: 17px; white-space: nowrap; }
 .pl-claim { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
 .pl-meta { font-size: 11px; color: var(--faint); margin: 8px 0 0; }
 .pl-caveat { font-size: 11.5px; color: var(--amber); margin: 8px 0 0; }
@@ -265,7 +327,8 @@ section { margin-top: 56px; scroll-margin-top: 20px; }
 .how-list { margin: 0; padding-left: 20px; display: grid; gap: 9px; font-size: 13.5px; color: var(--muted); }
 .econ { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .econ div { display: grid; gap: 3px; }
-.econ-v { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 26px; color: var(--signal); line-height: 1; }
+.econ-v { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 26px; color: var(--fg); line-height: 1; }
+.econ div.lead .econ-v { color: var(--signal); }
 .econ-l { font-size: 11.5px; color: var(--faint); }
 .excluded { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
 .excluded summary { cursor: pointer; font-weight: 600; color: var(--signal); }
@@ -308,3 +371,13 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
   .col-q { font-size: 9px; }
   h1 { font-size: 34px; }
 }
+
+/* ---------- brandmark ---------- */
+/* Crop window over the beehiiv lockup. The wordmark is ~43% of the file height and
+   the tagline ~13%, so scaling the whole lockup down turns the tagline to mush.
+   Ported from Brandmark.tsx in the Events repo. */
+.brandmark { display: block; overflow: hidden; width: 110px; height: 23px; flex: none; }
+.brandmark img { display: block; width: 110px; max-width: none; margin-top: -10px; }
+@media (prefers-color-scheme: dark) { .brandmark img { filter: invert(1); } }
+.foot-brand .brandmark { width: 132px; height: 28px; }
+.foot-brand .brandmark img { width: 132px; margin-top: -12px; }
