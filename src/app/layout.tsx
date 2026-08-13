@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import GlowPointer from "@/components/GlowPointer";
+import SiteNav from "@/components/SiteNav";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/600-italic.css";
@@ -42,9 +44,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Set the theme before first paint: a saved choice wins, otherwise
+            follow the system. Inline on purpose, a deferred script would flash
+            the wrong theme. Ported from the Events repo. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('evw-theme');var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         <div className="aura" aria-hidden="true" />
+        <GlowPointer />
+        <SiteNav />
         {children}
       </body>
     </html>
