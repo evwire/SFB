@@ -1,3 +1,4 @@
+import BrandTile from "@/components/BrandTile";
 import { STATUS_STYLE, fmtNum } from "@/lib/style";
 import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
 
@@ -100,7 +101,10 @@ export default function Dashboard({
             {byOperator.map((o, i) => (
               <li key={o.operator} className={i === 0 ? "lead" : undefined}>
                 <div className="bar-label">
-                  <span>{o.operator}</span>
+                  <span className="with-tile">
+                    <BrandTile operator={o.operator} />
+                    <span>{o.operator}</span>
+                  </span>
                   <span className="mono">
                     {o.sites} site{o.sites > 1 ? "s" : ""}
                     {o.stalls > 0 && ` · ${o.stalls} stalls`}
