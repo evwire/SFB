@@ -1,0 +1,29 @@
+{
+  "name": "evwire-sfb-map",
+  "version": "0.1.0",
+  "scripts": {
+    "geo": "node scripts/build-geo.mjs",
+    "prebuild": "node scripts/build-geo.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/fraunces": "5.3.0",
+    "d3-geo": "3.1.1",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "topojson-client": "3.1.0"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "3.1.1",
+    "@types/node": "26.2.0",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.3",
+    "us-atlas": "3.0.1"
+  },
+  "private": true
+}
