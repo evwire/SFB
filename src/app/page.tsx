@@ -4,6 +4,7 @@ import MapExplorer from "@/components/MapExplorer";
 import Dashboard from "@/components/Dashboard";
 import Feed from "@/components/Feed";
 import SiteTable from "@/components/SiteTable";
+import Subscribe from "@/components/Subscribe";
 import Brandmark from "@/components/Brandmark";
 import { fmtDate } from "@/lib/style";
 
@@ -18,6 +19,21 @@ export default async function Page() {
   const sfb = sites.filter((s) => s.siteClass === "SfB");
   const open = sfb.filter((s) => s.status === "Operational").length;
   const states = new Set(sfb.map((s) => s.state)).size;
+
+  const FAQ = [
+    {
+      q: "What is Tesla Supercharger for Business?",
+      a: "Tesla's programme for selling Supercharger hardware to third parties. Tesla supplies the hardware, runs the software and handles commissioning and remote operations. The host funds the installation, pays for the electricity, sets its own retail price and can brand the stalls. Tesla charges an all inclusive fee of $0.10 per kWh on revenue generating sites. It launched in September 2025.",
+    },
+    {
+      q: "What does a site cost to put in?",
+      a: "Tesla's own calculator, published in April 2026, puts turnkey installation at $45,000 to $65,000 per post, with a minimum of four stalls. On top of that comes the $0.10 per kWh fee, against a 97 percent uptime guarantee and a service agreement of ten years or more.",
+    },
+    {
+      q: `How many of these sites are there in the US?`,
+      a: `Nobody outside Tesla knows, because Tesla publishes no list. We have covered ${sfb.length} US sites across ${states} states, ${open} of them open. Francis Energy alone says it has commissioned 100 stalls across 17 sites in Oklahoma, which gives you a sense of how much never gets reported. Treat any published count, including ours, as a floor.`,
+    },
+  ];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -59,32 +75,11 @@ export default async function Page() {
       },
       {
         "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "What is Tesla Supercharger for Business?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "It is Tesla's programme for selling Supercharger hardware to third parties. Tesla supplies the hardware, runs the software and handles commissioning and remote operations. The host funds the installation, pays for electricity, sets its own retail price and can brand the stalls. Tesla charges an all inclusive fee of $0.10 per kWh on revenue generating sites. Tesla launched it in September 2025.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "How much does a Supercharger for Business site cost?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Tesla's own calculator, published in April 2026, puts turnkey installation at $45,000 to $65,000 per post, with a minimum of four stalls per location. Tesla then charges $0.10 per kWh on revenue generating sites and guarantees 97 percent uptime behind a service agreement of ten years or more.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "How many Supercharger for Business sites are there in the US?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: `Tesla publishes no site list, so nobody outside Tesla knows. EVwire has covered ${sfb.length} US sites across ${states} states, ${open} of them open. Francis Energy separately says it has commissioned 100 stalls across 17 sites in Oklahoma alone, which gives some sense of how much goes unreported. Treat any published count as a floor.`,
-            },
-          },
-        ],
+        mainEntity: FAQ.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
       },
     ],
   };
@@ -93,34 +88,15 @@ export default async function Page() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <header className="topbar">
-        <div className="shell topbar-inner">
-          <a className="brand" href="https://evwire.com" aria-label="EVwire">
-            <span className="dot" aria-hidden="true" />
-            <Brandmark />
-          </a>
-          <nav className="topnav">
-            <a href="#map">Map</a>
-            <a href="#dashboard">Rollout</a>
-            <a href="#sites">All sites</a>
-            <a href="#news">News</a>
-          </nav>
-        </div>
-      </header>
-
       <main className="shell">
-        <section className="hero rise" style={{ marginTop: 40 }}>
+        <section className="hero rise">
           <div className="eyebrow">Tesla Supercharger for Business</div>
           <h1>
-            A golf club in Nevada owns eight Superchargers.<br />
-            <span className="hero-accent">So does a police department in Georgia.</span>
+            Who owns a Supercharger <span className="hero-accent">besides Tesla</span>
           </h1>
           <p className="lede">
-            Tesla started selling Supercharger hardware to anyone who wanted it in September 2025.
-            Since then the buyers have included a Boca Raton jeweller, a barbecue travel center off
-            US-287, and one of Tesla&rsquo;s own charging rivals. We have covered {sfb.length} US
-            sites so far. Where a detail was never reported, this page says so rather than filling
-            the gap.
+            Tesla started selling the hardware in September 2025. Every US buyer we have
+            covered since, with what we know about each one.
           </p>
           <div className="hero-stats">
             <span className="chip"><span className="swatch" style={{ background: "var(--signal)" }} />{sfb.length} sites covered</span>
@@ -132,7 +108,7 @@ export default async function Page() {
 
         <section id="map">
           <div className="section-head">
-            <h2>The map</h2>
+            <h2><span className="sec-num" aria-hidden="true">01</span>The map</h2>
             <p className="section-note">Click a pin for the record behind it</p>
           </div>
           <MapExplorer sites={sites} />
@@ -140,7 +116,7 @@ export default async function Page() {
 
         <section id="dashboard">
           <div className="section-head">
-            <h2>The rollout so far</h2>
+            <h2><span className="sec-num" aria-hidden="true">02</span>The rollout so far</h2>
             <p className="section-note">Everything here traces to a story we published</p>
           </div>
           <Dashboard sites={sites} aggregates={aggregates} pipeline={pipeline} />
@@ -148,7 +124,7 @@ export default async function Page() {
 
         <section id="how">
           <div className="section-head">
-            <h2>How the programme works</h2>
+            <h2><span className="sec-num" aria-hidden="true">03</span>How the programme works</h2>
             <p className="section-note">Tesla&rsquo;s own published terms, {programme.economics.as_of}</p>
           </div>
           <div className="how-grid">
@@ -180,9 +156,24 @@ export default async function Page() {
           </details>
         </section>
 
+        <section id="faq">
+          <div className="section-head">
+            <h2><span className="sec-num" aria-hidden="true">04</span>Questions</h2>
+            <p className="section-note">The three we get asked most</p>
+          </div>
+          <div className="faq">
+            {FAQ.map((f) => (
+              <details key={f.q}>
+                <summary>{f.q}</summary>
+                <p className="faq-a">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         <section id="sites">
           <div className="section-head">
-            <h2>Every site, in full</h2>
+            <h2><span className="sec-num" aria-hidden="true">05</span>Every site, in full</h2>
             <p className="section-note">{sites.length} records</p>
           </div>
           <SiteTable sites={sites} />
@@ -190,11 +181,13 @@ export default async function Page() {
 
         <section id="news">
           <div className="section-head">
-            <h2>Latest coverage</h2>
+            <h2><span className="sec-num" aria-hidden="true">06</span>Latest coverage</h2>
             <p className="section-note">Straight from the newsletter</p>
           </div>
           <Feed items={feed.items} source={feed.source} asOf={feed.asOf} />
         </section>
+
+        <Subscribe sites={sfb.length} />
 
         <footer className="foot">
           <div className="foot-brand">
