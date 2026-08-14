@@ -34,11 +34,15 @@ repository set, so the repo is filled through the GitHub contents API instead, o
 time. Retested 2026-08-14: still 403. Every file must then be verified by comparing git blob
 SHAs against the locally built and tested copy.
 
-Wart one. `Dashboard.tsx` lost a literal non-breaking space on the way up, which silently
-turned a `String.replace` into a no-op. Two follow-up commits claim to replace it with a
-` ` escape. **They do not.** The escape could not be transmitted either. The file was
+Wart one. `Dashboard.tsx` lost a literal U+00A0 on the way up, which silently turned a
+`String.replace` into a no-op. Two follow-up commits claim to have replaced it with a
+backslash-u escape. **They do not.** The escape could not be transmitted either. The file was
 later rewritten to drop the `replace` entirely, since `.col-q` already carries
 `white-space: nowrap`. The code is correct. Those two commit messages are not.
+
+This file is now pure ASCII, deliberately. Typing the character in order to describe the
+character is exactly how the previous version of this file lost a byte on the way to GitHub,
+which is the failure it was warning about. Name U+00A0, never type it.
 
 Wart two, 2026-08-14. The local checkout root **is** the Next.js app, and so is the repo
 root. A push aimed at `app/src/app/globals.css` therefore created a second orphan copy of the
