@@ -46,6 +46,13 @@ export default function Subscribe({ sites }: { sites: number }) {
 
   // WCAG 3.3.1: the error is announced by role="alert" and focus returns to the
   // field that needs attention, rather than leaving it wherever the submit left it.
+  //
+  // The button label below carries a literal U+2026 rather than an escape. That
+  // is deliberate and was arrived at the hard way: the contents API resolved a
+  // backslash-u escape into the character on one push and passed a doubled
+  // backslash through verbatim on the next, so the escape is the fragile form
+  // here, not the character. Visible non-ASCII survives this pipeline intact.
+  // U+00A0 is the one that does not, because it is invisible whitespace.
   function fail(text: string) {
     setState("error");
     setMessage(text);
@@ -100,7 +107,7 @@ export default function Subscribe({ sites }: { sites: number }) {
                 placeholder="you@company.com"
               />
               <button type="submit" className="cta" disabled={state === "sending"}>
-                {state === "sending" ? "Signing you up\\u2026" : "Subscribe free"}
+                {state === "sending" ? "Signing you up…" : "Subscribe free"}
               </button>
             </div>
             {state === "error" && (
