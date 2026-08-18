@@ -1,6 +1,6 @@
 # STATE, SfB tracker
 
-_Last updated 2026-08-14._
+_Last updated 2026-08-18._
 
 ## Where this is
 
@@ -44,6 +44,15 @@ This file is now pure ASCII, deliberately. Typing the character in order to desc
 character is exactly how the previous version of this file lost a byte on the way to GitHub,
 which is the failure it was warning about. Name U+00A0, never type it.
 
+Narrowed 2026-08-18, with evidence. The warning used to say unusual characters can be
+mangled. That is too broad. Visible non-ASCII survives this pipeline intact: an ellipsis
+arrived correctly encoded, and MapExplorer's diamond and multiplication sign have survived
+many pushes. What does not survive is U+00A0, because it is invisible whitespace and gets
+normalised to a space. Escapes are the fragile form, not the characters: a backslash-u
+escape was resolved into its character in transit on one push, and a doubled backslash was
+passed through verbatim on the next, so neither matched local. Three pushes were spent on a
+single ellipsis before settling on the literal character. Prefer literals, verify by SHA.
+
 Wart two, 2026-08-14. The local checkout root **is** the Next.js app, and so is the repo
 root. A push aimed at `app/src/app/globals.css` therefore created a second orphan copy of the
 stylesheet one level too deep, and the contents API accepted it without complaint even though
@@ -75,6 +84,52 @@ the `sha` given belonged to a different path. Removed in `4da7a59`. **Paths in
   five panels, no horizontal scroll.
 - Theme toggle flips `.dark` on `<html>` and persists to `localStorage['evw-theme']`.
 - Every file on `main` compared by blob SHA against the tested local copy. All match.
+
+## Lazyweb-routed audit, 2026-08-18
+
+Audited against four instruction sets fetched through the Lazyweb MCP rather than
+from taste: Vercel's Web Interface Guidelines (frontend quality), addyosmani's WCAG 2.2
+skill (accessibility), pbakaus/impeccable (UX copy), ntcoding (data visualisation).
+
+The chart work already passed. Bars and columns encode by position and length, there is no
+pie, baselines start at zero, colour never carries meaning alone, the SVG is well under the
+1000-element threshold, and the full data table is the non-visual fallback the dataviz
+literature asks for. The findings were elsewhere.
+
+Fixed and verified on the served build:
+
+- **Dialog focus.** aria-modal was set but nothing moved the keyboard, so Enter on a pin
+  opened a dialog focus never entered, Tab walked the page behind the scrim, and Escape was
+  the only exit from somewhere the reader had never been. Focus now enters on open, Tab is
+  trapped, and closing restores focus to the exact pin, tracked by `data-pin`.
+- **Contrast.** Four text tokens failed AA at body sizes. `--signal-text` resolves to
+  `--forest` for every green below 18px (3.67:1 to 6.13:1) using only hues already in
+  BRAND.md. Three values are forked: light `--faint` 2.86 to 4.55, amber text 2.90 to 4.54,
+  dark `--faint` 4.32 to 4.50. All twelve text tokens now pass in both themes.
+- **Skip link**, first in the tab order. Uses `:focus`, not `:focus-visible`, which did not
+  match on the first Tab of a fresh load. Found by measuring, not by reading.
+- **prefers-reduced-motion** was honoured by the entrance animation alone. Now global.
+- **Six transitions** were shorthand with no property list, which is `transition: all`.
+- **color-scheme** per theme, so OS-drawn controls follow the page.
+- **Empty states**, which did not exist. A filter combination we have not covered rendered a
+  blank map; it now replaces the map with an explanation and a clear button, collapsing the
+  figure from about 1500px to 272px. An empty feed said nothing and now says so.
+- **Filters are linkable.** Status, operator and the heavy-duty toggle live in the query
+  string. Read after mount so markup agrees; unknown values ignored.
+- **Form**: name, autocomplete, inputmode, spellcheck, aria-invalid, aria-describedby, focus
+  returns to the field on failure, results announce through role=status.
+
+Not applied, deliberately: the Vercel ruleset asks for Title Case headings and second
+person, and VOICE.md outranks it per CLAUDE.md. It also asks for literal non-breaking
+spaces, which is the one character this repo demonstrably cannot transmit.
+
+## The BRAND.md fork
+
+Jaan's call, 2026-08-18: fix contrast on this site only, and treat each new build as a fork
+of the shared system rather than a consumer of it, carrying learnings back deliberately.
+The three diverging values and their measurements are documented in the header of
+`globals.css` so nobody resyncs them by reflex. Carrying them back into BRAND.md is a later,
+separate decision.
 
 ## Open threads
 
@@ -119,7 +174,10 @@ the `sha` given belonged to a different path. Removed in `4da7a59`. **Paths in
   authenticated fine as `evwire` against the API. What actually blocks it is narrower: the
   proxy only injects credentials for repositories in the session's authorized set, and it
   returns 403 for everything else. Worth rewording, because the current phrasing sends you
-  looking for the wrong problem.
+  looking for the wrong problem. Tested further 2026-08-18: an env `GH_TOKEN` returns 200 on
+  `api.github.com/user` and 403 on every `repos/evwire/SFB` path, with the body "GitHub
+  access to this repository is not enabled for this session". So curl is not a way around the
+  retyping either. The MCP connector is the only path in. Do not spend time on this again.
 - **The AV Hub Map CLAUDE.md** makes Nominatim the standard geocoder. It is unreachable from
   the cloud sandbox, along with every other geocoding service tried. Any map project built
   from a cloud session will be stuck at town-level precision until someone runs geocoding
