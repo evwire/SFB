@@ -48,12 +48,28 @@ export type Site = {
   milestone: string | null;
   summary: string;
   sourceUrl: string;
+  /** Headline of the article this record comes from, for the source card. */
+  sourceTitle: string | null;
+  /** The article's hero image, 1.905:1 in every case. Never assumed to depict the site. */
+  sourceImage: string | null;
+  /**
+   * A fifth honesty axis, same shape as Coordinate Precision. An article hero is
+   * not automatically a photograph of the site: some are, some are logo
+   * composites, and one article covers four Oklahoma locations at once. Until a
+   * human has looked at the image and said which, it stays Unclassified and is
+   * only ever shown as part of the source card, captioned as the article. Only
+   * "Site photo" earns the lead slot at the top of the record.
+   */
+  sourceImageKind: SourceImageKind;
   /** Fields the source article did not state. Surfaced in the UI so gaps read as gaps. */
   unstated: string[];
   notes: string | null;
   /** Draft-only sources never publish. */
   publish: boolean;
 };
+
+/** Unclassified is the safe default and must stay the default. */
+export type SourceImageKind = "Site photo" | "Illustrative" | "Unclassified";
 
 export type Aggregate = {
   slug: string;
