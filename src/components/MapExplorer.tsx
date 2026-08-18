@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
 import { STATUS_STYLE, STATUS_ORDER, EVIDENCE_LABEL, pinRadius, fmtDate, humaniseUnstated } from "@/lib/style";
+import BrandTile from "@/components/BrandTile";
 import type { Site, SiteStatus } from "@/lib/types";
 
 type Filter = "All" | SiteStatus;
@@ -13,6 +14,9 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
   const [showHeavy, setShowHeavy] = useState(false);
   const [operator, setOperator] = useState<string>("All operators");
   const [selected, setSelected] = useState<Site | null>(null);
+  // Mouse-only affordance. Everything it shows is already in the pin's
+  // aria-label and in the record a click away, so nothing depends on hover.
+  const [hovered, setHovered] = useState<Site | null>(null);
   const [mounted, setMounted] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const returnFocusTo = useRef<string | null>(null);
@@ -174,7 +178,8 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
       </div>
 
       <figure className="map-figure glass">
-        {visible.length > 0 && <svg
+        {visible.length > 0 && <div className="map-canvas">
+        <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="usmap"
           role="img"
@@ -203,6 +208,8 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
                   className={"pin" + (on ? " on" : "")}
                   transform={`translate(${s.x} ${s.y})`}
                   data-pin={s.slug}
+                  onMouseEnter={() => setHovered(s)}
+                  onMouseLeave={() => setHovered((h) => (h?.slug === s.slug ? null : h))}
                   onClick={() => openSite(s)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSite(s); } }}
                   tabIndex={0}
@@ -216,7 +223,20 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
               );
             })}
           </g>
-        </svg>}
+        </svg>
+
+        {/* Operator logo on hover. Positioned as a percentage of the viewBox,
+            which lines up because the svg fills this wrapper exactly. */}
+        {hovered && hovered.x != null && hovered.y != null && (
+          <span
+            className="pin-logo"
+            aria-hidden="true"
+            style={{ left: `${(hovered.x / VIEW_W) * 100}%`, top: `${(hovered.y / VIEW_H) * 100}%` }}
+          >
+            <BrandTile operator={hovered.operator} />
+          </span>
+        )}
+        </div>}
 
         {visible.length === 0 && (
           <div className="map-empty">
@@ -276,6 +296,24 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
               <h2 id="panel-title">{selected.name}</h2>
               {selected.milestone && <p className="milestone">{selected.milestone}</p>}
 
+              {/* Lead photo is gated on the image kind, not on the image
+                  existing. An article hero is not automatically a photograph of
+                  the site: some are logo composites, and one article covers four
+                  Oklahoma locations. Until someone has looked and said which,
+                  the image appears only on the source card at the foot of this
+                  record, captioned as the article rather than the place. */}
+              {selected.sourceImageKind === "Site photo" && selected.sourceImage && (
+                <figure className="record-photo">
+                  <img
+                    src={selected.sourceImage}
+                    alt={`${selected.name}, from EVwire's coverage`}
+                    width={1200}
+                    height={630}
+                    loading="lazy"
+                  />
+                </figure>
+              )}
+
               <dl className="facts">
                 <div><dt>Status</dt><dd><span style={{ color: STATUS_STYLE[selected.status].color }} aria-hidden="true">{STATUS_STYLE[selected.status].glyph}</span> {STATUS_STYLE[selected.status].label}</dd></div>
                 <div><dt>Operator</dt><dd>{selected.operator}</dd></div>
@@ -305,8 +343,24 @@ export default function MapExplorer({ sites }: { sites: Site[] }) {
                 {selected.notes && <p className="notes">{selected.notes}</p>}
               </div>
 
-              <a className="cta" href={selected.sourceUrl} target="_blank" rel="noopener">
-                Read the story
+              <a className="source-card" href={selected.sourceUrl} target="_blank" rel="noopener">
+                {selected.sourceImage && (
+                  <img
+                    className="source-card-img"
+                    src={selected.sourceImage}
+                    alt=""
+                    width={1200}
+                    height={630}
+                    loading="lazy"
+                  />
+                )}
+                <span className="source-card-text">
+                  <span className="source-card-kicker mono">From our coverage</span>
+                  <span className="source-card-title">
+                    {selected.sourceTitle ?? "Read the story behind this record"}
+                  </span>
+                  <span className="source-card-go">Read the story</span>
+                </span>
               </a>
             </div>
             </div>

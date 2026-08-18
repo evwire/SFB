@@ -36,9 +36,11 @@ export default function Feed({
           <li key={it.url} className="feed-item">
             <a href={it.url} target="_blank" rel="noopener">
               {it.image ? (
-                // Plain img: these are beehiiv CDN URLs already sized by cdn-cgi.
+                // Plain img: beehiiv CDN URLs, already sized by cdn-cgi. Every
+                // hero is 1.905:1, so the intrinsic ratio here must match or
+                // object-fit: cover silently crops the sides.
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.image} alt="" loading="lazy" width={640} height={360} className="feed-img" />
+                <img src={it.image} alt="" loading="lazy" width={1200} height={630} className="feed-img" />
               ) : (
                 <span className="feed-img placeholder" aria-hidden="true" />
               )}
