@@ -11,6 +11,7 @@ import type {
   Verification,
   EvidenceGrade,
   CoordPrecision,
+  SourceImageKind,
 } from "./types";
 
 /**
@@ -40,6 +41,30 @@ export function airtableConfigured(): boolean {
   return Boolean(
     process.env.AIRTABLE_TOKEN && process.env.AIRTABLE_BASE_ID && process.env.AIRTABLE_TABLE_ID
   );
+}
+
+/**
+ * Article hero images, pulled from the beehiiv API by post id and committed
+ * rather than fetched per request. Eighteen articles behind twenty-one records.
+ * Regenerate by re-reading `thumbnail_url` for each `source_post_id`.
+ *
+ * Only the asset path is stored. The CDN prefix lives here because it carries a
+ * width, and the originals are big: they run from 1200x630 up to 3600x1890, and
+ * one is a 1.1 MB PNG. Without an explicit width beehiiv serves the original, so
+ * a modal would pull several megabytes to fill a 512px box. 1024 covers the
+ * widest use (512px at 2x) with room to spare.
+ */
+import articleImages from "../../data/article-images.json";
+
+const CDN = "https://media.beehiiv.com/cdn-cgi/image";
+const CDN_OPTS = "fit=scale-down,format=auto,onerror=redirect,quality=80,width=1024";
+
+type ArticleImage = { title: string; path: string; kind?: string };
+const IMAGES = articleImages as Record<string, ArticleImage | undefined>;
+
+function heroUrl(postId: string | null | undefined): string | null {
+  const entry = postId ? IMAGES[postId] : undefined;
+  return entry ? `${CDN}/${CDN_OPTS}/uploads/asset/file/${entry.path}` : null;
 }
 
 type SeedSite = (typeof seed.sites)[number];
@@ -72,6 +97,11 @@ function fromSeed(s: SeedSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    sourceTitle: IMAGES[s.source_post_id]?.title ?? null,
+    sourceImage: heroUrl(s.source_post_id),
+    // Set per article in data/article-images.json. Anything other than
+    // "Site photo" keeps the image on the source card, captioned as the article.
+    sourceImageKind: (IMAGES[s.source_post_id]?.kind as SourceImageKind) ?? "Unclassified",
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     // The Gorham NH story is still an unpublished draft. It stays out of the
@@ -120,6 +150,11 @@ function fromAirtable(r: AirtableRecord): Site | null {
     milestone: str("Milestone"),
     summary: str("Summary") ?? "",
     sourceUrl: str("Source URL") ?? "",
+    // Airtable can carry its own values; otherwise fall back to the committed
+    // map keyed by the beehiiv post id, same as the seed path.
+    sourceTitle: str("Source Title") ?? IMAGES[str("Source Post ID") ?? ""]?.title ?? null,
+    sourceImage: str("Source Image") ?? heroUrl(str("Source Post ID")),
+    sourceImageKind: (str("Source Image Kind") as SourceImageKind) ?? "Unclassified",
     unstated: (str("Unstated") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     notes: str("Notes"),
     publish: f["Publish"] === true,
