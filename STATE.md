@@ -59,6 +59,11 @@ stylesheet one level too deep, and the contents API accepted it without complain
 the `sha` given belonged to a different path. Removed in `4da7a59`. **Paths in
 `create_or_update_file` take no `app/` prefix.**
 
+Wart three, 2026-08-18. Pushing file by file means a type change and the code that satisfies
+it can land in separate commits, and `main` will not build in between. Adding three required
+fields to `Site` in types.ts before data.ts populated them failed the Vercel build for about
+75 seconds. **A required field and its producers go in one push_files call.**
+
 ## The dataset
 
 21 records total, 20 published, from 28 EVwire articles reviewed.
@@ -118,6 +123,8 @@ Fixed and verified on the served build:
   string. Read after mount so markup agrees; unknown values ignored.
 - **Form**: name, autocomplete, inputmode, spellcheck, aria-invalid, aria-describedby, focus
   returns to the field on failure, results announce through role=status.
+- **scroll-margin-top** was 20px against a 63px sticky header, so anchoring to a section from
+  the nav landed its heading underneath the bar. Now 80px.
 
 Not applied, deliberately: the Vercel ruleset asks for Title Case headings and second
 person, and VOICE.md outranks it per CLAUDE.md. It also asks for literal non-breaking
@@ -131,42 +138,71 @@ The three diverging values and their measurements are documented in the header o
 `globals.css` so nobody resyncs them by reflex. Carrying them back into BRAND.md is a later,
 separate decision.
 
+## Article images, 2026-08-18
+
+Every record now ends in a source card: the article's hero, its headline and the read
+link, in place of the bare button. Hovering a pin raises the operator's logo above it.
+
+The hero images come from beehiiv by `source_post_id`, committed to
+`data/article-images.json`. Eighteen articles behind twenty-one records. Only the asset
+path is stored; `heroUrl` in data.ts adds the CDN prefix, which is what lets the width
+live in one place. That matters: the originals run from 1200x630 to 3600x1890 and one is
+a 1.1 MB PNG, and beehiiv serves the original unless a width is asked for.
+
+**Every hero is 1.905:1.** Not 16/9. The stylesheet had them boxed at 16/9, which cropped
+6.7 percent off the sides, and the width and height attributes added that morning for CLS
+made it worse: those become presentational hints, and with the CSS overriding width but
+not height, a landscape photograph rendered in a 371 by 630 portrait box. `height: auto`
+is what lets aspect-ratio govern. Any image rule in this file needs all three: width,
+height auto, and the ratio.
+
+`sourceImageKind` is the fifth honesty axis. An article hero is not automatically a
+photograph of the site, and the Francis Energy article covers four Oklahoma locations, so
+its image cannot depict any one of them. All eighteen start Unclassified, which keeps the
+image on the source card labelled as the article. Only "Site photo" earns the lead slot at
+the top of a record. **Do not infer this from filenames.** Several look conclusive and
+that is exactly the trap: a filename is a guess.
+
 ## Open threads
 
 1. **Hero headline.** Jaan is writing it. The current one is a placeholder.
-2. **Subdomain.** `sfb.evwire.com` needs attaching in Vercel plus a GoDaddy CNAME. Jaan.
-3. **Airtable base.** Jaan creates an empty base, then the assistant can import and wire it.
-4. **`public/og.png`.** Still not in the repo, and the contents API cannot carry binary, so it
+2. **Classify the eighteen article images.** Set `kind` in `data/article-images.json` to
+   "Site photo" or "Illustrative" per article. Site photo puts the image at the top of
+   every record built from that article; anything else leaves it on the source card. One
+   word each, and the lead slots light up on the next deploy.
+3. **Subdomain.** `sfb.evwire.com` needs attaching in Vercel plus a GoDaddy CNAME. Jaan.
+4. **Airtable base.** Jaan creates an empty base, then the assistant can import and wire it.
+5. **`public/og.png`.** Still not in the repo, and the contents API cannot carry binary, so it
    never will be by this route. `layout.tsx` references `/og.png`, so social cards 404 today.
    The real fix is `opengraph-image.tsx`, which is what codes.evwire.com does per STACK.md,
    and it removes the only binary file in the project. Do that rather than fighting the API.
-5. **`package-lock.json` and `data/airtable-sites-import.csv`.** Both plain text and both
+6. **`package-lock.json` and `data/airtable-sites-import.csv`.** Both plain text and both
    pushable, just not pushed. The lockfile matters: without it Vercel resolves transitive
    dependencies fresh on every build. `npm ci --dry-run` passes locally.
-6. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
+7. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
    one site, so the bars carry almost no information and the panel is by far the tallest thing
    in the dashboard. A top-five plus "and ten others" would say the same thing in a fifth of
    the space. Design call, not a bug.
-7. **Exact geocoding.** Nine records carry a street address and are flagged
+8. **Exact geocoding.** Nine records carry a street address and are flagged
    `ready_for_exact_geocode`. Nominatim is blocked from the sandbox. Run from a session with
    network access, then flip those records to Coordinate Precision `Exact`.
-8. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
-9. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
+9. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
+10. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
    media.beehiiv.com, so `Brandmark` renders as a broken image in every local screenshot.
    Nothing suggests it is broken in production, and evwire.com's own header serves the same
    file, but it has not been seen working here. Check it in a browser once.
-10. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
-    articles call it V4. Left null on purpose. Worth a one-line correction in the original
-    piece, then the record can be filled.
-11. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
-    April body, Genoa Ranch Golf Course in that post's SEO field, Genoa Lakes Golf Course in
-    the August UCN piece. Worth resolving in the source articles.
-12. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
-    17-site aggregate, but no source says so. They are counted separately and flagged.
-13. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
-    into the system". `Brandmark`, `ThemeToggle`, `GlowPointer`, `Subscribe`, `BrandTile`,
-    `SiteNav` and `lib/brand.ts` are ported here but not yet documented centrally, so the next
-    project will port them a third time.
+11. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
+   articles call it V4. Left null on purpose. Worth a one-line correction in the original
+   piece, then the record can be filled.
+12. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
+   April body, Genoa Ranch Golf Course in that post's SEO field, Genoa Lakes Golf Course in
+   the August UCN piece. Worth resolving in the source articles.
+13. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
+   17-site aggregate, but no source says so. They are counted separately and flagged.
+14. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
+   into the system". `Brandmark`, `ThemeToggle`, `GlowPointer`, `Subscribe`, `BrandTile`,
+   `SiteNav` and `lib/brand.ts` are ported here but not yet documented centrally, so the next
+   project will port them a third time.
 
 ## Corrections owed to the shared system docs
 
