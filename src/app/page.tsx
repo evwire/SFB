@@ -88,7 +88,7 @@ export default async function Page() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <main className="shell">
+      <main id="main" className="shell" tabIndex={-1}>
         <section className="hero rise">
           <div className="eyebrow">Tesla Supercharger for Business</div>
           <h1>
