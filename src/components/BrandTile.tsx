@@ -23,7 +23,7 @@ export default function BrandTile({ operator }: { operator: string }) {
       </span>
       {domain && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={brandLogoUrl(domain)} alt="" loading="lazy" decoding="async" />
+        <img src={brandLogoUrl(domain)} alt="" loading="lazy" decoding="async" width={28} height={28} />
       )}
     </span>
   );

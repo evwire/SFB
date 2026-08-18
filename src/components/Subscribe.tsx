@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type State = "idle" | "sending" | "done" | "error" | "fallback";
 
@@ -16,6 +16,7 @@ export default function Subscribe({ sites }: { sites: number }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,12 +38,18 @@ export default function Subscribe({ sites }: { sites: number }) {
         setState("fallback");
         return;
       }
-      setState("error");
-      setMessage(data?.error || "Something went wrong. Please try again.");
+      fail(data?.error || "That did not go through. Please try again.");
     } catch {
-      setState("error");
-      setMessage("Network error. Please try again.");
+      fail("We could not reach the server. Check your connection and try again.");
     }
+  }
+
+  // WCAG 3.3.1: the error is announced by role="alert" and focus returns to the
+  // field that needs attention, rather than leaving it wherever the submit left it.
+  function fail(text: string) {
+    setState("error");
+    setMessage(text);
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
   return (
@@ -60,12 +67,12 @@ export default function Subscribe({ sites }: { sites: number }) {
         </div>
 
         {state === "done" ? (
-          <div className="subscribe-result">
+          <div className="subscribe-result" role="status" aria-live="polite">
             <p className="subscribe-result-head">You are in.</p>
             <p className="subscribe-result-sub">Check your inbox to confirm.</p>
           </div>
         ) : state === "fallback" ? (
-          <div className="subscribe-result">
+          <div className="subscribe-result" role="status" aria-live="polite">
             <p className="subscribe-result-sub">Signups are handled on the main site.</p>
             <a className="cta" href="https://evwire.com" target="_blank" rel="noopener">
               Subscribe on EVwire
@@ -78,19 +85,26 @@ export default function Subscribe({ sites }: { sites: number }) {
             </label>
             <div className="subscribe-row">
               <input
+                ref={inputRef}
                 id="sub-email"
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
+                spellCheck={false}
                 required
+                aria-invalid={state === "error"}
+                aria-describedby={state === "error" ? "sub-email-error" : undefined}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
               />
               <button type="submit" className="cta" disabled={state === "sending"}>
-                {state === "sending" ? "Signing you up" : "Subscribe free"}
+                {state === "sending" ? "Signing you up…" : "Subscribe free"}
               </button>
             </div>
             {state === "error" && (
-              <p role="alert" className="subscribe-error">
+              <p id="sub-email-error" role="alert" className="subscribe-error">
                 {message}
               </p>
             )}
