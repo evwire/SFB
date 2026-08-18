@@ -162,7 +162,9 @@ a { color: inherit; }
 .link:hover { border-bottom-color: var(--signal-text); }
 .dark .link { border-bottom-color: rgba(95, 227, 154, 0.35); }
 
-section { margin-top: 48px; scroll-margin-top: 20px; }
+/* 80, not 20. The sticky topbar measures 63px, so anchoring to #dashboard from
+   the nav used to land the heading at y=22, underneath it. */
+section { margin-top: 48px; scroll-margin-top: 80px; }
 .hero { margin-top: 32px; }
 #map { margin-top: 30px; }
 .section-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
@@ -234,6 +236,21 @@ main:focus { outline: none; }
 .toggle input { accent-color: var(--signal); width: 15px; height: 15px; cursor: pointer; }
 
 .map-figure { margin: 0; padding: 8px 8px 0; }
+/* The svg fills this wrapper exactly, so the hover logo can be placed with
+   percentages taken straight from the viewBox coordinates. */
+.map-canvas { position: relative; }
+.pin-logo {
+  position: absolute; z-index: 2; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px));
+  animation: pin-logo-in .16s var(--enter) both;
+}
+.pin-logo .brandtile {
+  width: 46px; height: 46px; border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 10px 24px -8px rgba(11,17,22,.45);
+}
+.pin-logo .brandtile img { padding: 6px; }
+.pin-logo .brandtile .mono-fallback { font-size: 15px; }
+@keyframes pin-logo-in { from { opacity: 0; transform: translate(-50%, calc(-100% - 6px)); } }
 .usmap { display: block; width: 100%; height: auto; }
 .state { fill: color-mix(in srgb, var(--fg) 5%, transparent); stroke: var(--bg); stroke-width: 1; transition: fill .3s var(--enter); }
 .state.has { fill: color-mix(in srgb, var(--signal) 11%, transparent); }
@@ -330,6 +347,15 @@ main:focus { outline: none; }
 .facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); font-weight: 600; }
 .facts dd { margin: 3px 0 0; font-size: 14px; font-weight: 600; }
 .facts dd em { font-weight: 400; color: var(--faint); font-style: normal; }
+/* Lead photo. Only reached when a human has classified the image as depicting
+   this site, so it can be shown full bleed without a hedge. */
+.record-photo { margin: 16px 0 0; }
+.record-photo img {
+  display: block; width: 100%; height: auto; aspect-ratio: 1200/630;
+  object-fit: cover; border-radius: var(--r-tile);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+
 .summary { font-size: 14.5px; color: var(--muted); }
 .provenance { margin-top: 18px; padding: 14px 16px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--fg) 3.5%, transparent); }
 .prov-row { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -337,6 +363,24 @@ main:focus { outline: none; }
 .notes { color: var(--faint); }
 .cta { display: inline-block; margin-top: 20px; padding: 11px 22px; border-radius: var(--r-pill); background: linear-gradient(180deg, var(--signal), var(--forest)); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none; box-shadow: 0 6px 22px var(--glow); touch-action: manipulation; transition: transform .18s var(--interact), box-shadow .18s var(--interact); }
 .cta:hover { transform: translateY(-1px) scale(1.02); }
+
+/* Source card. The article's hero shown as the article, headline and all, which
+   is true whatever the picture happens to show. */
+.source-card {
+  display: block; margin-top: 20px; overflow: hidden;
+  border-radius: var(--r-tile); text-decoration: none; color: inherit;
+  background: color-mix(in srgb, var(--fg) 3.5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition: box-shadow .18s var(--interact), transform .18s var(--interact);
+}
+.source-card:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 10px 26px -12px rgba(11,17,22,.35); }
+/* Full width and the real ratio. Every beehiiv hero is 1.905:1, so a cropped
+   side strip threw away a third of the picture for no reason. */
+.source-card-img { width: 100%; height: auto; aspect-ratio: 1200/630; object-fit: cover; display: block; background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.source-card-text { display: grid; gap: 4px; padding: 12px 16px 14px; min-width: 0; }
+.source-card-kicker { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.source-card-title { font-size: 13.5px; font-weight: 600; line-height: 1.34; }
+.source-card-go { font-size: 12px; font-weight: 600; color: var(--signal-text); }
 
 /* ---------- dashboard ---------- */
 .dash { display: grid; gap: 18px; }
@@ -423,8 +467,11 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 .feed { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .feed-item a { display: grid; grid-template-rows: auto 1fr; height: 100%; text-decoration: none; border-radius: var(--r-panel); overflow: hidden; background: var(--panel); backdrop-filter: blur(22px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hairline); transition: transform .2s var(--interact), box-shadow .2s var(--interact); }
 .feed-item a:hover { transform: translateY(-5px); box-shadow: inset 0 0 0 1px var(--hairline), 0 16px 34px rgba(11,17,22,.12); }
-.feed-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: color-mix(in srgb, var(--fg) 6%, transparent); }
-.feed-img.placeholder { aspect-ratio: 16/9; }
+/* 1200/630, not 16/9. Every beehiiv hero is 1.905:1, from 1200x630 up to
+   3600x1890, and the 16/9 box was cropping 6.7 percent off the sides under
+   object-fit: cover. Confirmed against the asset metadata for all 18 articles. */
+.feed-img { width: 100%; height: auto; aspect-ratio: 1200/630; object-fit: cover; display: block; background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.feed-img.placeholder { aspect-ratio: 1200/630; }
 .feed-text { display: grid; gap: 6px; padding: 14px 16px 16px; align-content: start; }
 .feed-date { font-size: 11px; color: var(--faint); }
 .feed-title { font-size: 14px; font-weight: 600; line-height: 1.32; }
