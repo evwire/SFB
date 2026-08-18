@@ -100,7 +100,7 @@ export default function Subscribe({ sites }: { sites: number }) {
                 placeholder="you@company.com"
               />
               <button type="submit" className="cta" disabled={state === "sending"}>
-                {state === "sending" ? "Signing you up…" : "Subscribe free"}
+                {state === "sending" ? "Signing you up\\u2026" : "Subscribe free"}
               </button>
             </div>
             {state === "error" && (
