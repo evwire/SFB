@@ -1,5 +1,21 @@
-/* EVwire Brand System v1.2 tokens. Source of truth: EVwire-System/BRAND.md.
-   Do not invent hues here. Add them to BRAND.md first. */
+/* EVwire Brand System v1.2 tokens, forked for this site.
+   Source of truth is EVwire-System/BRAND.md. Do not invent hues here.
+
+   THIS FILE DELIBERATELY DIVERGES FROM BRAND.md IN THREE VALUES.
+   Measured 2026-08-14, they fail WCAG AA (4.5:1) for text below 18px:
+
+     --faint  #8693a0 on --paper  2.86:1   ->  #64717f  4.55:1
+     --amber  #d97706 on --paper  2.90:1   ->  #a95c05  4.54:1  (as text only)
+     --faint  #6b7680 on --night  4.32:1   ->  #6d7983  4.50:1
+
+   Hue and saturation are untouched in all three, only lightness. The tokens
+   carry the page's supporting text: section notes, the map caption, stat
+   footnotes, feed dates, table footnotes and pipeline caveats.
+
+   This is a fork, not drift, and it is deliberate: each EVwire build starts from
+   BRAND.md and diverges where it has to, and the learnings get carried back on
+   purpose rather than by accident. Do not "resync" these three to BRAND.md
+   without re-measuring. If BRAND.md later adopts them, delete this note. */
 
 :root {
   --forest: #15693e;
@@ -10,7 +26,7 @@
   --night: #06080b;
 
   --muted: #4f5b66;
-  --faint: #8693a0;
+  --faint: #64717f;   /* forked, see header. BRAND.md has #8693a0 at 2.86:1 */
   --surface: #ffffff;
   --hairline: rgba(11, 17, 22, 0.1);
   --hairline-strong: rgba(11, 17, 22, 0.15);
@@ -37,13 +53,28 @@
   --fg: var(--ink);
   --panel: rgba(255, 255, 255, 0.5);
   --panel-solid: #ffffff;
+
+  /* --signal is the brand green and it is 3.67:1 on paper. That clears WCAG AA
+     for large text but not for body text, so anything set below 18px uses
+     --signal-text instead, which resolves to --forest (6.13:1). Both hues are
+     already in BRAND.md section 2, so this adds no colour, only a rule about
+     which of the two existing greens is legal at which size. */
+  --signal-text: var(--forest);
+  /* --amber stays the brand value for pins, glyphs and panel tints, where the
+     3:1 graphics threshold applies. Only amber TEXT is darkened. */
+  --amber-text: #a95c05;
+
+  /* Without this the scrollbar, the operator <select> and the heavy-duty
+     checkbox stay in light livery over a night-mode page, because those are
+     drawn by the OS and CSS variables do not reach them. */
+  color-scheme: light;
 }
 
 :root.dark {
     --bg: var(--night);
     --fg: var(--paper);
     --muted: #a6b1bc;
-    --faint: #6b7680;
+    --faint: #6d7983;   /* forked, see header. BRAND.md has #6b7680 at 4.32:1 */
     --surface: #10151b;
     --hairline: rgba(255, 255, 255, 0.1);
     --hairline-strong: rgba(255, 255, 255, 0.15);
@@ -51,6 +82,11 @@
     --panel: rgba(255, 255, 255, 0.055);
     --panel-solid: #10151b;
   --signal: #5fe39a;
+  /* On night, the bright green is 12.36:1, so it is legal at every size, and the
+     brand amber is 6.29:1, so it needs no darkening here. */
+  --signal-text: #5fe39a;
+  --amber-text: #d97706;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -105,7 +141,7 @@ body {
 .brand .suffix { color: var(--faint); font-weight: 600; }
 
 /* Type */
-h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
 h1 { font-size: clamp(30px, 3.8vw, 44px); line-height: 1.08; max-width: 20ch; }
 h2 { font-size: clamp(22px, 2.6vw, 26px); line-height: 1.15; }
 h3 { font-size: 17px; }
@@ -118,12 +154,13 @@ h3 { font-size: 17px; }
 .eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--signal); flex: none; }
 
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.lede { font-size: 15.5px; color: var(--muted); max-width: 58ch; }
+.lede { font-size: 15.5px; color: var(--muted); max-width: 58ch; text-wrap: pretty; }
 .hero-accent { font-style: italic; color: var(--signal); }
 
 a { color: inherit; }
-.link { color: var(--signal); text-decoration: none; border-bottom: 1px solid rgba(27, 145, 82, 0.3); }
-.link:hover { border-bottom-color: var(--signal); }
+.link { color: var(--signal-text); text-decoration: none; border-bottom: 1px solid rgba(21, 105, 62, 0.35); }
+.link:hover { border-bottom-color: var(--signal-text); }
+.dark .link { border-bottom-color: rgba(95, 227, 154, 0.35); }
 
 section { margin-top: 48px; scroll-margin-top: 20px; }
 .hero { margin-top: 32px; }
@@ -136,6 +173,33 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
   .rise { animation: rise 0.55s var(--enter) both; }
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 }
+/* The entrance animation above was already opt-in, but the modal and its scrim
+   animate unconditionally and every hover carries a transition. Blanket override
+   so a reader who has asked the OS for less motion gets it everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip link. Off-screen until focused, then a normal-looking chip. */
+.skip-link {
+  position: fixed; top: 8px; left: 8px; z-index: 100;
+  transform: translateY(-160%);
+  padding: 10px 18px; border-radius: var(--r-pill);
+  background: var(--panel-solid); color: var(--fg);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  box-shadow: inset 0 0 0 1.5px var(--signal), 0 8px 26px rgba(11,17,22,.22);
+  transition: transform .18s var(--interact);
+}
+/* :focus, not :focus-visible. The link sits off-screen until focused, so it can
+   only ever be reached by keyboard, and focus-visible did not reliably match on
+   the first Tab of a fresh page load. Verified by measuring its position. */
+.skip-link:focus { transform: none; }
+main:focus { outline: none; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -150,7 +214,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(16px) saturate(160%); background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--hairline); }
 .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 13px; padding-bottom: 13px; }
 .topnav { display: flex; gap: 6px; flex-wrap: wrap; }
-.topnav a { font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: var(--r-pill); transition: .18s var(--interact); }
+.topnav a { font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: var(--r-pill); touch-action: manipulation; transition: color .18s var(--interact), background-color .18s var(--interact), box-shadow .18s var(--interact), transform .18s var(--interact); }
 .topnav a:hover { color: var(--fg); background: var(--panel-solid); box-shadow: inset 0 0 0 1px var(--hairline); transform: translateY(-1px); }
 
 /* ---------- hero ---------- */
@@ -161,7 +225,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .map-wrap { display: grid; gap: 14px; }
 .controls { display: grid; gap: 10px; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.fbtn { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 8px 14px; border-radius: var(--r-pill); border: 0; color: var(--muted); background: var(--panel-solid); box-shadow: inset 0 0 0 1px var(--hairline); transition: .18s var(--interact); }
+.fbtn { font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 8px 14px; border-radius: var(--r-pill); border: 0; color: var(--muted); background: var(--panel-solid); box-shadow: inset 0 0 0 1px var(--hairline); min-height: 24px; touch-action: manipulation; transition: color .18s var(--interact), box-shadow .18s var(--interact), transform .18s var(--interact); }
 .fbtn:hover { transform: translateY(-2px); color: var(--fg); }
 .fbtn.on { color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--signal), 0 4px 16px var(--glow); }
 .filter-row.secondary { gap: 14px; }
@@ -174,18 +238,26 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .state { fill: color-mix(in srgb, var(--fg) 5%, transparent); stroke: var(--bg); stroke-width: 1; transition: fill .3s var(--enter); }
 .state.has { fill: color-mix(in srgb, var(--signal) 11%, transparent); }
 .pin { cursor: pointer; outline: none; }
-.pin .core { stroke: var(--bg); stroke-width: 1.5; transition: .18s var(--interact); }
+.pin .core { stroke: var(--bg); stroke-width: 1.5; transition: transform .18s var(--interact), stroke .18s var(--interact), stroke-width .18s var(--interact); }
 .pin .halo { fill: none; stroke-width: 1.2; stroke-dasharray: 3 3; opacity: .5; }
 .pin .hd { fill: none; stroke: var(--teal); stroke-width: 1.5; }
 .pin:hover .core, .pin:focus-visible .core, .pin.on .core { transform: scale(1.35); }
 .pin:focus-visible .core { stroke: var(--signal); stroke-width: 2.5; }
+/* Empty state. An empty map with no explanation reads as a broken map, and the
+   distinction that matters here is "we have not reported one" rather than
+   "there are none", which is the whole disclaimer of this page in miniature. */
+.map-empty { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 40px 24px 34px; }
+.map-empty-head { margin: 0; font-family: var(--display); font-size: 19px; font-weight: 600; }
+.map-empty-sub { margin: 0; max-width: 52ch; font-size: 13.5px; color: var(--muted); }
+.map-empty .fbtn { margin-top: 6px; }
+
 .map-caption { display: grid; gap: 6px; padding: 12px 14px 14px; font-size: 12px; color: var(--faint); }
-.map-caption .warn { color: var(--amber); }
+.map-caption .warn { color: var(--amber-text); }
 
 /* ---------- panel ---------- */
 /* Scrim is barely tinted on purpose. Tuning law 3: the glass transmits the page
    as darkened by the scrim, so a heavy scrim leaves the panel nothing to show. */
-.scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(11,17,22,0.04); backdrop-filter: blur(8px) saturate(115%); -webkit-backdrop-filter: blur(8px) saturate(115%); animation: fade .2s ease both; }
+.scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; overscroll-behavior: contain; background: rgba(11,17,22,0.04); backdrop-filter: blur(8px) saturate(115%); -webkit-backdrop-filter: blur(8px) saturate(115%); animation: fade .2s ease both; }
 .dark .scrim { background: rgba(0,0,0,0.32); backdrop-filter: blur(14px) saturate(115%); -webkit-backdrop-filter: blur(14px) saturate(115%); }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
 /* The settled light-glass recipe (BRAND.md section 6, tuned over six rounds on the
@@ -226,7 +298,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   opacity: .5; mix-blend-mode: overlay; pointer-events: none; z-index: 2;
 }
-.panel-scroll { position: relative; z-index: 1; max-height: inherit; overflow: auto; border-radius: inherit; }
+.panel-scroll { position: relative; z-index: 1; max-height: inherit; overflow: auto; overscroll-behavior: contain; border-radius: inherit; }
 .dark .panel {
   background:
     radial-gradient(130% 100% at -18% -42%, rgba(255,255,255,.98), rgba(255,255,255,0) 64%),
@@ -247,11 +319,11 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .dots i { width: 9px; height: 9px; border-radius: 999px; background: rgba(11,17,22,.15); }
 .panel-body { position: relative; z-index: 1; }
 .dark .dots i { background: rgba(255,255,255,.32); }
-.chrome-label { font-size: 11px; letter-spacing: .18em; color: var(--signal); text-transform: uppercase; }
-.close { justify-self: end; font-size: 22px; line-height: 1; width: 30px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.chrome-label { font-size: 11px; letter-spacing: .18em; color: var(--signal-text); text-transform: uppercase; }
+.close { justify-self: end; font-size: 22px; line-height: 1; width: 32px; height: 32px; border: 0; touch-action: manipulation; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
 .close:hover { background: var(--panel-solid); color: var(--fg); }
 .panel-body { padding: 22px 24px 26px; }
-.milestone { margin: 10px 0 0; font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--signal); }
+.milestone { margin: 10px 0 0; font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--signal-text); }
 @media (max-width: 560px) { .milestone { font-size: 12.5px; font-weight: 500; } }
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
 .facts div { min-width: 0; }
@@ -263,7 +335,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .prov-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .unstated, .notes { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
 .notes { color: var(--faint); }
-.cta { display: inline-block; margin-top: 20px; padding: 11px 22px; border-radius: var(--r-pill); background: linear-gradient(180deg, var(--signal), var(--forest)); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none; box-shadow: 0 6px 22px var(--glow); transition: .18s var(--interact); }
+.cta { display: inline-block; margin-top: 20px; padding: 11px 22px; border-radius: var(--r-pill); background: linear-gradient(180deg, var(--signal), var(--forest)); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none; box-shadow: 0 6px 22px var(--glow); touch-action: manipulation; transition: transform .18s var(--interact), box-shadow .18s var(--interact); }
 .cta:hover { transform: translateY(-1px) scale(1.02); }
 
 /* ---------- dashboard ---------- */
@@ -318,7 +390,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .pl-num { font-family: var(--display); font-style: italic; font-weight: 600; color: var(--muted); font-size: 17px; white-space: nowrap; }
 .pl-claim { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
 .pl-meta { font-size: 11px; color: var(--faint); margin: 8px 0 0; }
-.pl-caveat { font-size: 11.5px; color: var(--amber); margin: 8px 0 0; }
+.pl-caveat { font-size: 11.5px; color: var(--amber-text); margin: 8px 0 0; }
 .agg-claim { font-size: 14.5px; margin: 10px 0 0; }
 
 .dash-disclaimer { font-size: 13px; color: var(--muted); padding: 16px 20px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--amber) 8%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 25%, transparent); margin: 0; }
@@ -332,7 +404,7 @@ section { margin-top: 48px; scroll-margin-top: 20px; }
 .econ div.lead .econ-v { color: var(--signal); }
 .econ-l { font-size: 11.5px; color: var(--faint); }
 .excluded { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
-.excluded summary { cursor: pointer; font-weight: 600; color: var(--signal); }
+.excluded summary { cursor: pointer; font-weight: 600; color: var(--signal-text); }
 .excluded ul { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 7px; }
 
 /* ---------- table ---------- */
@@ -349,7 +421,7 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 
 /* ---------- feed ---------- */
 .feed { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.feed-item a { display: grid; grid-template-rows: auto 1fr; height: 100%; text-decoration: none; border-radius: var(--r-panel); overflow: hidden; background: var(--panel); backdrop-filter: blur(22px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hairline); transition: .2s var(--interact); }
+.feed-item a { display: grid; grid-template-rows: auto 1fr; height: 100%; text-decoration: none; border-radius: var(--r-panel); overflow: hidden; background: var(--panel); backdrop-filter: blur(22px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hairline); transition: transform .2s var(--interact), box-shadow .2s var(--interact); }
 .feed-item a:hover { transform: translateY(-5px); box-shadow: inset 0 0 0 1px var(--hairline), 0 16px 34px rgba(11,17,22,.12); }
 .feed-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: color-mix(in srgb, var(--fg) 6%, transparent); }
 .feed-img.placeholder { aspect-ratio: 16/9; }
@@ -357,6 +429,11 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 .feed-date { font-size: 11px; color: var(--faint); }
 .feed-title { font-size: 14px; font-weight: 600; line-height: 1.32; }
 .feed-desc { font-size: 12px; color: var(--muted); }
+/* The feed is the one part of this page fetched live, so it is the one part that
+   can come back empty without anything being wrong with our data. */
+.feed-empty { display: grid; gap: 8px; padding: 34px 30px; text-align: center; justify-items: center; }
+.feed-empty-head { margin: 0; font-family: var(--display); font-size: 18px; font-weight: 600; }
+.feed-empty-sub { margin: 0; max-width: 56ch; font-size: 13.5px; color: var(--muted); }
 
 /* ---------- footer ---------- */
 .foot { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--hairline); display: grid; gap: 10px; font-size: 13px; color: var(--muted); }
@@ -392,7 +469,8 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
   isolation: isolate;
   background: var(--panel-solid);
   box-shadow: inset 0 0 0 1px var(--hairline);
-  transition: .18s var(--interact);
+  touch-action: manipulation;
+  transition: color .18s var(--interact), transform .18s var(--interact);
 }
 .pill-frost::before {
   content: "";
@@ -412,11 +490,11 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 
 .nav-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .nav-out { font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
-.nav-out:hover { color: var(--signal); }
+.nav-out:hover { color: var(--signal-text); }
 .theme-toggle {
   display: grid; place-items: center;
   width: 36px; height: 36px; border: 0; border-radius: var(--r-pill);
-  color: var(--fg); cursor: pointer; flex: none;
+  color: var(--fg); cursor: pointer; flex: none; touch-action: manipulation;
 }
 .cta-sm { margin-top: 0; padding: 8px 16px; font-size: 13px; }
 @media (max-width: 900px) { .topnav { display: none; } }
@@ -441,7 +519,7 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 .section-head h2 { display: flex; align-items: baseline; gap: 12px; }
 .sec-num {
   font-family: var(--display); font-style: italic; font-weight: 600;
-  font-size: .72em; color: var(--signal); flex: none;
+  font-size: .72em; color: var(--signal-text); flex: none;
 }
 
 /* ---------- FAQ, native details with a green marker ---------- */
@@ -465,7 +543,7 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 .subscribe-inner { display: grid; gap: 26px; grid-template-columns: 1.1fr 1fr; align-items: center; }
 .subscribe h2 { font-size: clamp(21px, 2.4vw, 26px); }
 .subscribe-pitch { margin: 10px 0 0; font-size: 14px; color: var(--muted); max-width: 46ch; }
-.subscribe-proof { margin: 12px 0 0; font-size: 11.5px; color: var(--signal); }
+.subscribe-proof { margin: 12px 0 0; font-size: 11.5px; color: var(--signal-text); }
 .subscribe-form { display: grid; gap: 8px; }
 .subscribe-row { display: flex; gap: 8px; }
 .subscribe-row input {
