@@ -1,10 +1,14 @@
 import BrandTile from "@/components/BrandTile";
 
-import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
+import type { Site, Aggregate } from "@/lib/types";
 
 /**
- * Four panels, in the order asked for: counts, operator leaderboard, rollout
- * timeline, announced pipeline.
+ * Three panels: operator leaderboard, rollout timeline, hardware split.
+ *
+ * The announced pipeline used to be a fourth. It was the odd one out, because the
+ * other three measure what exists and it quoted six futures, and because an
+ * operator's announcement sat nowhere near their sites or their own tally. The
+ * claims now live in that operator's profile, reachable from any leaderboard row.
  *
  * The counting rule that matters: Francis Energy's 100 stalls across 17 Oklahoma
  * sites is an operator claim covering sites we have not individually reported, so it
@@ -14,11 +18,9 @@ import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
 export default function Dashboard({
   sites,
   aggregates,
-  pipeline,
 }: {
   sites: Site[];
   aggregates: Aggregate[];
-  pipeline: PipelineClaim[];
 }) {
   const sfb = sites.filter((s) => s.siteClass === "SfB");
 
@@ -72,25 +74,32 @@ export default function Dashboard({
           <ul className="bars">
             {byOperator.map((o, i) => (
               <li key={o.operator} className={i === 0 ? "lead" : undefined}>
-                <div className="bar-label">
-                  <span className="with-tile">
-                    <BrandTile operator={o.operator} />
-                    <span>{o.operator}</span>
+                {/* A plain anchor, not a click handler. The profile panel lives in
+                    MapExplorer at the top of the page, and a link into its query
+                    string reaches it without the two components having to know
+                    about each other, and without needing JavaScript to work. */}
+                <a className="bar-row" href={`?profile=${encodeURIComponent(o.operator)}#map`}>
+                  <span className="bar-label">
+                    <span className="with-tile">
+                      <BrandTile operator={o.operator} />
+                      <span>{o.operator}</span>
+                    </span>
+                    <span className="mono">
+                      {o.sites} site{o.sites > 1 ? "s" : ""}
+                      {o.stalls > 0 && ` · ${o.stalls} stalls`}
+                      {o.unknown > 0 && ` · ${o.unknown} unc.`}
+                    </span>
                   </span>
-                  <span className="mono">
-                    {o.sites} site{o.sites > 1 ? "s" : ""}
-                    {o.stalls > 0 && ` · ${o.stalls} stalls`}
-                    {o.unknown > 0 && ` · ${o.unknown} unc.`}
+                  <span className="bar-track">
+                    <span className="bar-fill" style={{ width: `${(o.sites / maxOpSites) * 100}%` }} />
                   </span>
-                </div>
-                <div className="bar-track">
-                  <div className="bar-fill" style={{ width: `${(o.sites / maxOpSites) * 100}%` }} />
-                </div>
+                </a>
               </li>
             ))}
           </ul>
           <p className="panel-foot">
-            &ldquo;unc.&rdquo; is a site whose stall count nobody has published.
+            &ldquo;unc.&rdquo; is a site whose stall count nobody has published. Open any
+            operator for their sites, their own tally and anything they have announced.
           </p>
         </section>
 
@@ -131,27 +140,6 @@ export default function Dashboard({
             The lone V3 sits in Belleville, Kansas. AC Customs says Tesla discounted them to
             clear the last of the old stock.
           </p>
-        </section>
-
-        <section className="dash-panel glass wide">
-          <h3>The pipeline</h3>
-          <p className="panel-sub mono">Announcements, quoted as they were made</p>
-          <ul className="pipeline">
-            {pipeline.map((p) => (
-              <li key={p.operator + p.asOf}>
-                <div className="pl-head">
-                  <span className="pl-op">{p.operator}</span>
-                  <span className="pl-num">{p.headlineNumber}</span>
-                </div>
-                <p className="pl-claim">{p.claim}</p>
-                <p className="pl-meta mono">
-                  {p.timeframe ? `${p.timeframe} · ` : ""}stated {p.asOf} ·{" "}
-                  <a className="link" href={p.sourceUrl} target="_blank" rel="noopener">source</a>
-                </p>
-                {p.caveat && <p className="pl-caveat">{p.caveat}</p>}
-              </li>
-            ))}
-          </ul>
         </section>
 
         {aggregates.map((a) => (

@@ -7,7 +7,8 @@ import { STATUS_STYLE, STATUS_ORDER, fmtNum } from "@/lib/style";
 import { clusterSites, type Cluster } from "@/lib/cluster";
 import { brandLogoUrl, monogram, operatorDomain } from "@/lib/brand";
 import SiteRecord from "@/components/SiteRecord";
-import type { Site, SiteStatus, Aggregate } from "@/lib/types";
+import OperatorProfile from "@/components/OperatorProfile";
+import type { Site, SiteStatus, Aggregate, PipelineClaim } from "@/lib/types";
 
 type Filter = "All" | SiteStatus;
 
@@ -31,13 +32,23 @@ function useIsWide() {
   return wide;
 }
 
-export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggregates: Aggregate[] }) {
+export default function MapExplorer({
+  sites,
+  aggregates,
+  pipeline,
+}: {
+  sites: Site[];
+  aggregates: Aggregate[];
+  pipeline: PipelineClaim[];
+}) {
   const [filter, setFilter] = useState<Filter>("All");
   const [showHeavy, setShowHeavy] = useState(false);
   const [operator, setOperator] = useState<string>("All operators");
   const [selected, setSelected] = useState<Site | null>(null);
   /** A cluster the reader has opened but not yet picked from. */
   const [picking, setPicking] = useState<Cluster | null>(null);
+  /** An operator whose profile is open. Separate from the operator filter above. */
+  const [profile, setProfile] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const isWide = useIsWide();
 
@@ -64,6 +75,10 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
     const op = p.get("operator");
     if (op && operators.includes(op)) setOperator(op);
     if (p.get("heavy") === "1") setShowHeavy(true);
+    // Deep link into a profile, which is how the leaderboard further down the page
+    // reaches this panel without the two components having to know about each other.
+    const prof = p.get("profile");
+    if (prof && directory.some((d) => d.operator === prof)) setProfile(prof);
     // operators is derived from props that do not change after mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -77,9 +92,11 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
     else p.set("operator", operator);
     if (showHeavy) p.set("heavy", "1");
     else p.delete("heavy");
+    if (profile) p.set("profile", profile);
+    else p.delete("profile");
     const q = p.toString();
     window.history.replaceState(null, "", (q ? `?${q}` : window.location.pathname) + window.location.hash);
-  }, [mounted, filter, operator, showHeavy]);
+  }, [mounted, filter, operator, showHeavy, profile]);
 
   const visible = useMemo(
     () =>
@@ -116,16 +133,60 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
     };
   }, [sites, aggregates]);
 
-  const close = useCallback(() => { setSelected(null); setPicking(null); }, []);
+  /**
+   * Every operator the page knows about, including the four that have announced
+   * something and built nothing we have covered. Leaving those out would have made
+   * the profile panel the place where EVgo, United Chargers Network, Verdek and the
+   * Pilot deal quietly stopped existing.
+   */
+  const directory = useMemo(() => {
+    const blank = (operator: string) => ({ operator, sites: 0, stalls: 0, heavy: 0, announced: false });
+    const rows = new Map<string, ReturnType<typeof blank>>();
+    for (const s of sites) {
+      const r = rows.get(s.operator) ?? blank(s.operator);
+      // Counted apart, always. Heavy-duty is Tesla MCS hardware for trucks, a
+      // different product line, and merging the two counts is the one thing the
+      // class field exists to prevent.
+      if (s.siteClass === "SfB") {
+        r.sites += 1;
+        r.stalls += s.stalls ?? 0;
+      } else {
+        r.heavy += 1;
+      }
+      rows.set(s.operator, r);
+    }
+    for (const p of pipeline) {
+      const r = rows.get(p.operator) ?? blank(p.operator);
+      r.announced = true;
+      rows.set(p.operator, r);
+    }
+    return [...rows.values()].sort(
+      (a, b) =>
+        b.sites - a.sites ||
+        b.stalls - a.stalls ||
+        b.heavy - a.heavy ||
+        a.operator.localeCompare(b.operator)
+    );
+  }, [sites, pipeline]);
+
+  const close = useCallback(() => { setSelected(null); setPicking(null); setProfile(null); }, []);
 
   const openSite = useCallback((s: Site) => {
     returnFocusTo.current = s.slug;
     setPicking(null);
+    setProfile(null);
     setSelected(s);
+  }, []);
+
+  const openProfile = useCallback((op: string) => {
+    setSelected(null);
+    setPicking(null);
+    setProfile(op);
   }, []);
 
   const openCluster = useCallback((c: Cluster) => {
     returnFocusTo.current = c.key;
+    setProfile(null);
     if (c.sites.length === 1) { setPicking(null); setSelected(c.sites[0]); }
     else { setSelected(null); setPicking(c); }
   }, []);
@@ -142,7 +203,7 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
    * Tab trapped, scroll locked, focus restored on close.
    */
   useEffect(() => {
-    if (!selected && !picking) return;
+    if (!selected && !picking && !profile) return;
     const modal = !isWide;
     const node = modal ? dialogRef.current : panelScrollRef.current;
     // preventScroll, because the panel is already on screen beside the map and
@@ -181,7 +242,7 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
         returnFocusTo.current = null;
       }
     };
-  }, [selected, picking, isWide, close]);
+  }, [selected, picking, profile, isWide, close]);
 
   const marker = (c: Cluster) => {
     const many = c.sites.length > 1;
@@ -275,7 +336,16 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
       </ul>
     </div>
   ) : selected ? (
-    <SiteRecord site={selected} headingId="record-title" />
+    <SiteRecord site={selected} headingId="record-title" onOperator={openProfile} />
+  ) : profile ? (
+    <OperatorProfile
+      operator={profile}
+      sites={sites}
+      aggregates={aggregates}
+      pipeline={pipeline}
+      headingId="record-title"
+      onSite={openSite}
+    />
   ) : null;
 
   /**
@@ -431,7 +501,7 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
               <>
                 <div className="record-chrome">
                   <span className="mono chrome-label">
-                    {picking ? "CHOOSE A SITE" : "SITE RECORD"}
+                    {picking ? "CHOOSE A SITE" : profile ? "OPERATOR" : "SITE RECORD"}
                   </span>
                   <button className="close" onClick={close} aria-label="Close site record">
                     &times;
@@ -446,6 +516,30 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
                   Every marker opens the record behind it: what the article stated, what it
                   never said, and the story it came from.
                 </p>
+                <div className="op-dir">
+                  <h3 className="op-dir-h mono">Or by operator</h3>
+                  <ul className="op-dir-list">
+                    {directory.map((d) => (
+                      <li key={d.operator}>
+                        <button className="op-dir-row" onClick={() => openProfile(d.operator)}>
+                          <span className="op-dir-name">{d.operator}</span>
+                          <span className="op-dir-meta mono">
+                            {d.sites > 0
+                              ? `${d.sites} site${d.sites > 1 ? "s" : ""}`
+                              : d.heavy > 0
+                                ? "heavy-duty"
+                                : "announced only"}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="op-dir-foot">
+                    Announced only means they have said something and we have not covered a
+                    site of theirs. It is not a claim that they have built nothing. Heavy-duty
+                    is Tesla MCS truck hardware, counted apart from the programme.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -469,7 +563,7 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
               <div className="panel-chrome">
                 <span className="dots" aria-hidden="true"><i /><i /><i /></span>
                 <span className="mono chrome-label">
-                  {picking ? "CHOOSE A SITE" : "SITE RECORD"}
+                  {picking ? "CHOOSE A SITE" : profile ? "OPERATOR" : "SITE RECORD"}
                 </span>
                 <button className="close" onClick={close} aria-label="Close site record">
                   &times;

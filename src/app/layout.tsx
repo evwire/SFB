@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | EVwire",
   },
   description:
-    "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard, operator leaderboard, announced pipeline and the latest coverage.",
+    "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard, a profile for every operator and the latest coverage.",
   keywords: [
     "Supercharger for Business",
     "third-party Tesla Supercharger",

@@ -106,7 +106,7 @@ export default async function Page() {
         </section>
 
         <div className="dash-band">
-          <MapExplorer sites={sites} aggregates={aggregates} />
+          <MapExplorer sites={sites} aggregates={aggregates} pipeline={pipeline} />
         </div>
 
         <section id="dashboard" className="shell">
@@ -114,7 +114,7 @@ export default async function Page() {
             <h2><span className="sec-num" aria-hidden="true">01</span>The rollout so far</h2>
             <p className="section-note">Everything here traces to a story we published</p>
           </div>
-          <Dashboard sites={sites} aggregates={aggregates} pipeline={pipeline} />
+          <Dashboard sites={sites} aggregates={aggregates} />
         </section>
 
         <section id="how" className="shell">
