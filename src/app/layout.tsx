@@ -6,6 +6,13 @@ import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/600-italic.css";
 import "./globals.css";
 
+/**
+ * No `images` entries here on purpose. `opengraph-image.tsx` beside this file is
+ * the file convention, and Next fills in both the Open Graph and Twitter image
+ * tags from it with absolute URLs. Listing /og.png by hand is what left every
+ * social card pointing at a 404, because that file is binary and the contents
+ * API this repo is pushed through cannot carry it.
+ */
 export const metadata: Metadata = {
   metadataBase: new URL("https://sfb.evwire.com"),
   title: {
@@ -29,7 +36,6 @@ export const metadata: Metadata = {
     title: "Tesla Supercharger for Business: every US site we have covered",
     description:
       "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard and the latest coverage.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "EVwire Supercharger for Business tracker" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -37,7 +43,6 @@ export const metadata: Metadata = {
     title: "Tesla Supercharger for Business: every US site we have covered",
     description:
       "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard and the latest coverage.",
-    images: ["/og.png"],
   },
   alternates: { canonical: "https://sfb.evwire.com" },
 };
