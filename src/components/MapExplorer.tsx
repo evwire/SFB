@@ -145,7 +145,9 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
     if (!selected && !picking) return;
     const modal = !isWide;
     const node = modal ? dialogRef.current : panelScrollRef.current;
-    node?.focus();
+    // preventScroll, because the panel is already on screen beside the map and
+    // the default scroll-into-view nudged the whole page down on every click.
+    node?.focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { close(); return; }
@@ -222,8 +224,11 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
           <text className="mk-count" y={1}>{c.sites.length}</text>
         ) : (
           <>
-            {/* Monogram underneath, logo on top. A logo that 404s simply reveals
-                the monogram, with no JavaScript involved. */}
+            {/* Monogram underneath, logo on top. onError hides the logo so the
+                monogram shows through. It is not optional: Chromium paints its
+                broken-image glyph inside an SVG image element that fails, which
+                looks like a bug in the disc rather than a missing logo. Seen in
+                a screenshot, not reasoned about. */}
             {/* Neutral, not the operator accent. The ring already carries status,
                 and a second colour inside it reads as a second meaning. The
                 accent stays on the dashboard tiles, where nothing competes. */}
@@ -237,6 +242,7 @@ export default function MapExplorer({ sites, aggregates }: { sites: Site[]; aggr
                 height={(R - 4) * 2}
                 preserveAspectRatio="xMidYMid meet"
                 clipPath="url(#mk-clip)"
+                onError={(e) => { (e.currentTarget as SVGImageElement).style.display = "none"; }}
               />
             )}
           </>
