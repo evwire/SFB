@@ -1,5 +1,5 @@
 import BrandTile from "@/components/BrandTile";
-import { STATUS_STYLE, fmtNum } from "@/lib/style";
+
 import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
 
 /**
@@ -11,16 +11,6 @@ import type { Site, Aggregate, PipelineClaim } from "@/lib/types";
  * is never folded into the site totals. It sits beside them, labelled and sourced.
  */
 
-function Stat({ value, label, note, hero }: { value: string; label: string; note?: string; hero?: boolean }) {
-  return (
-    <div className={"stat" + (hero ? " hero" : "")}>
-      <div className="stat-value">{value}</div>
-      <div className="stat-label">{label}</div>
-      {note && <div className="stat-note mono">{note}</div>}
-    </div>
-  );
-}
-
 export default function Dashboard({
   sites,
   aggregates,
@@ -31,11 +21,6 @@ export default function Dashboard({
   pipeline: PipelineClaim[];
 }) {
   const sfb = sites.filter((s) => s.siteClass === "SfB");
-  const open = sfb.filter((s) => s.status === "Operational");
-  const knownStalls = sfb.filter((s) => s.stalls != null);
-  const stallSum = knownStalls.reduce((a, s) => a + (s.stalls ?? 0), 0);
-  const states = new Set(sfb.map((s) => s.state));
-  const missingStalls = sfb.length - knownStalls.length;
 
   const hardware = sfb.reduce<Record<string, number>>((acc, s) => {
     const k = s.hardware ?? "Not stated";
@@ -78,21 +63,8 @@ export default function Dashboard({
 
   return (
     <div className="dash">
-      <div className="dash-grid">
-        <Stat hero value={String(sfb.length)} label="sites we have covered" note={`${open.length} of them open`} />
-        <Stat value={String(states.size)} label="states" />
-        <Stat
-          value={fmtNum(stallSum)}
-          label="stalls counted"
-          note={missingStalls > 0 ? `${missingStalls} site${missingStalls > 1 ? "s" : ""} never gave a number` : "every site counted"}
-        />
-        <Stat
-          value={String(aggregates.reduce((a, x) => a + x.stalls, 0))}
-          label="more stalls claimed by operators"
-          note="not covered one by one"
-        />
-      </div>
-
+      {/* The four headline figures moved to the rail beside the map, where they
+          are visible without scrolling. Repeating them here would be noise. */}
       <div className="dash-cols">
         <section className="dash-panel glass">
           <h3>Who is building</h3>

@@ -88,43 +88,38 @@ export default async function Page() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <main id="main" className="shell" tabIndex={-1}>
-        <section className="hero rise">
-          <div className="eyebrow">Tesla Supercharger for Business</div>
-          <h1>
-            Who owns a Supercharger <span className="hero-accent">besides Tesla</span>
-          </h1>
-          <p className="lede">
-            Tesla started selling the hardware in September 2025. Every US buyer we have
-            covered since, with what we know about each one.
+      <main id="main" tabIndex={-1}>
+        {/* The strip. The numbers that used to sit here as chips are now the rail
+            beside the map, so this says what the page is and gets out of the way. */}
+        <section id="map" className="titlestrip shell rise">
+          <div>
+            <div className="eyebrow">Tesla Supercharger for Business</div>
+            <h1>
+              Who owns a Supercharger <span className="hero-accent">besides Tesla</span>
+            </h1>
+          </div>
+          <p className="strip-note mono">
+            Tesla started selling the hardware in September 2025.
+            <br />
+            Updated {fmtDate("2026-08-13")}
           </p>
-          <div className="hero-stats">
-            <span className="chip"><span className="swatch" style={{ background: "var(--signal)" }} />{sfb.length} sites covered</span>
-            <span className="chip">{states} states</span>
-            <span className="chip">{open} open</span>
-            <span className="chip">Updated {fmtDate("2026-08-13")}</span>
-          </div>
         </section>
 
-        <section id="map">
-          <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">01</span>The map</h2>
-            <p className="section-note">Click a pin for the record behind it</p>
-          </div>
-          <MapExplorer sites={sites} />
-        </section>
+        <div className="dash-band">
+          <MapExplorer sites={sites} aggregates={aggregates} />
+        </div>
 
-        <section id="dashboard">
+        <section id="dashboard" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">02</span>The rollout so far</h2>
+            <h2><span className="sec-num" aria-hidden="true">01</span>The rollout so far</h2>
             <p className="section-note">Everything here traces to a story we published</p>
           </div>
           <Dashboard sites={sites} aggregates={aggregates} pipeline={pipeline} />
         </section>
 
-        <section id="how">
+        <section id="how" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">03</span>How the programme works</h2>
+            <h2><span className="sec-num" aria-hidden="true">02</span>How the programme works</h2>
             <p className="section-note">Tesla&rsquo;s own published terms, {programme.economics.as_of}</p>
           </div>
           <div className="how-grid">
@@ -156,9 +151,9 @@ export default async function Page() {
           </details>
         </section>
 
-        <section id="faq">
+        <section id="faq" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">04</span>Questions</h2>
+            <h2><span className="sec-num" aria-hidden="true">03</span>Questions</h2>
             <p className="section-note">The three we get asked most</p>
           </div>
           <div className="faq">
@@ -171,25 +166,25 @@ export default async function Page() {
           </div>
         </section>
 
-        <section id="sites">
+        <section id="sites" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">05</span>Every site, in full</h2>
+            <h2><span className="sec-num" aria-hidden="true">04</span>Every site, in full</h2>
             <p className="section-note">{sites.length} records</p>
           </div>
           <SiteTable sites={sites} />
         </section>
 
-        <section id="news">
+        <section id="news" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">06</span>Latest coverage</h2>
+            <h2><span className="sec-num" aria-hidden="true">05</span>Latest coverage</h2>
             <p className="section-note">Straight from the newsletter</p>
           </div>
           <Feed items={feed.items} source={feed.source} asOf={feed.asOf} />
         </section>
 
-        <Subscribe sites={sfb.length} />
+        <div className="shell"><Subscribe sites={sfb.length} /></div>
 
-        <footer className="foot">
+        <footer className="foot shell">
           <div className="foot-brand">
             <span className="dot" aria-hidden="true" />
             <Brandmark />
