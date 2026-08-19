@@ -24,9 +24,10 @@ The site is fully functional in all of those states.
 ## Working copy
 
 `~/Claude/Projects/SfB-map` on Jaan's Mac, a sibling of Affiliate and Events per PLAYBOOK.
-It has the full git history and the origin remote set. `package-lock.json` and
-`data/airtable-sites-import.csv` are now in the repo too, so `public/og.png` is the only file
-that exists locally and not on GitHub, and it is binary, so this route cannot carry it at all.
+It has the full git history and the origin remote set. As of 2026-08-19 the repo and the
+working copy hold the same files: the lockfile and the Airtable CSV went up, and `public/og.png`
+was deleted rather than pushed, because `opengraph-image.tsx` replaced it. There is no longer a
+binary file anywhere in this project, which means nothing is now unpushable by this route.
 
 ## How this repo gets updated, and two warts
 
@@ -190,6 +191,34 @@ stale build cache serving a 14 KB stylesheet from an earlier build under an unch
 hash, which looks exactly like a CSS bug. Fetch the stylesheet the server actually serves and
 grep it for the new selector before debugging the rule.
 
+## The social card, 2026-08-19
+
+`src/app/opengraph-image.tsx` generates the card at request time. It replaced `public/og.png`,
+which was the only binary in the project and the one file the contents API cannot carry, so it
+never reached the repo while `layout.tsx` pointed at it anyway. **Every social card this site
+produced before today was a 404.** Verified after deploy by fetching the live route: 200, and
+the PNG header decodes to 1200x630 rather than an error page.
+
+The figures come from `getSiteData`, so the card cannot drift from the page, and they are worded
+as the page words them: covered, never exists.
+
+Three things Satori does not do the way a browser does, each found by building rather than by
+reading:
+
+- **It cannot resolve a module specifier for a font.** `require.resolve` of a woff inside
+  node_modules fails the webpack build outright. Read the path from disk at request time instead,
+  and list the files in `experimental.outputFileTracingIncludes` in next.config.mjs, because
+  nothing imports them so tracing cannot infer them and the lambda would ship without them.
+- **woff, not woff2.** Satori cannot decode woff2, and @fontsource ships both.
+- **A narrower gradient grammar.** `radial-gradient(900px 600px at ...)` fails the build with
+  "missing comma before color stops". The `circle at` form parses.
+- **No system fonts at all.** Text not covered by a supplied face renders as nothing, silently.
+  Fraunces carries the whole card for that reason, which on a poster reads as deliberate.
+
+The metadata `images` entries were removed rather than repointed. `opengraph-image.tsx` is the
+file convention and Next fills both the Open Graph and Twitter tags from it with absolute URLs.
+Listing a path by hand is what broke it in the first place.
+
 ## Article images, 2026-08-18
 
 The article hero now leads each record rather than sitting at its foot. It was at the bottom
@@ -232,32 +261,27 @@ that is exactly the trap: a filename is a guess.
    operator, which is the documented precedent for why these get sourced rather than inferred.
 4. **Subdomain.** `sfb.evwire.com` needs attaching in Vercel plus a GoDaddy CNAME. Jaan.
 5. **Airtable base.** Jaan creates an empty base, then the assistant can import and wire it.
-6. **`public/og.png`.** The last file not in the repo, and the contents API cannot carry
-   binary, so it never will be by this route. `layout.tsx` references `/og.png`, so social
-   cards 404 today. The real fix is `opengraph-image.tsx`, which is what codes.evwire.com does
-   per STACK.md, and it removes the only binary file in the project. Do that rather than
-   fighting the API.
-7. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
+6. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
    one site, so the bars carry almost no information and the panel is by far the tallest thing
    in the dashboard. A top-five plus "and ten others" would say the same thing in a fifth of
    the space. Design call, not a bug.
-8. **Exact geocoding.** Nine records carry a street address and are flagged
+7. **Exact geocoding.** Nine records carry a street address and are flagged
    `ready_for_exact_geocode`. Nominatim is blocked from the sandbox. Run from a session with
    network access, then flip those records to Coordinate Precision `Exact`.
-9. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
-10. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
+8. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
+9. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
    media.beehiiv.com, so `Brandmark` renders as a broken image in every local screenshot.
    Nothing suggests it is broken in production, and evwire.com's own header serves the same
    file, but it has not been seen working here. Check it in a browser once.
-11. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
+10. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
    articles call it V4. Left null on purpose. Worth a one-line correction in the original
    piece, then the record can be filled.
-12. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
+11. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
    April body, Genoa Ranch Golf Course in that post's SEO field, Genoa Lakes Golf Course in
    the August UCN piece. Worth resolving in the source articles.
-13. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
+12. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
    17-site aggregate, but no source says so. They are counted separately and flagged.
-14. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
+13. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
    into the system". `Brandmark`, `ThemeToggle`, `GlowPointer`, `Subscribe`, `BrandTile`,
    `SiteNav` and `lib/brand.ts` are ported here but not yet documented centrally, so the next
    project will port them a third time.
