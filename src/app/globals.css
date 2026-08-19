@@ -277,18 +277,25 @@ main:focus { outline: none; }
 .dash-band { position: relative; z-index: 1; max-width: 1440px; margin: 22px auto 0; padding: 0 20px; }
 .dashboard {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr) 390px;
+  grid-template-columns: minmax(0, 1fr) 390px;
   gap: 16px;
   align-items: start;
 }
 
-.stats-rail { display: grid; gap: 10px; align-content: start; }
-.stats-rail .stat { padding: 14px 16px; }
-.stats-rail .stat-value { font-size: 30px; }
-.stats-rail .stat.lead .stat-value { color: var(--signal); }
-.stats-rail .stat-label { margin-top: 5px; font-size: 12.5px; }
-.stats-rail .stat-note { margin-top: 3px; font-size: 11px; }
-.rail-note { margin: 2px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--faint); }
+/* The numbers run across the top instead of down the side. As a rail they cost
+   the map 210px of width for four figures that are two lines each, and the map is
+   the thing people come for. Baseline-aligned so the numerals read as a row. */
+.statbar {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 40px;
+  padding: 0 4px 14px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--hairline);
+}
+.statcell { display: flex; align-items: baseline; gap: 10px; }
+.statcell-v { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 34px; line-height: 1; color: var(--fg); }
+.statcell.lead .statcell-v { color: var(--signal); }
+.statcell-l { display: flex; flex-direction: column; font-size: 12.5px; font-weight: 600; line-height: 1.25; }
+.statcell-n { font-size: 10.5px; font-weight: 400; color: var(--faint); }
+.statbar-note { margin: 0 0 0 auto; max-width: 40ch; font-size: 11px; line-height: 1.45; color: var(--faint); }
 
 .map-col { display: grid; gap: 12px; min-width: 0; }
 
@@ -389,29 +396,53 @@ main:focus { outline: none; }
 .op-dir-foot { margin: 12px 0 0; font-size: 10.5px; line-height: 1.5; color: var(--faint); }
 
 @media (max-width: 1439px) {
-  .dashboard { grid-template-columns: 190px minmax(0, 1fr) 340px; }
+  .dashboard { grid-template-columns: minmax(0, 1fr) 340px; }
 }
 /* Below the side panel breakpoint the record returns to a centred dialog, so the
-   column is removed and the map takes its space. */
+   column is removed and the map takes the whole band. */
 @media (max-width: 1099px) {
-  .dashboard { grid-template-columns: 180px minmax(0, 1fr); }
+  .dashboard { grid-template-columns: minmax(0, 1fr); }
   .record-col { display: none; }
+  .statbar-note { margin-left: 0; max-width: none; flex-basis: 100%; }
 }
 /* On a phone there is no "beside", so the rail has to stack. Above the map it
    pushed the map's top to y=777 on a 390x844 screen, leaving 67px of it visible,
    which is the same complaint the dashboard was built to answer. So the map
    leads here and the numbers follow it. The rail holds no focusable elements,
    so moving it visually cannot desync the tab order from what is on screen. */
+/* On a phone the strip becomes two columns of two. It stays above the map, which
+   the rail could not do: stacked, the rail pushed the map's top to y=777 on a
+   390x844 screen. Four short cells cost about a third of that. */
 @media (max-width: 720px) {
-  .dashboard { grid-template-columns: 1fr; grid-template-areas: "map" "rail"; gap: 12px; }
-  .map-col { grid-area: map; }
-  .stats-rail { grid-area: rail; grid-template-columns: repeat(2, 1fr); }
-  .rail-note { grid-column: 1 / -1; }
-  .stats-rail .stat { padding: 12px 14px; }
-  .stats-rail .stat-value { font-size: 25px; }
+  .dashboard { grid-template-columns: 1fr; gap: 12px; }
+  /* Two by two, one line each. With the sub-notes showing, the strip stood 175px
+     tall and put the map's top at y=637 on a 390x844 screen, which is the
+     complaint the whole band was rebuilt to answer. The notes are not lost: the
+     board below carries the same breakdown in full. */
+  .statbar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; padding-bottom: 12px; }
+  .statcell { gap: 8px; }
+  .statcell-v { font-size: 24px; }
+  .statcell-l { font-size: 11.5px; }
+  .statcell-n { display: none; }
+  .statbar-note { grid-column: 1 / -1; margin: 0; max-width: none; font-size: 10.5px; }
   .controls { gap: 8px; }
+  /* One swipeable row rather than three wrapped ones. Five status chips wrapped
+     to three lines on a 390px screen and cost the map 72px of height, which on a
+     phone is the difference between seeing the map and scrolling to find it.
+     Page-level horizontal scroll is a bug; a scrolling control strip is a
+     pattern, and every chip is still reachable. */
+  .filter-row:not(.secondary) {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .filter-row:not(.secondary)::-webkit-scrollbar { display: none; }
+  .filter-row:not(.secondary) .fbtn { flex: none; scroll-snap-align: start; }
   .filter-row { gap: 6px; }
   .fbtn { padding: 7px 11px; font-size: 12px; }
+  /* The strip note repeats what the map caption and the board both say, and on a
+     phone it is 40px of the map's height. */
+  .strip-note { font-size: 11px; }
 }
 
 /* ---------- panel ---------- */
@@ -500,51 +531,93 @@ main:focus { outline: none; }
 
 /* ---------- dashboard ---------- */
 .dash { display: grid; gap: 18px; }
-.stat { padding: 20px; border-radius: var(--r-tile); background: var(--panel); backdrop-filter: blur(22px) saturate(180%); box-shadow: inset 0 0 0 1px var(--hairline); }
-.stat-value { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 40px; line-height: 1; color: var(--fg); }
-.stat-label { margin-top: 8px; font-size: 13px; font-weight: 600; }
-.stat-note { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
-/* align-items: start, not the default stretch. The operator list runs to fifteen
-   rows and the two panels beside it have four or five, so stretching left 640px of
-   dead space inside each of them. */
-.dash-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
 .dash-panel { padding: 22px 24px; }
-.dash-panel.wide { grid-column: 1 / -1; }
 .panel-sub { font-size: 11.5px; color: var(--faint); margin: 6px 0 16px; }
 .panel-foot { font-size: 12px; color: var(--faint); margin: 16px 0 0; }
 
-/* minmax(0, 1fr) rather than the implicit auto track. Grid items carry
-   min-width: auto, so an auto track cannot shrink below its items' min-content and
-   the row overflowed the panel by 34px, clipping the stall count off every line. */
-.bars { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
-.bars li { min-width: 0; }
-/* The row is a link into the operator's profile, so it needs to look like one on
-   hover without becoming a wall of green text at rest. */
-.bar-row { display: block; text-decoration: none; color: inherit; padding: 4px 6px; margin: -4px -6px; border-radius: 10px; transition: background-color .18s var(--interact); }
-.bar-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
-.bar-row:hover .bar-label > .with-tile > span:last-child { color: var(--signal-text); }
-.bar-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
-.bar-label .mono { color: var(--faint); font-weight: 400; font-size: 11.5px; white-space: nowrap; }
-.bar-track { display: block; height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
-.bar-fill { display: block; height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--fg) 34%, transparent); }
-.bars li.lead .bar-fill { background: linear-gradient(90deg, var(--signal), var(--forest)); }
+/* ---------- the board ---------- */
+/* Built to survive being screenshotted, which is a real constraint and not a
+   decorative one: it has to be legible out of context, carry its own source, and
+   fit in one frame. Everything here follows from that. It replaced an operator
+   leaderboard, a quarterly timeline and a hardware split, none of which were
+   worth a screenshot on their own. */
+.board { padding: 26px 28px 20px; display: grid; gap: 20px; }
+.board-top { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-start; justify-content: space-between; }
+.board-h { font-size: 20px; }
+.board-sub { margin: 6px 0 0; font-size: 11.5px; color: var(--faint); }
+.board-total { text-align: right; }
+.board-total-v { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 44px; line-height: 1; color: var(--signal); }
+.board-total-l { margin-top: 4px; font-size: 11.5px; color: var(--faint); }
 
-.cols { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; align-items: flex-end; }
-.cols li { flex: 1; display: grid; justify-items: center; gap: 5px; min-width: 0; }
-.col-track { width: 100%; height: 92px; display: flex; align-items: flex-end; }
-.col-fill { width: 100%; border-radius: 6px 6px 2px 2px; background: color-mix(in srgb, var(--fg) 26%, transparent); min-height: 3px; }
-.cols li.lead .col-fill { background: linear-gradient(180deg, var(--signal), var(--forest)); }
-.col-n { font-size: 12px; font-weight: 700; }
-.col-q { font-size: 10px; color: var(--faint); white-space: nowrap; }
+/* One bar, two segments, because not one stall on this page is both counted and
+   merely planned. A third empty segment would invent a category. */
+.board-split { display: grid; gap: 9px; }
+.board-splitbar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.seg { display: block; height: 100%; }
+.seg.open { background: linear-gradient(90deg, var(--signal), var(--forest)); }
+.seg.building { background: var(--blue); }
+.board-keys { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12px; color: var(--muted); }
+.board-key { display: inline-flex; align-items: baseline; gap: 6px; }
+.board-key strong { color: var(--fg); font-variant-numeric: tabular-nums; }
+.board-key.dim { color: var(--faint); }
+.board-key.dim strong { color: var(--muted); }
 
-.split { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.split li { display: grid; grid-template-columns: 74px 1fr 26px; align-items: center; gap: 10px; font-size: 12.5px; }
-.split-k { font-weight: 600; }
-.split-k.dim { color: var(--faint); font-weight: 400; }
-.split-bar { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
-.split-bar i { display: block; height: 100%; background: color-mix(in srgb, var(--fg) 30%, transparent); border-radius: 999px; }
-.split li.lead .split-bar i { background: var(--signal); }
-.split-n { text-align: right; color: var(--faint); font-size: 11.5px; }
+/* Two columns wherever there is room, so thirteen rows stay in one frame rather
+   than turning the board into something you have to scroll to screenshot.
+   min(430px, 100%), not a bare 430px: auto-fit honours the minimum literally, so
+   on a 350px phone a bare 430px track overflows and the page scrolls sideways. */
+.board-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(430px, 100%), 1fr)); gap: 2px 30px; }
+.board-row {
+  display: grid; grid-template-columns: 22px 28px minmax(0, 1fr) 96px 30px 26px;
+  align-items: center; gap: 10px; padding: 6px 8px; margin: 0 -8px;
+  border-radius: 10px; text-decoration: none; color: inherit;
+  transition: background-color .18s var(--interact);
+}
+.board-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.board-row:hover .board-name { color: var(--signal-text); }
+.board-rank { font-size: 11px; color: var(--faint); text-align: right; }
+/* "=7" is the convention for a joint placing. Dimmer than the number so it reads
+   as a qualifier rather than as a digit. */
+.board-rank.tied > span { opacity: .55; margin-right: 1px; }
+.board-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.board-n { font-size: 13px; font-weight: 700; text-align: right; }
+.board-sites { font-size: 10.5px; color: var(--faint); text-align: right; }
+
+.board-band { display: grid; gap: 9px; }
+.board-band-h { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); font-weight: 600; font-family: var(--sans); margin: 0; }
+.board-band-note { margin: 0; font-size: 11px; color: var(--faint); line-height: 1.5; max-width: 70ch; }
+.board-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 7px; }
+.board-chip {
+  display: inline-flex; align-items: baseline; gap: 2px;
+  padding: 6px 12px; border-radius: var(--r-pill);
+  font-size: 12.5px; font-weight: 600; text-decoration: none; color: var(--fg);
+  background: var(--panel-solid); box-shadow: inset 0 0 0 1px var(--hairline);
+  transition: box-shadow .18s var(--interact), transform .18s var(--interact);
+}
+.board-chip .mono { color: var(--faint); font-weight: 400; font-size: 11px; }
+.board-hd { margin-left: 6px; padding: 2px 7px; border-radius: var(--r-pill); font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--teal); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--teal) 40%, transparent); }
+.board-chip:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+/* Amber, matching the caveat colour used on announced claims everywhere else, so
+   an unbuilt future never wears the same skin as a counted stall. */
+.board-chip.announced { background: color-mix(in srgb, var(--amber) 8%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 28%, transparent); }
+.board-chip.announced .mono { color: var(--amber-text); }
+
+.board-agg { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--muted); padding: 13px 16px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--fg) 3.5%, transparent); }
+.board-agg strong { color: var(--fg); }
+
+/* The attribution line. A screenshot with no source is a number somebody made up. */
+.board-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-top: 14px; border-top: 1px solid var(--hairline); font-size: 11px; color: var(--faint); }
+.board-mark { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--fg); letter-spacing: -.02em; }
+.board-mark .dot { width: 7px; height: 7px; }
+.board-asof { margin-left: auto; }
+
+@media (max-width: 560px) {
+  .board { padding: 20px 18px 16px; }
+  .board-row { grid-template-columns: 18px 24px minmax(0, 1fr) 60px 26px 22px; gap: 8px; }
+  .board-total-v { font-size: 36px; }
+  .board-asof { margin-left: 0; }
+}
 
 .agg-claim { font-size: 14.5px; margin: 10px 0 0; }
 
@@ -670,8 +743,6 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 .brandtile .mono-fallback {
   font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .02em;
 }
-.bar-label .with-tile { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
-.bar-label .with-tile > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- numbered sections (BRAND.md section 6) ---------- */
 .section-head h2 { display: flex; align-items: baseline; gap: 12px; }
