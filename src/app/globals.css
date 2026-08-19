@@ -311,20 +311,82 @@ main:focus { outline: none; }
 .record-pick-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
 .record-pick-list .fbtn { width: 100%; text-align: left; }
 
-/* Record hero. The article image leads now rather than sitting at the foot,
-   captioned as the article so the placement makes no claim the data does not. */
-.record-hero { position: relative; display: block; border-radius: var(--r-tile); overflow: hidden; text-decoration: none; color: inherit; }
+/* Record hero. The article image leads the record, captioned as the article so the
+   placement makes no claim the data does not. The caption sits under the picture
+   rather than over it: overlaid, a gradient and two lines of type covered the
+   bottom third of a 1200x630 thumbnail whose whole job is to be looked at. */
+.record-hero { margin: 0; display: grid; gap: 8px; }
+.record-hero > a { display: block; border-radius: var(--r-tile); overflow: hidden; }
 .record-hero img { display: block; width: 100%; height: auto; aspect-ratio: 1200/630; object-fit: cover; background: color-mix(in srgb, var(--fg) 6%, transparent); }
-.record-hero-cap {
-  position: absolute; inset: auto 0 0 0; display: grid; gap: 2px; padding: 22px 12px 10px;
-  background: linear-gradient(180deg, rgba(11,17,22,0), rgba(11,17,22,.82));
+.record-hero-cap { display: grid; gap: 3px; }
+.record-hero-kicker { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.record-hero-title { font-size: 12.5px; font-weight: 600; line-height: 1.35; color: var(--fg); text-decoration: none; }
+.record-hero-title:hover { color: var(--signal-text); }
+/* A button that reads as a link. It is a button because it opens a panel rather
+   than navigating, and screen reader users should be told which. */
+.linkish {
+  font: inherit; font-size: inherit; font-weight: inherit;
+  padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  color: var(--signal-text); border-bottom: 1px solid rgba(21, 105, 62, 0.35);
 }
-.record-hero-kicker { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.82); }
-.record-hero-title { font-size: 12.5px; font-weight: 600; line-height: 1.32; color: #fff; }
+.linkish:hover { border-bottom-color: var(--signal-text); }
+.dark .linkish { border-bottom-color: rgba(95, 227, 154, 0.35); }
+
 .record-head { margin-top: 14px; }
 .record-head h2 { font-size: 21px; margin-top: 6px; }
 .record .facts { margin: 16px 0; }
 .record .cta { margin-top: 16px; }
+
+/* ---------- operator profile ---------- */
+/* Three kinds of number live here and they are not interchangeable: sites we
+   counted one by one, an operator's own tally of sites we never reported, and a
+   future they announced. Each block is labelled with which it is, and the two that
+   are not our count are tinted so they cannot be skim-read as though they were. */
+.op-head { margin-top: 2px; }
+.op-line { margin: 10px 0 0; font-size: 11.5px; color: var(--faint); }
+.op-block { margin-top: 18px; }
+.op-h { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); font-weight: 600; font-family: var(--sans); }
+.op-note { margin: 7px 0 0; font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+.op-claim { margin: 8px 0 0; font-size: 13.5px; line-height: 1.45; }
+.op-meta { margin: 8px 0 0; font-size: 11px; color: var(--faint); }
+.op-caveat { margin: 8px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--amber-text); }
+
+.op-sites { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.op-site {
+  width: 100%; text-align: left; font: inherit; cursor: pointer;
+  display: grid; gap: 3px; padding: 9px 12px; border: 0;
+  border-radius: var(--r-tile); background: color-mix(in srgb, var(--fg) 3.5%, transparent);
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow .18s var(--interact), transform .18s var(--interact);
+}
+.op-site:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+.op-site-name { font-size: 12.5px; font-weight: 600; color: var(--fg); }
+.op-site-meta { font-size: 10.5px; color: var(--faint); }
+
+.op-agg, .op-pipe { padding: 14px 16px; border-radius: var(--r-tile); }
+.op-agg { background: color-mix(in srgb, var(--fg) 3.5%, transparent); }
+.op-pipe {
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 25%, transparent);
+}
+.op-pipe-num { margin: 8px 0 0; font-family: var(--display); font-style: italic; font-weight: 600; font-size: 20px; line-height: 1; }
+
+/* ---------- operator directory ---------- */
+/* The idle state of the panel. It used to say "pick a site" and nothing else,
+   which wasted the one part of the page that is visible before any interaction. */
+.op-dir { margin-top: 20px; text-align: left; }
+.op-dir-h { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); font-weight: 600; margin: 0 0 8px; }
+.op-dir-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.op-dir-row {
+  width: 100%; font: inherit; cursor: pointer; border: 0; background: none;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 7px 10px; border-radius: 10px; text-align: left;
+  transition: background-color .18s var(--interact);
+}
+.op-dir-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.op-dir-name { font-size: 12.5px; font-weight: 600; color: var(--fg); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-dir-meta { font-size: 10.5px; color: var(--faint); white-space: nowrap; }
+.op-dir-foot { margin: 12px 0 0; font-size: 10.5px; line-height: 1.5; color: var(--faint); }
 
 @media (max-width: 1439px) {
   .dashboard { grid-template-columns: 190px minmax(0, 1fr) 340px; }
@@ -456,10 +518,15 @@ main:focus { outline: none; }
    the row overflowed the panel by 34px, clipping the stall count off every line. */
 .bars { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
 .bars li { min-width: 0; }
+/* The row is a link into the operator's profile, so it needs to look like one on
+   hover without becoming a wall of green text at rest. */
+.bar-row { display: block; text-decoration: none; color: inherit; padding: 4px 6px; margin: -4px -6px; border-radius: 10px; transition: background-color .18s var(--interact); }
+.bar-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.bar-row:hover .bar-label > .with-tile > span:last-child { color: var(--signal-text); }
 .bar-label { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
 .bar-label .mono { color: var(--faint); font-weight: 400; font-size: 11.5px; white-space: nowrap; }
-.bar-track { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--fg) 34%, transparent); }
+.bar-track { display: block; height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 7%, transparent); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 999px; background: color-mix(in srgb, var(--fg) 34%, transparent); }
 .bars li.lead .bar-fill { background: linear-gradient(90deg, var(--signal), var(--forest)); }
 
 .cols { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; align-items: flex-end; }
@@ -479,14 +546,6 @@ main:focus { outline: none; }
 .split li.lead .split-bar i { background: var(--signal); }
 .split-n { text-align: right; color: var(--faint); font-size: 11.5px; }
 
-.pipeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-.pipeline li { padding: 16px 18px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--fg) 3.5%, transparent); }
-.pl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.pl-op { font-weight: 700; font-size: 13.5px; }
-.pl-num { font-family: var(--display); font-style: italic; font-weight: 600; color: var(--muted); font-size: 17px; white-space: nowrap; }
-.pl-claim { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
-.pl-meta { font-size: 11px; color: var(--faint); margin: 8px 0 0; }
-.pl-caveat { font-size: 11.5px; color: var(--amber-text); margin: 8px 0 0; }
 .agg-claim { font-size: 14.5px; margin: 10px 0 0; }
 
 .dash-disclaimer { font-size: 13px; color: var(--muted); padding: 16px 20px; border-radius: var(--r-tile); background: color-mix(in srgb, var(--amber) 8%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 25%, transparent); margin: 0; }
