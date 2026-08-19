@@ -12,6 +12,11 @@ import { fmtDate } from "@/lib/style";
 // landing, which happens weekly at most, but the news feed benefits.
 export const revalidate = 300;
 
+// One date, three places: the title strip, the board's attribution line and the
+// footer. The board's is the one that leaves the page inside a screenshot, so it
+// must not be able to disagree with the page it was taken from.
+const UPDATED = "2026-08-13";
+
 export default async function Page() {
   const { sites, aggregates, pipeline, programme, source } = await getSiteData();
   const feed = await getFeed(12);
@@ -101,7 +106,7 @@ export default async function Page() {
           <p className="strip-note mono">
             Tesla started selling the hardware in September 2025.
             <br />
-            Updated {fmtDate("2026-08-13")}
+            Updated {fmtDate(UPDATED)}
           </p>
         </section>
 
@@ -111,10 +116,10 @@ export default async function Page() {
 
         <section id="dashboard" className="shell">
           <div className="section-head">
-            <h2><span className="sec-num" aria-hidden="true">01</span>The rollout so far</h2>
-            <p className="section-note">Everything here traces to a story we published</p>
+            <h2><span className="sec-num" aria-hidden="true">01</span>The board</h2>
+            <p className="section-note">Every name we have found, with its source</p>
           </div>
-          <Dashboard sites={sites} aggregates={aggregates} />
+          <Dashboard sites={sites} aggregates={aggregates} pipeline={pipeline} asOf={UPDATED} />
         </section>
 
         <section id="how" className="shell">
@@ -199,7 +204,7 @@ export default async function Page() {
           </p>
           <p className="mono foot-meta">
             Coordinates come from the US Cities Database, checked against ZIP centroids. Last
-            reviewed {fmtDate("2026-08-13")}.
+            reviewed {fmtDate(UPDATED)}.
           </p>
         </footer>
       </main>

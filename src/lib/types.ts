@@ -92,6 +92,14 @@ export type PipelineClaim = {
   asOf: string;
   sourceUrl: string;
   caveat: string | null;
+  /**
+   * True when the announcement is Tesla MCS or Megacharger hardware rather than
+   * Supercharger for Business. Same axis as `Site.siteClass` and the same rule:
+   * the two are never merged into one count, and a board that listed the Pilot
+   * deal beside four Supercharger announcements without saying so would be
+   * merging them in the reader's head, which is the same thing.
+   */
+  heavyDuty: boolean;
 };
 
 export type FeedItem = {

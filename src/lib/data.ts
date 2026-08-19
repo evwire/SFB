@@ -230,6 +230,11 @@ export async function getSiteData(): Promise<SiteData> {
     asOf: p.as_of,
     sourceUrl: p.source_url,
     caveat: p.caveat ?? null,
+    // The seed marks a heavy-duty announcement by opening its caveat with the
+    // words in capitals, which is how it was written before there was anywhere
+    // to put a flag. Reading it here rather than in a component keeps the string
+    // matching in one place: if the convention changes, it changes once.
+    heavyDuty: (p.caveat ?? "").startsWith("HEAVY-DUTY"),
   }));
 
   return {

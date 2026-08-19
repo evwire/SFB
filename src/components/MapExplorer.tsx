@@ -117,21 +117,32 @@ export default function MapExplorer({
     [sites]
   );
 
-  // Headline figures, lifted out of the dashboard section so they sit beside the
-  // map rather than below it. Francis Energy's operator claim stays separate
-  // from the site totals, as everywhere else on this page.
+  /**
+   * The four figures in the strip above the map.
+   *
+   * Open and incoming are disjoint on purpose. They used to be "stalls counted"
+   * beside "more stalls claimed", which put a number we counted next to a number
+   * an operator asserted and left the reader to notice the difference. Open plus
+   * incoming sums to the counted total and nothing overlaps, so the two can be
+   * read side by side without arithmetic.
+   *
+   * Francis Energy's aggregate claim is not here at all any more. It is on the
+   * board below, in a sentence that says whose tally it is.
+   */
   const stats = useMemo(() => {
     const sfb = sites.filter((s) => s.siteClass === "SfB");
     const known = sfb.filter((s) => s.stalls != null);
+    const stalls = (pred: (s: Site) => boolean) =>
+      sfb.filter(pred).reduce((a, s) => a + (s.stalls ?? 0), 0);
     return {
       sites: sfb.length,
       open: sfb.filter((s) => s.status === "Operational").length,
       states: new Set(sfb.map((s) => s.state)).size,
-      stalls: known.reduce((a, s) => a + (s.stalls ?? 0), 0),
+      openStalls: stalls((s) => s.status === "Operational"),
+      incoming: stalls((s) => s.status === "Construction" || s.status === "Planned"),
       missing: sfb.length - known.length,
-      claimed: aggregates.reduce((a, x) => a + x.stalls, 0),
     };
-  }, [sites, aggregates]);
+  }, [sites]);
 
   /**
    * Every operator the page knows about, including the four that have announced
@@ -359,35 +370,43 @@ export default function MapExplorer({
 
   return (
     <>
-      <div className="dashboard">
-        <aside className="stats-rail" aria-label="Coverage at a glance">
-          <div className="stat lead">
-            <div className="stat-value">{stats.sites}</div>
-            <div className="stat-label">sites we have covered</div>
-            <div className="stat-note mono">{stats.open} of them open</div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">{stats.states}</div>
-            <div className="stat-label">states</div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">{fmtNum(stats.stalls)}</div>
-            <div className="stat-label">stalls counted</div>
-            <div className="stat-note mono">
-              {stats.missing > 0 ? `${stats.missing} never gave a number` : "every site counted"}
-            </div>
-          </div>
-          <div className="stat">
-            <div className="stat-value">{stats.claimed}</div>
-            <div className="stat-label">more stalls claimed</div>
-            <div className="stat-note mono">not covered one by one</div>
-          </div>
-          <p className="rail-note">
-            Tesla publishes no list. This is what we have reported and checked, so the real
-            number is higher.
-          </p>
-        </aside>
+      {/* A strip, not a column. As a rail it took 210px off the map for four
+          numbers that are two lines each, and the map is what people came for. */}
+      <div className="statbar" aria-label="Coverage at a glance">
+        <div className="statcell lead">
+          <span className="statcell-v">{stats.sites}</span>
+          <span className="statcell-l">
+            sites we have covered
+            <span className="statcell-n mono">{stats.open} open</span>
+          </span>
+        </div>
+        <div className="statcell">
+          <span className="statcell-v">{stats.states}</span>
+          <span className="statcell-l">states</span>
+        </div>
+        <div className="statcell">
+          <span className="statcell-v">{fmtNum(stats.openStalls)}</span>
+          <span className="statcell-l">
+            stalls open
+            <span className="statcell-n mono">
+              {stats.missing > 0 ? `${stats.missing} sites gave no number` : "every site counted"}
+            </span>
+          </span>
+        </div>
+        <div className="statcell">
+          <span className="statcell-v">{fmtNum(stats.incoming)}</span>
+          <span className="statcell-l">
+            stalls incoming
+            <span className="statcell-n mono">under construction</span>
+          </span>
+        </div>
+        <p className="statbar-note">
+          Tesla publishes no list. This is what we have reported and checked, so the real
+          number is higher.
+        </p>
+      </div>
 
+      <div className="dashboard">
         <div className="map-col">
           <div className="controls">
             <div className="filter-row" role="group" aria-label="Filter sites by status">

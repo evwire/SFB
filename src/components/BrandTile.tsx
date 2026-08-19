@@ -1,3 +1,5 @@
+"use client";
+
 import { brandLogoUrl, brandAccent, monogram, operatorDomain } from "@/lib/brand";
 
 /**
@@ -5,8 +7,12 @@ import { brandLogoUrl, brandAccent, monogram, operatorDomain } from "@/lib/brand
  * monogram fallback and a deterministic accent glow.
  *
  * The logo URL carries `fallback/404`, so Brandfetch returns a 404 rather than a
- * placeholder when it has nothing. The monogram sits underneath the image, so a
- * failed load reveals it with no JavaScript involved.
+ * placeholder when it has nothing. The monogram sits underneath, but revealing it
+ * takes an onError: Chromium paints its broken-image glyph over a failed img,
+ * which reads as a bug in the tile rather than as a missing logo. That is a
+ * client component's worth of JavaScript for one attribute, and it is worth it,
+ * because the same mistake was shipped on the map markers and had to be found in
+ * a screenshot.
  */
 export default function BrandTile({ operator }: { operator: string }) {
   const domain = operatorDomain(operator);
@@ -23,7 +29,15 @@ export default function BrandTile({ operator }: { operator: string }) {
       </span>
       {domain && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={brandLogoUrl(domain)} alt="" loading="lazy" decoding="async" width={28} height={28} />
+        <img
+          src={brandLogoUrl(domain)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={28}
+          height={28}
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+        />
       )}
     </span>
   );
