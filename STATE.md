@@ -24,8 +24,9 @@ The site is fully functional in all of those states.
 ## Working copy
 
 `~/Claude/Projects/SfB-map` on Jaan's Mac, a sibling of Affiliate and Events per PLAYBOOK.
-It has the full git history, the origin remote set, and the three files missing from GitHub
-(`public/og.png`, `package-lock.json`, `data/airtable-sites-import.csv`).
+It has the full git history and the origin remote set. `package-lock.json` and
+`data/airtable-sites-import.csv` are now in the repo too, so `public/og.png` is the only file
+that exists locally and not on GitHub, and it is binary, so this route cannot carry it at all.
 
 ## How this repo gets updated, and two warts
 
@@ -231,34 +232,32 @@ that is exactly the trap: a filename is a guess.
    operator, which is the documented precedent for why these get sourced rather than inferred.
 4. **Subdomain.** `sfb.evwire.com` needs attaching in Vercel plus a GoDaddy CNAME. Jaan.
 5. **Airtable base.** Jaan creates an empty base, then the assistant can import and wire it.
-6. **`public/og.png`.** Still not in the repo, and the contents API cannot carry binary, so it
-   never will be by this route. `layout.tsx` references `/og.png`, so social cards 404 today.
-   The real fix is `opengraph-image.tsx`, which is what codes.evwire.com does per STACK.md,
-   and it removes the only binary file in the project. Do that rather than fighting the API.
-7. **`package-lock.json` and `data/airtable-sites-import.csv`.** Both plain text and both
-   pushable, just not pushed. The lockfile matters: without it Vercel resolves transitive
-   dependencies fresh on every build. `npm ci --dry-run` passes locally.
-8. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
+6. **`public/og.png`.** The last file not in the repo, and the contents API cannot carry
+   binary, so it never will be by this route. `layout.tsx` references `/og.png`, so social
+   cards 404 today. The real fix is `opengraph-image.tsx`, which is what codes.evwire.com does
+   per STACK.md, and it removes the only binary file in the project. Do that rather than
+   fighting the API.
+7. **The operator leaderboard is fifteen rows of near-ties.** Fourteen operators have exactly
    one site, so the bars carry almost no information and the panel is by far the tallest thing
    in the dashboard. A top-five plus "and ten others" would say the same thing in a fifth of
    the space. Design call, not a bug.
-9. **Exact geocoding.** Nine records carry a street address and are flagged
+8. **Exact geocoding.** Nine records carry a street address and are flagged
    `ready_for_exact_geocode`. Nominatim is blocked from the sandbox. Run from a session with
    network access, then flip those records to Coordinate Precision `Exact`.
-10. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
-11. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
+9. **Gorham NH.** Suppressed until the draft publishes. Flip `Publish` then.
+10. **Feed thumbnails and the nav logo unverified.** The sandbox has no route to
    media.beehiiv.com, so `Brandmark` renders as a broken image in every local screenshot.
    Nothing suggests it is broken in production, and evwire.com's own header serves the same
    file, but it has not been seen working here. Check it in a browser once.
-12. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
+11. **Alpharetta hardware.** Its own article says 325 kW but never says V4. Three later
    articles call it V4. Left null on purpose. Worth a one-line correction in the original
    piece, then the record can be filled.
-13. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
+12. **Genoa NV naming.** Three different names across our own coverage: Genoa Golf Club in the
    April body, Genoa Ranch Golf Course in that post's SEO field, Genoa Lakes Golf Course in
    the August UCN piece. Worth resolving in the source articles.
-14. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
+13. **Francis Energy overlap.** The four named Francis sites are presumably a subset of the
    17-site aggregate, but no source says so. They are counted separately and flagged.
-15. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
+14. **Shared components back into EVwire-System.** Jaan chose "port, then move the shared ones
    into the system". `Brandmark`, `ThemeToggle`, `GlowPointer`, `Subscribe`, `BrandTile`,
    `SiteNav` and `lib/brand.ts` are ported here but not yet documented centrally, so the next
    project will port them a third time.
