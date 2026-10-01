@@ -15,3 +15,6 @@ src/lib/us-states.generated.ts
 
 # large scrape junk — do not ship
 data/tesla-ownership-pull/
+
+# dated Tesla pull snapshots (keep data/snapshots/.gitkeep)
+data/snapshots/*/

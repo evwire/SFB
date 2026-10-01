@@ -116,3 +116,17 @@ they do not. That check is the only automated guard on the coordinate data, so k
   still an unpublished draft. Flip `Publish` once the story goes live.
 - **Feed thumbnails could not be verified from the build sandbox** because it has no outbound
   access to media.beehiiv.com. Check them once on the first deploy.
+
+## Watching Tesla Customer Owned list changes
+
+Committed Tesla layers live in `data/sites.tesla-*.json`. To notice adds, removals,
+open/upcoming flips, and ownership or stall/name changes:
+
+```sh
+npm run diff:sfb
+npm run diff:sfb -- --baseline data --fresh data/snapshots/YYYY-MM-DD
+```
+
+Full pull + schedule notes: [`data/WATCH.md`](data/WATCH.md). Diff script:
+`scripts/diff-sfb-sites.mjs`. Live Find Us pulls still need headed WebKit on Mac
+(Akamai blocks plain curl); the diff itself needs no network.

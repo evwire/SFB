@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "diff:sfb": "node scripts/diff-sfb-sites.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
