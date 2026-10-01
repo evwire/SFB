@@ -445,16 +445,17 @@ export default function MapExplorer({
                 phase === "upcoming" ||
                 s.pinStyle === "upcoming" ||
                 (phase === "both" && s.status !== "Operational");
+              const isFrancis = /francis energy/i.test(s.operator ?? "");
               return (
                 <g
                   key={s.slug}
-                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "")}
+                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "") + (isFrancis ? " francis" : "")}
                   transform={`translate(${s.x} ${s.y})`}
                   onClick={() => setSelected(s)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(s); } }}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""} ${s.stalls ?? "unknown number of"} stalls.`}
+                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.`}
                 >
                   {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
                   {ring ? (
@@ -466,6 +467,17 @@ export default function MapExplorer({
                     </>
                   ) : (
                     <circle className="core" r={r} style={{ fill: pinColor }} />
+                  )}
+                  {isFrancis && (
+                    <text
+                      className="pin-letter"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      dy="0.05em"
+                      aria-hidden="true"
+                    >
+                      F
+                    </text>
                   )}
                   {s.siteClass === "Heavy-duty" && <circle className="hd" r={r + 3.5} />}
                 </g>
@@ -489,10 +501,17 @@ export default function MapExplorer({
               <span className="legend-swatch solid" style={{ background: COVERED_STYLE.color }} aria-hidden="true" />
               <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
             </span>
+            <span className="legend-chip francis">
+              <span className="legend-swatch solid francis-swatch" aria-hidden="true">F</span>
+              Francis Energy
+            </span>
           </div>
           <span className="mono">
             Pins use Tesla’s published coordinates when available. Soft ring = town-level only.
             Amber pins are sites EVwire has written about.
+          </span>
+          <span className="mono map-gap-note">
+            EVgo sites aren’t on this map yet — we’re still building that layer.
           </span>
           {unplotted.length > 0 && (
             <span className="mono warn">

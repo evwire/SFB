@@ -534,6 +534,37 @@ table.sites tbody tr:hover { background: color-mix(in srgb, var(--signal) 5%, tr
 /* Upcoming visuals are decorative; .hit provides the clickable region (same size as ring). */
 .pin .hit { fill: transparent; pointer-events: all; }
 .pin .upcoming-ring, .pin .upcoming-dot { pointer-events: none; }
+.pin .pin-letter {
+  pointer-events: none;
+  fill: #fff;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 0.6px;
+  user-select: none;
+}
+.pin.francis .core { /* keep amber/open/upcoming colors; F is the distinguisher */ }
+.legend-swatch.francis-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--signal);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  border: none;
+}
+.legend-chip.francis { color: var(--ink); }
+.map-gap-note {
+  display: block;
+  margin-top: 0.35rem;
+  opacity: 0.78;
+}
+
 .evidence-details { margin-top: 12px; color: var(--faint); font-size: 12px; }
 .evidence-details summary { cursor: pointer; color: var(--muted); font-weight: 600; }
 .evidence-details summary:hover { color: var(--fg); }
