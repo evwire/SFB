@@ -24,12 +24,14 @@ export type SiteClass = "SfB" | "Heavy-duty";
 export type Site = {
   slug: string;
   name: string;
-  operator: string;
+  operator: string | null;
   host: string | null;
   hostType: string | null;
   address: string | null;
   city: string | null;
   state: string;
+  /** ISO country code when known (Europe uses this; US sites are US). */
+  country?: string | null;
   lat: number | null;
   lng: number | null;
   coordPrecision: CoordPrecision;
@@ -48,28 +50,16 @@ export type Site = {
   milestone: string | null;
   summary: string;
   sourceUrl: string;
-  /** Headline of the article this record comes from, for the source card. */
-  sourceTitle: string | null;
-  /** The article's hero image, 1.905:1 in every case. Never assumed to depict the site. */
-  sourceImage: string | null;
-  /**
-   * A fifth honesty axis, same shape as Coordinate Precision. An article hero is
-   * not automatically a photograph of the site: some are, some are logo
-   * composites, and one article covers four Oklahoma locations at once. Until a
-   * human has looked at the image and said which, it stays Unclassified and is
-   * only ever shown as part of the source card, captioned as the article. Only
-   * "Site photo" earns the lead slot at the top of the record.
-   */
-  sourceImageKind: SourceImageKind;
   /** Fields the source article did not state. Surfaced in the UI so gaps read as gaps. */
   unstated: string[];
   notes: string | null;
   /** Draft-only sources never publish. */
   publish: boolean;
+  /** When set (Both view), solid open pin vs ring upcoming pin. */
+  pinStyle?: "open" | "upcoming";
+  /** EVwire articles that cover this Find Us site (matched, never invented). */
+  articles?: FeedItem[];
 };
-
-/** Unclassified is the safe default and must stay the default. */
-export type SourceImageKind = "Site photo" | "Illustrative" | "Unclassified";
 
 export type Aggregate = {
   slug: string;
@@ -92,14 +82,6 @@ export type PipelineClaim = {
   asOf: string;
   sourceUrl: string;
   caveat: string | null;
-  /**
-   * True when the announcement is Tesla MCS or Megacharger hardware rather than
-   * Supercharger for Business. Same axis as `Site.siteClass` and the same rule:
-   * the two are never merged into one count, and a board that listed the Pilot
-   * deal beside four Supercharger announcements without saying so would be
-   * merging them in the reader's head, which is the same thing.
-   */
-  heavyDuty: boolean;
 };
 
 export type FeedItem = {
@@ -125,4 +107,74 @@ export type Programme = {
   markets: { list: string[]; as_of: string; source_url: string; note: string };
   primer_url: string;
   excluded_figures: string[];
+};
+
+export type DataSource = "airtable" | "tesla" | "seed";
+
+export type Region = "us" | "europe";
+
+
+
+
+export type SitePhase = "open" | "upcoming" | "both";
+
+export type UpcomingCoverage = {
+  pulled_at: string;
+  complete: boolean;
+  honesty_banner: string | null;
+  totals: {
+    totalCS: number;
+    classified: number;
+    gaps: number;
+    http200: number;
+    customerOwned: number;
+    teslaOwned: number;
+  };
+  counts: Record<string, {
+    totalCS: number;
+    http200: number;
+    classified?: number;
+    gaps?: number;
+    customerOwned: number;
+    teslaOwned: number;
+    CO_UnderConstruction?: number;
+    CO_InDevelopment?: number;
+  }>;
+};
+
+export type SiteData = {
+  sites: Site[];
+  aggregates: Aggregate[];
+  pipeline: PipelineClaim[];
+  programme: Programme;
+  source: DataSource;
+  generated: string;
+  sourceLabel: string;
+  region: Region;
+  regionLabel: string;
+  areaNoun: string;
+  phase?: SitePhase;
+  coverage?: UpcomingCoverage | null;
+};
+
+export type SciCompareRegion = {
+  tesla_open: number;
+  tesla_upcoming: number;
+  tesla_upcoming_uc: number;
+  tesla_upcoming_in_dev: number;
+  sci_open: number;
+  sci_upcoming: number;
+  sci_upcoming_breakdown: Record<string, number>;
+  overlap_note: string;
+};
+
+export type SciCompare = {
+  snapshot: string;
+  snapshot_label: string;
+  source_sci: string;
+  method_sci: string;
+  method_tesla: string;
+  labels: { tesla: string; sci: string };
+  regions: { us: SciCompareRegion; europe: SciCompareRegion };
+  why_they_differ: string;
 };

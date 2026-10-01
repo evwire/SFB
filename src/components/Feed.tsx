@@ -10,25 +10,6 @@ export default function Feed({
   source: string;
   asOf: string;
 }) {
-  // The feed is live, so nothing coming back is a state a reader can actually
-  // hit: a tag gets renamed, or the API is down. Say which of those it is as far
-  // as we can tell, and leave a way onward rather than an empty grid.
-  if (items.length === 0) {
-    return (
-      <div className="feed-empty glass">
-        <p className="feed-empty-head">No stories came back just now.</p>
-        <p className="feed-empty-sub">
-          The map and the table above are built from our own records and are unaffected.
-          The coverage list reloads every few minutes, or you can{" "}
-          <a className="link" href="https://evwire.com" target="_blank" rel="noopener">
-            read the latest on EVwire
-          </a>
-          .
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
       <ul className="feed">
@@ -36,11 +17,9 @@ export default function Feed({
           <li key={it.url} className="feed-item">
             <a href={it.url} target="_blank" rel="noopener">
               {it.image ? (
-                // Plain img: beehiiv CDN URLs, already sized by cdn-cgi. Every
-                // hero is 1.905:1, so the intrinsic ratio here must match or
-                // object-fit: cover silently crops the sides.
+                // Plain img: these are beehiiv CDN URLs already sized by cdn-cgi.
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.image} alt="" loading="lazy" width={1200} height={630} className="feed-img" />
+                <img src={it.image} alt="" loading="lazy" className="feed-img" />
               ) : (
                 <span className="feed-img placeholder" aria-hidden="true" />
               )}

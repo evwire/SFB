@@ -58,23 +58,12 @@ the two into one count, and do not put Semi pricing next to Supercharger for Bus
    `Unstated` so the page can show the gap.
 3. Coordinates: geocode the street address with Nominatim
    (`https://nominatim.openstreetmap.org/search?q=<encoded>&format=json&limit=1`, User-Agent
-   required) and set Coordinate Precision to `Exact`. Note that Nominatim is unreachable from
-   the cloud sandbox. If it is blocked, use the city centroid and set `Area-Only`. Do not
-   silently ship a parcel-level claim you did not geocode.
+   required) and set Coordinate Precision to `Exact`. If Nominatim is unreachable, use the
+   city centroid and set `Area-Only`. Do not silently ship a parcel-level claim you did not
+   geocode.
 4. Write the record in Airtable with `typecast: true`, or add it to `data/sites.seed.json`
-   and rerun `node scripts/make-airtable-csv.mjs` if the base does not exist yet.
+   and regenerate the CSV if the base does not exist yet.
 5. Run `npm run geo`. It fails the build if a coordinate lands outside its stated state.
-
-## If you have to populate this repo through the GitHub contents API again
-
-The git proxy only injects credentials for repositories in the session's authorized set. When
-`evwire/SFB` is not in that set, `git push` returns 403 and the contents API is the fallback.
-Two things to know:
-
-- It cannot carry binary content, so images have to be added another way.
-- It requires retyping every file, which can silently mangle unusual characters. A literal
-  non-breaking space was flattened once already. Always verify afterwards by comparing
-  `git hash-object <file>` against the blob SHA the API reports. Do not skip that step.
 
 ## What not to do
 

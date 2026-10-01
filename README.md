@@ -51,33 +51,19 @@ The seed files are **not mocks**. They are the real dataset, safe to ship, and t
 correct on its first deploy with no environment variables at all. Airtable and beehiiv are
 upgrades that remove the need to redeploy, not prerequisites.
 
-## Two files that are missing from this repo
-
-Both were left out because this repo was populated through the GitHub contents API, which
-cannot carry binary content and needed every file retyped.
-
-- **`public/og.png`** is the social card, 1200x630, already designed. Upload it through the
-  GitHub web UI or add it on the next push from a git client. Until then the Open Graph tags
-  point at a 404 and links will preview without an image. Everything else works.
-- **`package-lock.json`** is absent. To compensate, every dependency in `package.json` is
-  pinned to an exact version rather than a caret range, so installs are still deterministic.
-  Add the lockfile on the next real push if you want belt and braces.
-
-Both files exist in the working copy at `~/Claude/Projects/SfB-map`.
-
 ## Setup still to do
 
 ### 1. Vercel
 
-Import this repo into the `evwires-projects` team, framework preset Next.js, then map
-`sfb.evwire.com` in Project Settings, Domains. DNS for evwire.com is at GoDaddy.
+The Vercel project has to be created from the dashboard, there is no token in the build
+environment. Import this repo into the `evwires-projects` team, framework preset Next.js,
+then map `sfb.evwire.com` in Project Settings, Domains. DNS for evwire.com is at GoDaddy.
 
 ### 2. Airtable (optional, but this is what removes deploys from the loop)
 
 1. Create a base named **SfB Map** with one table named **Sites**.
-2. Import the CSV produced by `node scripts/make-airtable-csv.mjs`. It carries all 21 records
-   and the exact column names the code expects. A generated copy is already at
-   `~/Claude/Projects/SfB-map/data/airtable-sites-import.csv`.
+2. Import `data/airtable-sites-import.csv`. It carries all 21 records and the exact column
+   names the code expects.
 3. Set these field types by hand after import, Airtable guesses them as text:
    - **Status**: single select. Operational, Construction, Planned, At risk, Closed, Unknown
    - **Verification Status**: single select. Verified, To Verify, Suspected, Cancelled

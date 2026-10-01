@@ -1,7 +1,13 @@
 import "server-only";
-import { geoAlbersUsa } from "d3-geo";
+import { geoAlbersUsa, geoMercator } from "d3-geo";
 import { VIEW_W, VIEW_H } from "./us-states.generated";
+import { EU_VIEW_W, EU_VIEW_H } from "./europe-countries.generated";
 import seed from "../../data/sites.seed.json";
+import teslaUs from "../../data/sites.tesla-customer-owned.json";
+import teslaEu from "../../data/sites.tesla-customer-owned-europe.json";
+import teslaUpcomingUs from "../../data/sites.tesla-upcoming-customer-owned.json";
+import teslaUpcomingEu from "../../data/sites.tesla-upcoming-customer-owned-europe.json";
+import sciCompareJson from "../../data/sci-compare.json";
 import type {
   Site,
   Aggregate,
@@ -11,28 +17,38 @@ import type {
   Verification,
   EvidenceGrade,
   CoordPrecision,
-  SourceImageKind,
+  DataSource,
+  Region,
+  SiteData,
+  UpcomingCoverage,
+  SitePhase,
+  SciCompare,
 } from "./types";
 
 /**
- * Two sources, one shape.
- *
- * Airtable is the CMS whenever AIRTABLE_TOKEN, AIRTABLE_BASE_ID and AIRTABLE_TABLE_ID
- * are all set. Until the base exists, the committed data/sites.seed.json carries the
- * same records, so the site is correct from the first deploy and switches over with
- * three environment variables and no code change.
- *
- * This is deliberately not a mock. The seed file is the real, sourced dataset and is
- * safe to ship. Airtable simply lets Jaan edit it without a deploy.
+ * Two public Tesla-verified datasets (US + Europe), one Site shape.
+ * Article-sourced seed remains untouched in data/sites.seed.json.
  */
 
-const projection = geoAlbersUsa()
+const usProjection = geoAlbersUsa()
   .scale(1300)
   .translate([VIEW_W / 2, VIEW_H / 2]);
 
-function project(lat: number | null, lng: number | null): { x: number | null; y: number | null } {
+const euProjection = geoMercator()
+  .center([-2, 54])
+  .scale(1450)
+  .translate([EU_VIEW_W / 2, EU_VIEW_H / 2]);
+
+function projectUs(lat: number | null, lng: number | null): { x: number | null; y: number | null } {
   if (lat == null || lng == null) return { x: null, y: null };
-  const xy = projection([lng, lat]);
+  const xy = usProjection([lng, lat]);
+  if (!xy) return { x: null, y: null };
+  return { x: +xy[0].toFixed(2), y: +xy[1].toFixed(2) };
+}
+
+function projectEu(lat: number | null, lng: number | null): { x: number | null; y: number | null } {
+  if (lat == null || lng == null) return { x: null, y: null };
+  const xy = euProjection([lng, lat]);
   if (!xy) return { x: null, y: null };
   return { x: +xy[0].toFixed(2), y: +xy[1].toFixed(2) };
 }
@@ -43,34 +59,12 @@ export function airtableConfigured(): boolean {
   );
 }
 
-/**
- * Article hero images, pulled from the beehiiv API by post id and committed
- * rather than fetched per request. Eighteen articles behind twenty-one records.
- * Regenerate by re-reading `thumbnail_url` for each `source_post_id`.
- *
- * Only the asset path is stored. The CDN prefix lives here because it carries a
- * width, and the originals are big: they run from 1200x630 up to 3600x1890, and
- * one is a 1.1 MB PNG. Without an explicit width beehiiv serves the original, so
- * a modal would pull several megabytes to fill a 512px box. 1024 covers the
- * widest use (512px at 2x) with room to spare.
- */
-import articleImages from "../../data/article-images.json";
-
-const CDN = "https://media.beehiiv.com/cdn-cgi/image";
-const CDN_OPTS = "fit=scale-down,format=auto,onerror=redirect,quality=80,width=1024";
-
-type ArticleImage = { title: string; path: string; kind?: string };
-const IMAGES = articleImages as Record<string, ArticleImage | undefined>;
-
-function heroUrl(postId: string | null | undefined): string | null {
-  const entry = postId ? IMAGES[postId] : undefined;
-  return entry ? `${CDN}/${CDN_OPTS}/uploads/asset/file/${entry.path}` : null;
-}
-
 type SeedSite = (typeof seed.sites)[number];
+type TeslaUsSite = (typeof teslaUs.sites)[number];
+type TeslaEuSite = (typeof teslaEu.sites)[number];
 
 function fromSeed(s: SeedSite): Site {
-  const { x, y } = project(s.lat, s.lng);
+  const { x, y } = projectUs(s.lat, s.lng);
   return {
     slug: s.slug,
     name: s.name,
@@ -80,6 +74,7 @@ function fromSeed(s: SeedSite): Site {
     address: s.address ?? null,
     city: s.city ?? null,
     state: s.state,
+    country: "US",
     lat: s.lat ?? null,
     lng: s.lng ?? null,
     coordPrecision: s.coord_precision as CoordPrecision,
@@ -97,20 +92,189 @@ function fromSeed(s: SeedSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
-    sourceTitle: IMAGES[s.source_post_id]?.title ?? null,
-    sourceImage: heroUrl(s.source_post_id),
-    // Set per article in data/article-images.json. Anything other than
-    // "Site photo" keeps the image on the source card, captioned as the article.
-    sourceImageKind: (IMAGES[s.source_post_id]?.kind as SourceImageKind) ?? "Unclassified",
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
-    // The Gorham NH story is still an unpublished draft. It stays out of the
-    // public build until the article goes live.
     publish: !(s.notes ?? "").includes("UNPUBLISHED DRAFT"),
   };
 }
 
-/** Field names expected in the Airtable Sites table. Keep in sync with data/airtable-sites-import.csv. */
+function fromTeslaUs(s: TeslaUsSite): Site {
+  const { x, y } = projectUs(s.lat, s.lng);
+  return {
+    slug: s.slug,
+    name: s.name,
+    operator: s.operator,
+    host: s.host ?? null,
+    hostType: s.host_type ?? null,
+    address: s.address ?? null,
+    city: s.city ?? null,
+    state: s.state,
+    country: "US",
+    lat: s.lat ?? null,
+    lng: s.lng ?? null,
+    coordPrecision: s.coord_precision as CoordPrecision,
+    x,
+    y,
+    stalls: s.stalls ?? null,
+    hardware: s.hardware ?? null,
+    powerKw: s.power_kw ?? null,
+    status: s.status as SiteStatus,
+    verification: s.verification as Verification,
+    evidenceGrade: s.evidence_grade as EvidenceGrade,
+    siteClass: "SfB",
+    firstConfirmed: s.first_confirmed ?? null,
+    openedOn: s.opened_on ?? null,
+    milestone: s.milestone ?? null,
+    summary: s.summary,
+    sourceUrl: s.source_url,
+    unstated: s.unstated ?? [],
+    notes: s.notes ?? null,
+    publish: s.publish !== false,
+  };
+}
+
+function fromTeslaEu(s: TeslaEuSite): Site {
+  const { x, y } = projectEu(s.lat, s.lng);
+  const country = (s as { country?: string | null }).country ?? s.state ?? null;
+  return {
+    slug: s.slug,
+    name: s.name,
+    operator: s.operator,
+    host: s.host ?? null,
+    hostType: s.host_type ?? null,
+    address: s.address ?? null,
+    city: s.city ?? null,
+    state: s.state, // country ISO for Europe
+    country,
+    lat: s.lat ?? null,
+    lng: s.lng ?? null,
+    coordPrecision: s.coord_precision as CoordPrecision,
+    x,
+    y,
+    stalls: s.stalls ?? null,
+    hardware: s.hardware ?? null,
+    powerKw: s.power_kw ?? null,
+    status: s.status as SiteStatus,
+    verification: s.verification as Verification,
+    evidenceGrade: s.evidence_grade as EvidenceGrade,
+    siteClass: "SfB",
+    firstConfirmed: s.first_confirmed ?? null,
+    openedOn: s.opened_on ?? null,
+    milestone: s.milestone ?? null,
+    summary: s.summary,
+    sourceUrl: s.source_url,
+    unstated: s.unstated ?? [],
+    notes: s.notes ?? null,
+    publish: s.publish !== false,
+  };
+}
+
+
+type UpcomingRawSite = {
+  slug: string;
+  name: string;
+  operator: string | null;
+  host: string | null;
+  host_type: string | null;
+  address: string | null;
+  city: string | null;
+  state: string;
+  country?: string | null;
+  lat: number | null;
+  lng: number | null;
+  coord_precision: string;
+  stalls: number | null;
+  hardware: string | null;
+  power_kw: number | null;
+  status: string;
+  verification: string;
+  evidence_grade: string;
+  first_confirmed: string | null;
+  opened_on: string | null;
+  milestone: string | null;
+  summary: string;
+  source_url: string;
+  unstated: string[];
+  notes: string | null;
+  publish?: boolean;
+};
+type TeslaUpcomingSite = UpcomingRawSite;
+
+function fromTeslaUpcomingUs(s: TeslaUpcomingSite): Site {
+  const { x, y } = projectUs(s.lat, s.lng);
+  return {
+    slug: s.slug,
+    name: s.name,
+    operator: s.operator ?? null,
+    host: s.host ?? null,
+    hostType: s.host_type ?? null,
+    address: s.address ?? null,
+    city: s.city ?? null,
+    state: s.state,
+    country: "US",
+    lat: s.lat ?? null,
+    lng: s.lng ?? null,
+    coordPrecision: s.coord_precision as CoordPrecision,
+    x,
+    y,
+    stalls: s.stalls ?? null,
+    hardware: s.hardware ?? null,
+    powerKw: s.power_kw ?? null,
+    status: s.status as SiteStatus,
+    verification: s.verification as Verification,
+    evidenceGrade: s.evidence_grade as EvidenceGrade,
+    siteClass: "SfB",
+    firstConfirmed: s.first_confirmed ?? null,
+    openedOn: s.opened_on ?? null,
+    milestone: s.milestone ?? null,
+    summary: s.summary,
+    sourceUrl: s.source_url,
+    unstated: s.unstated ?? [],
+    notes: s.notes ?? null,
+    publish: s.publish !== false,
+  };
+}
+
+function fromTeslaUpcomingEu(s: UpcomingRawSite): Site {
+  const { x, y } = projectEu(s.lat, s.lng);
+  const country = (s as { country?: string | null }).country ?? s.state ?? null;
+  return {
+    slug: s.slug,
+    name: s.name,
+    operator: s.operator ?? null,
+    host: s.host ?? null,
+    hostType: s.host_type ?? null,
+    address: s.address ?? null,
+    city: s.city ?? null,
+    state: s.state,
+    country,
+    lat: s.lat ?? null,
+    lng: s.lng ?? null,
+    coordPrecision: s.coord_precision as CoordPrecision,
+    x,
+    y,
+    stalls: s.stalls ?? null,
+    hardware: s.hardware ?? null,
+    powerKw: s.power_kw ?? null,
+    status: s.status as SiteStatus,
+    verification: s.verification as Verification,
+    evidenceGrade: s.evidence_grade as EvidenceGrade,
+    siteClass: "SfB",
+    firstConfirmed: s.first_confirmed ?? null,
+    openedOn: s.opened_on ?? null,
+    milestone: s.milestone ?? null,
+    summary: s.summary,
+    sourceUrl: s.source_url,
+    unstated: s.unstated ?? [],
+    notes: s.notes ?? null,
+    publish: s.publish !== false,
+  };
+}
+
+function coverageFromMeta(meta: { coverage?: UpcomingCoverage } | undefined): UpcomingCoverage | null {
+  return (meta?.coverage as UpcomingCoverage) ?? null;
+}
+
 type AirtableRecord = { id: string; fields: Record<string, unknown> };
 
 function fromAirtable(r: AirtableRecord): Site | null {
@@ -122,7 +286,7 @@ function fromAirtable(r: AirtableRecord): Site | null {
   if (!slug || !name) return null;
   const lat = num("Latitude");
   const lng = num("Longitude");
-  const { x, y } = project(lat, lng);
+  const { x, y } = projectUs(lat, lng);
   const hardware = str("Hardware");
   return {
     slug,
@@ -133,6 +297,7 @@ function fromAirtable(r: AirtableRecord): Site | null {
     address: str("Address"),
     city: str("City"),
     state: str("State") ?? "",
+    country: "US",
     lat,
     lng,
     coordPrecision: (str("Coordinate Precision") as CoordPrecision) ?? "None",
@@ -150,11 +315,6 @@ function fromAirtable(r: AirtableRecord): Site | null {
     milestone: str("Milestone"),
     summary: str("Summary") ?? "",
     sourceUrl: str("Source URL") ?? "",
-    // Airtable can carry its own values; otherwise fall back to the committed
-    // map keyed by the beehiiv post id, same as the seed path.
-    sourceTitle: str("Source Title") ?? IMAGES[str("Source Post ID") ?? ""]?.title ?? null,
-    sourceImage: str("Source Image") ?? heroUrl(str("Source Post ID")),
-    sourceImageKind: (str("Source Image Kind") as SourceImageKind) ?? "Unclassified",
     unstated: (str("Unstated") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     notes: str("Notes"),
     publish: f["Publish"] === true,
@@ -179,7 +339,7 @@ async function fetchAirtableSites(): Promise<Site[] | null> {
         next: { revalidate: 300 },
       });
       if (!res.ok) {
-        console.error(`Airtable responded ${res.status}. Falling back to the committed seed data.`);
+        console.error(`Airtable responded ${res.status}. Falling back to Tesla-verified data.`);
         return null;
       }
       const json = (await res.json()) as { records: AirtableRecord[]; offset?: string };
@@ -190,59 +350,144 @@ async function fetchAirtableSites(): Promise<Site[] | null> {
       offset = json.offset;
     } while (offset);
   } catch (err) {
-    console.error("Airtable fetch failed. Falling back to the committed seed data.", err);
+    console.error("Airtable fetch failed. Falling back to Tesla-verified data.", err);
     return null;
   }
   return out;
 }
 
-export type SiteData = {
-  sites: Site[];
-  aggregates: Aggregate[];
-  pipeline: PipelineClaim[];
-  programme: Programme;
-  source: "airtable" | "seed";
-  generated: string;
-};
+export type { SiteData } from "./types";
 
-export async function getSiteData(): Promise<SiteData> {
-  const fromTable = await fetchAirtableSites();
-  const sites = (fromTable ?? seed.sites.map(fromSeed)).filter((s) => s.publish);
-
-  const aggregates: Aggregate[] = seed.aggregates.map((a) => ({
-    slug: a.slug,
-    operator: a.operator,
-    state: a.state,
-    sites: a.sites,
-    stalls: a.stalls,
-    asOf: a.as_of,
-    claim: a.claim,
-    sourceCited: a.source_cited ?? null,
-    sourceUrl: a.source_url,
-    notes: a.notes ?? null,
-  }));
-
-  const pipeline: PipelineClaim[] = seed.pipeline.map((p) => ({
-    operator: p.operator,
-    claim: p.claim,
-    headlineNumber: p.headline_number,
-    timeframe: p.timeframe ?? null,
-    asOf: p.as_of,
-    sourceUrl: p.source_url,
-    caveat: p.caveat ?? null,
-    // The seed marks a heavy-duty announcement by opening its caveat with the
-    // words in capitals, which is how it was written before there was anywhere
-    // to put a flag. Reading it here rather than in a component keeps the string
-    // matching in one place: if the convention changes, it changes once.
-    heavyDuty: (p.caveat ?? "").startsWith("HEAVY-DUTY"),
-  }));
-
+function teslaUsData(): SiteData {
+  const sites = teslaUs.sites.map(fromTeslaUs).filter((s) => s.publish);
+  const meta = teslaUs._meta;
   return {
     sites,
-    aggregates,
-    pipeline,
+    aggregates: [],
+    pipeline: [],
     programme: seed.programme as Programme,
-    source: fromTable ? "airtable" : "seed",
-    generated: seed._meta.generated,
+    source: "tesla",
+    generated: meta.pulled_at ?? meta.generated,
+    sourceLabel: "Tesla Find Us",
+    region: "us",
+    regionLabel: "United States",
+    areaNoun: "states",
+    phase: "open",
+    coverage: null,
+  };
+}
+
+function teslaEuData(): SiteData {
+  const sites = teslaEu.sites.map(fromTeslaEu).filter((s) => s.publish);
+  const meta = teslaEu._meta;
+  return {
+    sites,
+    aggregates: [],
+    pipeline: [],
+    programme: seed.programme as Programme,
+    source: "tesla",
+    generated: meta.pulled_at ?? meta.generated,
+    sourceLabel: "Tesla Find Us",
+    region: "europe",
+    regionLabel: "Europe",
+    areaNoun: "countries",
+    phase: "open",
+    coverage: null,
+  };
+}
+
+
+function teslaUpcomingUsData(): SiteData {
+  const sites = (teslaUpcomingUs.sites as UpcomingRawSite[]).map(fromTeslaUpcomingUs).filter((s) => s.publish);
+  const meta = teslaUpcomingUs._meta as typeof teslaUpcomingUs._meta & { coverage?: UpcomingCoverage };
+  return {
+    sites,
+    aggregates: [],
+    pipeline: [],
+    programme: seed.programme as Programme,
+    source: "tesla",
+    generated: meta.pulled_at ?? meta.generated,
+    sourceLabel: "Tesla Find Us",
+    region: "us",
+    regionLabel: "United States",
+    areaNoun: "states",
+    phase: "upcoming",
+    coverage: coverageFromMeta(meta),
+  };
+}
+
+function teslaUpcomingEuData(): SiteData {
+  const sites = (teslaUpcomingEu.sites as UpcomingRawSite[]).map(fromTeslaUpcomingEu).filter((s) => s.publish);
+  const meta = teslaUpcomingEu._meta as typeof teslaUpcomingEu._meta & { coverage?: UpcomingCoverage };
+  return {
+    sites,
+    aggregates: [],
+    pipeline: [],
+    programme: seed.programme as Programme,
+    source: "tesla",
+    generated: meta.pulled_at ?? meta.generated,
+    sourceLabel: "Tesla Find Us",
+    region: "europe",
+    regionLabel: "Europe",
+    areaNoun: "countries",
+    phase: "upcoming",
+    coverage: coverageFromMeta(meta),
+  };
+}
+
+/** @deprecated Prefer getRegionalSiteData. Returns US Tesla list (Airtable override if configured). */
+export async function getSiteData(): Promise<SiteData> {
+  const fromTable = await fetchAirtableSites();
+  if (fromTable) {
+    return {
+      sites: fromTable.filter((s) => s.publish),
+      aggregates: [],
+      pipeline: [],
+      programme: seed.programme as Programme,
+      source: "airtable",
+      generated: new Date().toISOString().slice(0, 10),
+      sourceLabel: "Airtable",
+      region: "us",
+      regionLabel: "United States",
+      areaNoun: "states",
+    };
+  }
+  return teslaUsData();
+}
+
+export function getSciCompare(): SciCompare {
+  return sciCompareJson as SciCompare;
+}
+
+export async function getRegionalSiteData(): Promise<{
+  us: SiteData;
+  europe: SiteData;
+  usUpcoming: SiteData;
+  europeUpcoming: SiteData;
+  sciCompare: SciCompare;
+}> {
+  const fromTable = await fetchAirtableSites();
+  const us: SiteData = fromTable
+    ? {
+        sites: fromTable.filter((s) => s.publish),
+        aggregates: [],
+        pipeline: [],
+        programme: seed.programme as Programme,
+        source: "airtable",
+        generated: new Date().toISOString().slice(0, 10),
+        sourceLabel: "Airtable",
+        region: "us",
+        regionLabel: "United States",
+        areaNoun: "states",
+        phase: "open",
+        coverage: null,
+      }
+    : teslaUsData();
+  return {
+    us,
+    europe: teslaEuData(),
+    usUpcoming: teslaUpcomingUsData(),
+    europeUpcoming: teslaUpcomingEuData(),
+    sciCompare: getSciCompare(),
   };
 }

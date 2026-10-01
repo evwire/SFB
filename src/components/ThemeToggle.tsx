@@ -2,63 +2,50 @@
 
 import { useEffect, useState } from "react";
 
-/**
- * Light/dark switch. Ported from the Events repo, Tailwind classes swapped for
- * the vanilla rules in globals.css.
- *
- * The initial class is set by the inline script in layout.tsx before paint, so
- * there is no flash. This only reads it back and writes the reader's choice to
- * localStorage. Choosing a theme opts out of following the system from then on.
- */
+const STORAGE_KEY = "evwire-sfb-theme";
+
+function applyTheme(theme: "light" | "dark") {
+  const root = document.documentElement;
+  if (theme === "dark") root.classList.add("dark");
+  else root.classList.remove("dark");
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function ThemeToggle() {
-  const [dark, setDark] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-    setReady(true);
+    const dark = document.documentElement.classList.contains("dark");
+    setTheme(dark ? "dark" : "light");
   }, []);
 
-  function toggle() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      localStorage.setItem("evw-theme", next ? "dark" : "light");
-    } catch {
-      // Private mode or storage disabled: the choice just does not persist.
-    }
-  }
+  const next = theme === "dark" ? "light" : "dark";
 
   return (
     <button
-      onClick={toggle}
-      aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-      title={dark ? "Light theme" : "Dark theme"}
-      className="pill-frost theme-toggle"
+      type="button"
+      className="theme-toggle"
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === "dark" ? "Light mode" : "Dark mode"}
+      onClick={() => {
+        applyTheme(next);
+        setTheme(next);
+      }}
     >
-      {/* Render nothing until mounted so the icon cannot contradict the theme */}
-      {ready &&
-        (dark ? (
-          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2L3.1 3.1"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-            <path
-              d="M13.5 9.9A5.8 5.8 0 0 1 6.1 2.5a5.8 5.8 0 1 0 7.4 7.4Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ))}
+      {theme === "dark" ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+        </svg>
+      )}
     </button>
   );
 }

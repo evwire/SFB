@@ -5,6 +5,10 @@ import type { SiteStatus, EvidenceGrade } from "./types";
  * ships a glyph and a word alongside its colour. Status coding follows CHARTS.md:
  * green is live, blue is coming, amber wants attention.
  */
+
+/** Sites EVwire has written about. Amber is BRAND extended accent; always pair with the word. */
+export const COVERED_STYLE = { color: "var(--amber)", hex: "#D97706", glyph: "◆", label: "Covered by EVwire" } as const;
+
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
   Operational: { color: "var(--signal)", glyph: "●", label: "Open" },
   Construction: { color: "var(--blue)", glyph: "◐", label: "Under construction" },
@@ -80,4 +84,22 @@ export function fmtDate(iso: string | null): string {
 
 export function fmtNum(n: number): string {
   return n.toLocaleString("en-US");
+}
+
+
+/** Strip scrape/API field jargon from user-visible prose. Data files stay raw. */
+export function humanisePublicCopy(text: string): string {
+  return text
+    // The summary already states ownership in plain English; hide the
+    // duplicated scrape fields instead of rendering “customer-owned” twice.
+    .replace(/\bownershipType\s*=\s*CUSTOMER_OWNED\b/gi, "")
+    .replace(/\bownership_type\s*=\s*Customer Owned\b/gi, "")
+    .replace(/\bmapOwnershipType\s*=\s*Customer Owned\b/gi, "")
+    .replace(/\bget-location-details\b/gi, "Tesla Find Us")
+    .replace(/\bbrandName\b/g, "operator name")
+    .replace(/\bCUSTOMER_OWNED\b/gi, "customer-owned")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/([.!?])\s*([.!?])/g, "$1")
+    .trim();
 }

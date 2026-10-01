@@ -1,0 +1,41 @@
+{
+  "snapshot": "2026-10-01T13:48:00+03:00",
+  "snapshot_label": "1 Oct 2026, 13:48 EEST",
+  "source_sci": "https://supercharge.info/service/supercharge/allSites",
+  "method_sci": "Names matching /^\\[.+?\\]/ (includes [TBD]). USA = address.country==USA. Europe = address.region==Europe. Open = status OPEN. Upcoming = PLAN|CONSTRUCTION|PERMIT|VOTING|EXPANDING. Closed brackets excluded from upcoming.",
+  "method_tesla": "Tesla Find Us ownership SoT: open uses ownershipType=CUSTOMER_OWNED; upcoming uses get-location-details ownership_type=Customer Owned. EU/GB upcoming pull complete with 0 Customer Owned.",
+  "labels": {
+    "tesla": "Tesla Find Us (customer-owned)",
+    "sci": "Supercharge.info (name brackets)"
+  },
+  "regions": {
+    "us": {
+      "tesla_open": 60,
+      "tesla_upcoming": 260,
+      "tesla_upcoming_uc": 33,
+      "tesla_upcoming_in_dev": 227,
+      "sci_open": 66,
+      "sci_upcoming": 186,
+      "sci_upcoming_breakdown": {
+        "PLAN": 163,
+        "CONSTRUCTION": 23
+      },
+      "overlap_note": "60/60 Tesla open present in SCI brackets; 59 SCI OPEN, 1 CLOSED_TEMP. SCI has 7 additional open brackets (66 total)."
+    },
+    "europe": {
+      "tesla_open": 40,
+      "tesla_upcoming": 0,
+      "tesla_upcoming_uc": 0,
+      "tesla_upcoming_in_dev": 0,
+      "sci_open": 41,
+      "sci_upcoming": 29,
+      "sci_upcoming_breakdown": {
+        "PLAN": 13,
+        "CONSTRUCTION": 4,
+        "PERMIT": 12
+      },
+      "overlap_note": "40/40 Tesla open present in SCI brackets as OPEN; SCI has 1 additional open bracket (41 total)."
+    }
+  },
+  "why_they_differ": "Supercharge.info brackets are community annotations and can include sites Tesla does not list as customer-owned. Tesla\u2019s counts only include sites it marks as customer-owned (open) or third-party owned coming soon."
+}
