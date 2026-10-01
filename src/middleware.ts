@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-/** Soft-launch friend preview gate (Hobby-safe). SHA-256 of the preview password — not the password. */
-const PREVIEW_PASSWORD_SHA256 = "d9755ff34ff9d0d76d82f060eaa0374a44b864f9388b5cb41e3b9f1b273a22a6";
-
-const COOKIE = "sfb_preview_ok";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 14; // 14 days
-
-async function sha256Hex(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import { PREVIEW_COOKIE } from "@/lib/preview-gate";
 
 function loginPage(error?: string): NextResponse {
   const msg = error
@@ -44,7 +31,7 @@ function loginPage(error?: string): NextResponse {
   </style>
 </head>
 <body>
-  <form method="POST" action="/__preview_auth">
+  <form method="POST" action="/api/preview-auth">
     <h1>EVwire · SfB preview</h1>
     ${msg}
     <label for="pw">Preview password</label>
@@ -65,8 +52,10 @@ function loginPage(error?: string): NextResponse {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Static assets + the unlock Route Handler (must accept POST itself).
   if (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/preview-auth") ||
     pathname === "/favicon.ico" ||
     pathname === "/robots.txt" ||
     pathname === "/og.png" ||
@@ -75,34 +64,22 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname === "/__preview_auth" && req.method === "POST") {
-    const form = await req.formData();
-    const password = String(form.get("password") ?? "");
-    const digest = await sha256Hex(password);
-    if (digest === PREVIEW_PASSWORD_SHA256) {
+  if (req.cookies.get(PREVIEW_COOKIE)?.value === "1") {
+    // Pages only serve GET/HEAD — reject leftover POST (e.g. old 307 follow).
+    if (req.method !== "GET" && req.method !== "HEAD") {
       const url = req.nextUrl.clone();
       url.pathname = "/";
       url.search = "";
-      const res = NextResponse.redirect(url);
-      res.cookies.set({
-        name: COOKIE,
-        value: "1",
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: COOKIE_MAX_AGE,
-      });
-      return res;
+      return NextResponse.redirect(url, 303);
     }
-    return loginPage("That password didn’t match. Try again.");
-  }
-
-  if (req.cookies.get(COOKIE)?.value === "1") {
     return NextResponse.next();
   }
 
-  return loginPage();
+  const err =
+    req.nextUrl.searchParams.get("preview_err") === "1"
+      ? "That password didn’t match. Try again."
+      : undefined;
+  return loginPage(err);
 }
 
 export const config = {
