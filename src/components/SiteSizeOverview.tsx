@@ -127,25 +127,36 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         </div>
 
         <div
-          className="size-mosaic"
-          role="img"
-          aria-label={`${data.totalSites} open sites coloured by stall count`}
+          className="size-bars"
+          role="list"
+          aria-label="Open sites by stall count"
         >
-          {data.sizeShares.map((share) => (
-            <div key={share.stalls} className="size-mosaic-group">
-              <div className="size-mosaic-squares">
-                {Array.from({ length: share.sites }, (_, i) => (
-                  <span
-                    key={`${share.stalls}-${i}`}
-                    className={`size-mosaic-sq size-seg-${share.stalls}`}
-                  />
-                ))}
-              </div>
-              <p className="size-mosaic-legend mono">
-                {share.sites} site{share.sites === 1 ? "" : "s"} · {share.stalls} stalls
-              </p>
-            </div>
-          ))}
+          {[...data.sizeShares]
+            .sort((a, b) => b.sites - a.sites || a.stalls - b.stalls)
+            .map((share) => {
+              const widthPct =
+                data.totalSites > 0 ? (share.sites / data.totalSites) * 100 : 0;
+              const pctLabel = Number.isInteger(share.pct)
+                ? `${share.pct}%`
+                : `${share.pct}%`;
+              return (
+                <div key={share.stalls} className="size-bar-row" role="listitem">
+                  <span className="size-bar-label">{share.stalls} stalls</span>
+                  <div className="size-bar-track">
+                    <div
+                      className={`size-bar-fill size-seg-${share.stalls}`}
+                      style={{ width: `${Math.max(widthPct, share.sites > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                  <span className="size-bar-count">
+                    <strong>
+                      {share.sites} site{share.sites === 1 ? "" : "s"}
+                    </strong>
+                    <span className="mono size-bar-pct">{pctLabel}</span>
+                  </span>
+                </div>
+              );
+            })}
         </div>
       </section>
 
