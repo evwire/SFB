@@ -127,36 +127,23 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         </div>
 
         <div
-          className="size-bars"
+          className="size-pyramid"
           role="list"
-          aria-label="Open sites by stall count"
+          aria-label="Site sizes as a pyramid: larger stall counts on top, many small sites at the base"
         >
-          {[...data.sizeShares]
-            .sort((a, b) => b.sites - a.sites || a.stalls - b.stalls)
-            .map((share) => {
-              const widthPct =
-                data.totalSites > 0 ? (share.sites / data.totalSites) * 100 : 0;
-              const pctLabel = Number.isInteger(share.pct)
-                ? `${share.pct}%`
-                : `${share.pct}%`;
-              return (
-                <div key={share.stalls} className="size-bar-row" role="listitem">
-                  <span className="size-bar-label">{share.stalls} stalls</span>
-                  <div className="size-bar-track">
-                    <div
-                      className={`size-bar-fill size-seg-${share.stalls}`}
-                      style={{ width: `${Math.max(widthPct, share.sites > 0 ? 4 : 0)}%` }}
-                    />
-                  </div>
-                  <span className="size-bar-count">
-                    <strong>
-                      {share.sites} site{share.sites === 1 ? "" : "s"}
-                    </strong>
-                    <span className="mono size-bar-pct">{pctLabel}</span>
-                  </span>
-                </div>
-              );
-            })}
+          {data.pyramidLayers.map((layer) => (
+            <div key={layer.stalls} className="size-pyramid-row" role="listitem">
+              <span className="size-pyramid-left">{layer.leftLabel}</span>
+              <div className="size-pyramid-band-wrap">
+                <div
+                  className={`size-pyramid-band size-seg-${layer.stalls}`}
+                  style={{ width: `${layer.widthPct}%` }}
+                  title={`${layer.sites} site${layer.sites === 1 ? "" : "s"} (${layer.pct}%)`}
+                />
+              </div>
+              <span className="size-pyramid-right">{layer.rightLabel}</span>
+            </div>
+          ))}
         </div>
       </section>
 

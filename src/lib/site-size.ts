@@ -1,8 +1,8 @@
 import "server-only";
 import type { Site } from "./types";
-import type { SizeCell, SizeOverview, SizeRow, SizeShare, SizeStory } from "./site-size-types";
+import type { SizeCell, SizeOverview, SizePyramidLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
-export type { SizeCell, SizeOverview, SizeRow, SizeShare, SizeStory } from "./site-size-types";
+export type { SizeCell, SizeOverview, SizePyramidLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
 /** Stall-size overview for open US sites. Computed from live site data — never hardcoded. */
 
@@ -192,6 +192,49 @@ function buildStory(
   return { headline, subline, tiles };
 }
 
+
+function buildPyramidLayers(sites: Site[], sizeShares: SizeShare[]): SizePyramidLayer[] {
+  const maxSites = Math.max(1, ...sizeShares.map((s) => s.sites));
+  const minFrac = 0.14;
+
+  return [...sizeShares]
+    .sort((a, b) => b.stalls - a.stalls)
+    .map((share) => {
+      const inLayer = sites.filter((s) => s.stalls === share.stalls);
+      const opCounts = new Map<string, number>();
+      for (const s of inLayer) {
+        const op = s.operator?.trim() || "Operator not stated";
+        opCounts.set(op, (opCounts.get(op) ?? 0) + 1);
+      }
+      const ranked = [...opCounts.entries()].sort(
+        (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+      );
+      const siteBit =
+        share.sites === 1 ? "1 site" : `${share.sites} sites`;
+      let rightLabel = siteBit;
+      if (ranked.length === 1) {
+        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}`;
+      } else if (ranked.length === 2) {
+        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}, ${shortOperatorName(ranked[1]![0])}`;
+      } else if (ranked.length > 2) {
+        const more = ranked.length - 2;
+        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}, ${shortOperatorName(ranked[1]![0])} + ${more} more`;
+      }
+
+      const raw = share.sites / maxSites;
+      const widthPct = Math.round(Math.max(raw, share.sites > 0 ? minFrac : 0) * 1000) / 10;
+
+      return {
+        stalls: share.stalls,
+        sites: share.sites,
+        pct: share.pct,
+        widthPct,
+        leftLabel: `${share.stalls} stalls`,
+        rightLabel,
+      };
+    });
+}
+
 /**
  * Build the US open site-size overview from Site records.
  * Sites without a stall count are excluded (upcoming Tesla sites are all null).
@@ -279,6 +322,7 @@ export function buildSizeOverview(
 
   const takeaways = buildTakeaways(withStalls, rows, sizeShares, median, average);
   const story = buildStory(withStalls, sizeShares, median, byOp);
+  const pyramidLayers = buildPyramidLayers(withStalls, sizeShares);
 
   return {
     totalSites,
@@ -286,6 +330,7 @@ export function buildSizeOverview(
     median,
     average,
     sizeShares,
+    pyramidLayers,
     sizeColumns,
     rows,
     takeaways,

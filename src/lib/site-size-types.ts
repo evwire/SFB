@@ -6,6 +6,17 @@ export type SizeShare = {
   pct: number;
 };
 
+/** One pyramid band: stall size at top → many small sites at the base. */
+export type SizePyramidLayer = {
+  stalls: number;
+  sites: number;
+  pct: number;
+  /** Band width 0–100 relative to the widest layer (with a readable floor). */
+  widthPct: number;
+  leftLabel: string;
+  rightLabel: string;
+};
+
 export type SizeCell = {
   stalls: number;
   count: number;
@@ -43,6 +54,7 @@ export type SizeOverview = {
   median: number;
   average: number;
   sizeShares: SizeShare[];
+  pyramidLayers: SizePyramidLayer[];
   sizeColumns: number[];
   rows: SizeRow[];
   takeaways: string[];
