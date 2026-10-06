@@ -3,7 +3,7 @@
 import React, { useId, useMemo, useState } from "react";
 import type { SizeCell, SizeOverview, SizeRow } from "@/lib/site-size-types";
 import { fmtNum } from "@/lib/style";
-import StallLayoutIso, { stallSizeColor } from "@/components/StallLayoutIso";
+import StallLayoutIso, { isoDisplaySize, stallSizeColor } from "@/components/StallLayoutIso";
 
 function bubbleRadius(count: number, maxCount: number): number {
   if (count <= 0) return 0;
@@ -106,6 +106,10 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
     [data.rows]
   );
   const rollupRow = useMemo(() => data.rows.find((r) => r.isRollup) ?? null, [data.rows]);
+  const drawColPx = useMemo(() => {
+    const widths = data.isoLayers.map((l) => isoDisplaySize(l.stalls).widthPx);
+    return Math.max(120, ...widths, 0);
+  }, [data.isoLayers]);
 
   const colCount = data.sizeColumns.length;
   const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.2rem, 1fr)) minmax(5.5rem, 7rem)`;
@@ -127,17 +131,21 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
           ))}
         </div>
 
+        <div className="size-iso-wrap">
         <div
           className="size-iso"
           role="list"
           aria-label="Open US sites by stall layout"
         >
           <div className="size-iso-heads" aria-hidden="true">
-            <span>Stalls per site</span>
+            <span>Stalls</span>
             <span>Layout (same scale)</span>
             <span>Open US sites · builders</span>
           </div>
-          <div className="size-iso-rows">
+          <div
+            className="size-iso-rows"
+            style={{ ["--iso-draw-col" as string]: `${drawColPx}px` }}
+          >
             {data.isoLayers.map((layer) => {
               const color = stallSizeColor(layer.stalls);
               return (
@@ -163,6 +171,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
             })}
           </div>
           <p className="size-iso-foot mono">block = charger post · same scale</p>
+        </div>
         </div>
       </section>
 

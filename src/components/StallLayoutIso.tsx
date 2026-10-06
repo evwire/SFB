@@ -1,7 +1,7 @@
 /**
- * 3/4 isometric stall layout. Same scale for every size:
- * ≤6 stalls → single row; otherwise two facing rows of ceil(n/2) / floor(n/2).
- * Geometry mirrors workspace/mock/gen34.py.
+ * 3/4 isometric stall layout at ONE shared scale (px/stall).
+ * ≤6 → single row; otherwise two facing rows of ceil(n/2) / floor(n/2).
+ * Geometry mirrors workspace/mock/gen34.py; display size is never stretched.
  */
 
 type Props = {
@@ -9,14 +9,20 @@ type Props = {
   /** CSS colour or var() used for plate + posts. */
   color: string;
   className?: string;
+  /** Uniform display scale (geometry units → CSS px). Same for every size. */
+  scale?: number;
 };
 
-const IW = 26; // stall cell width
-const IDP = 40; // row depth
-const HH = 22; // post height
-const TH = 6; // plate thickness
+/** Stall cell width / depth / post height in geometry units (shared). */
+const IW = 26;
+const IDP = 40;
+const HH = 22;
+const TH = 6;
 const C30 = Math.cos(Math.PI / 6);
 const S30 = 0.5;
+
+/** Geometry → CSS px. Keeps the full chart ~one screen on desktop. */
+export const ISO_DISPLAY_SCALE = 0.48;
 
 function layoutFor(n: number): { rows: number; perRow: number[] } {
   const count = Math.max(0, Math.floor(n));
@@ -35,16 +41,21 @@ function pts(list: [number, number][]): string {
   return list.map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`).join(" ");
 }
 
-export default function StallLayoutIso({ stalls, color, className }: Props) {
+export type IsoMetrics = {
+  vbW: number;
+  vbH: number;
+  minX: number;
+  minY: number;
+  widthPx: number;
+  heightPx: number;
+};
+
+/** Natural display size at the shared scale (not stretched to the column). */
+export function isoDisplaySize(stalls: number, scale = ISO_DISPLAY_SCALE): IsoMetrics {
   const { rows, perRow } = layoutFor(stalls);
   if (rows === 0) {
-    return (
-      <svg className={className} viewBox="0 0 40 24" aria-hidden="true">
-        <title>{stalls} stalls</title>
-      </svg>
-    );
+    return { vbW: 40, vbH: 24, minX: 0, minY: 0, widthPx: 40 * scale, heightPx: 24 * scale };
   }
-
   const per = Math.max(...perRow);
   const L = per * IW;
   const D = rows * IDP;
@@ -56,6 +67,45 @@ export default function StallLayoutIso({ stalls, color, className }: Props) {
   const minY = -2;
   const vbW = maxX - minX;
   const vbH = maxY - minY;
+  return {
+    vbW,
+    vbH,
+    minX,
+    minY,
+    widthPx: Math.round(vbW * scale),
+    heightPx: Math.round(vbH * scale),
+  };
+}
+
+export default function StallLayoutIso({
+  stalls,
+  color,
+  className,
+  scale = ISO_DISPLAY_SCALE,
+}: Props) {
+  const { rows, perRow } = layoutFor(stalls);
+  const metrics = isoDisplaySize(stalls, scale);
+
+  if (rows === 0) {
+    return (
+      <svg
+        className={className}
+        width={metrics.widthPx}
+        height={metrics.heightPx}
+        viewBox="0 0 40 24"
+        aria-hidden="true"
+      >
+        <title>{stalls} stalls</title>
+      </svg>
+    );
+  }
+
+  const per = Math.max(...perRow);
+  const L = per * IW;
+  const D = rows * IDP;
+  const ox = D * C30;
+  const oy = HH + 4;
+  const { minX, minY, vbW, vbH, widthPx, heightPx } = metrics;
 
   const plate = `color-mix(in srgb, ${color} 14%, white)`;
   const plateEdge = `color-mix(in srgb, ${color} 40%, #666)`;
@@ -78,11 +128,12 @@ export default function StallLayoutIso({ stalls, color, className }: Props) {
   return (
     <svg
       className={className}
+      width={widthPx}
+      height={heightPx}
       viewBox={`${minX} ${minY} ${vbW} ${vbH}`}
       role="img"
       aria-label={`${stalls}-stall layout`}
     >
-      {/* Plate thickness (left/right faces) */}
       <polygon
         points={pts([
           P(ox, oy, 0, D),
@@ -101,7 +152,6 @@ export default function StallLayoutIso({ stalls, color, className }: Props) {
         ])}
         fill={plateSide}
       />
-      {/* Top plate */}
       <polygon
         className="size-iso-plate"
         points={pts([P(ox, oy, 0, 0), P(ox, oy, L, 0), P(ox, oy, L, D), P(ox, oy, 0, D)])}
@@ -110,7 +160,6 @@ export default function StallLayoutIso({ stalls, color, className }: Props) {
         strokeWidth={1.5}
         strokeLinejoin="round"
       />
-      {/* Stall dividers */}
       {Array.from({ length: per + 1 }, (_, i) => {
         const a = P(ox, oy, i * IW, 0);
         const b = P(ox, oy, i * IW, D);
@@ -136,7 +185,6 @@ export default function StallLayoutIso({ stalls, color, className }: Props) {
           strokeWidth={2.5}
         />
       ) : null}
-      {/* Charger posts */}
       {boxes.map(({ x0, y0 }, idx) => {
         const x1 = x0 + 9;
         const y1 = y0 + 8;

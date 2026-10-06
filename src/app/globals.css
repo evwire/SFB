@@ -771,52 +771,61 @@ html.dark .theme-toggle {
   line-height: 1.3;
 }
 
-/* 3/4 isometric site-size chart (same scale per stall) */
+/* 3/4 isometric site-size chart (same scale per stall — never stretched) */
+.size-iso-wrap {
+  margin-top: 18px;
+  overflow: hidden;
+}
 .size-iso {
-  margin-top: 22px;
   display: grid;
   gap: 0;
 }
 .size-iso-heads {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1.35fr) minmax(10rem, 1fr);
-  gap: 12px 18px;
-  padding: 0 0 12px;
-  margin-bottom: 4px;
+  grid-template-columns: 4.25rem var(--iso-draw-col, 220px) minmax(9rem, 1fr);
+  gap: 10px 16px;
+  padding: 0 0 8px;
+  margin-bottom: 2px;
   border-bottom: 1px solid var(--hairline);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
+  white-space: nowrap;
 }
 .size-iso-heads span:first-child { text-align: right; }
-.size-iso-rows { display: grid; gap: 0; }
+.size-iso-rows {
+  display: grid;
+  gap: 0;
+  --iso-draw-col: 220px;
+}
 .size-iso-row {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1.35fr) minmax(10rem, 1fr);
-  gap: 12px 18px;
+  grid-template-columns: 4.25rem var(--iso-draw-col, 220px) minmax(9rem, 1fr);
+  gap: 10px 16px;
   align-items: center;
-  padding: 16px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--hairline);
+  min-height: 0;
 }
 .size-iso-row:last-child { border-bottom: 0; }
 .size-iso-num {
   display: grid;
   justify-items: end;
-  gap: 2px;
+  gap: 1px;
   line-height: 1;
 }
 .size-iso-n {
   font-family: var(--display);
   font-style: italic;
   font-weight: 600;
-  font-size: clamp(36px, 4.2vw, 52px);
+  font-size: clamp(26px, 2.8vw, 34px);
   letter-spacing: -0.03em;
   color: currentColor;
 }
 .size-iso-n-unit {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -824,83 +833,63 @@ html.dark .theme-toggle {
 }
 .size-iso-draw {
   display: flex;
+  justify-content: flex-start;
   align-items: center;
+  width: var(--iso-draw-col, 220px);
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
+/* Natural pixel size from the SVG width/height attrs — never stretch */
 .size-iso-draw svg {
-  width: 100%;
-  max-width: 420px;
-  height: auto;
   display: block;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  flex: none;
 }
 .size-iso-sites {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 .size-iso-count {
   font-family: var(--display);
   font-style: italic;
   font-weight: 600;
-  font-size: clamp(26px, 3vw, 36px);
+  font-size: clamp(20px, 2.2vw, 26px);
   letter-spacing: -0.02em;
   line-height: 1.05;
   color: currentColor;
 }
 .size-iso-who {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
-  line-height: 1.35;
+  line-height: 1.3;
 }
 .size-iso-foot {
-  margin: 8px 0 0;
-  font-size: 11.5px;
+  margin: 6px 0 0;
+  font-size: 11px;
   color: var(--faint);
   text-align: right;
 }
-/* Dark: lift plate tints so layouts stay readable on Night */
 html.dark .size-iso-plate {
   filter: brightness(1.18) saturate(1.05);
 }
+/* Mobile: scale the whole chart uniformly (not per drawing) */
 @media (max-width: 820px) {
-  .size-iso-heads,
-  .size-iso-row {
-    grid-template-columns: 4.25rem minmax(0, 1fr);
+  .size-iso {
+    zoom: 0.72;
   }
-  .size-iso-heads span:last-child,
-  .size-iso-sites {
-    grid-column: 1 / -1;
+}
+@supports not (zoom: 1) {
+  @media (max-width: 820px) {
+    .size-iso {
+      transform: scale(0.72);
+      transform-origin: top left;
+      width: calc(100% / 0.72);
+    }
   }
-  .size-iso-heads span:nth-child(2) { display: none; }
-  .size-iso-draw svg { max-width: 100%; }
-  .size-iso-foot { text-align: left; }
 }
-@media (max-width: 520px) {
-  .size-iso-n { font-size: 32px; }
-  .size-iso-count { font-size: 24px; }
-}
-
-/* Shared size colours */
-.size-seg-4 { background: var(--signal); }
-.size-seg-6 { background: var(--teal); }
-.size-seg-8 { background: var(--blue); }
-.size-seg-12 { background: var(--violet); }
-.size-seg-20 { background: var(--amber); }
-.size-swatch {
-  width: 10px; height: 10px; border-radius: 999px; flex: none;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 12%, transparent);
-}
-.size-bubble.size-seg-4 { background: color-mix(in srgb, var(--signal) 88%, transparent); }
-.size-bubble.size-seg-6 { background: color-mix(in srgb, var(--teal) 88%, transparent); }
-.size-bubble.size-seg-8 { background: color-mix(in srgb, var(--blue) 88%, transparent); }
-.size-bubble.size-seg-12 { background: color-mix(in srgb, var(--violet) 88%, transparent); }
-.size-bubble.size-seg-20 { background: color-mix(in srgb, var(--amber) 88%, transparent); }
-.size-bubble.francis {
-  background: var(--signal) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg) 18%, transparent), 0 6px 18px var(--glow);
-}
-.size-bubble.francis .size-bubble-n { color: #fff; }
 
 /* Operator cards */
 .size-cards-head { margin-bottom: 4px; }
