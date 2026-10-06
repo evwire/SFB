@@ -66,12 +66,11 @@ export function humaniseUnstated(key: string): string {
 }
 
 /** Pin radius grows with stall count but stays legible when the count is unknown. */
+/** Three clear size steps for map dots. */
 export function pinRadius(stalls: number | null): number {
-  if (stalls == null) return 4.5;
+  if (stalls == null) return 5;
   if (stalls <= 4) return 5.5;
-  if (stalls <= 6) return 7;
   if (stalls <= 8) return 8.5;
-  if (stalls <= 12) return 10;
   return 12;
 }
 

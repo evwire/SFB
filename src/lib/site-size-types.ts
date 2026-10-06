@@ -17,6 +17,8 @@ export type SizeIsoLayer = {
   buildersLabel: string;
   /** Francis Energy sites in this size class (for honest blue share in layouts). */
   francisSites: number;
+  /** True when Francis has the most sites of any operator in this size class. */
+  francisIsLeader: boolean;
 };
 
 export type SizeCell = {

@@ -76,41 +76,71 @@ export function OperatorRank({
         <span>
           <i className="op-dot stall" /> Stalls
         </span>
-        <span className="op-pair-scale">Scale → {maxPct.toFixed(1)}%</span>
       </div>
       <ul className="op-pair-list">
-        {pairs.map((p) => {
-          const left = (p.sitePct / maxPct) * 100;
-          const right = (p.stallPct / maxPct) * 100;
-          return (
-            <li key={p.key} className={"op-pair-row" + (p.isFrancis ? " is-subject" : "")}>
-              <span className="op-pair-name">{p.label}</span>
-              <div
-                className="op-pair-track"
-                data-site-pct={p.sitePct.toFixed(2)}
-                data-stall-pct={p.stallPct.toFixed(2)}
-                data-site-width={left.toFixed(2)}
-                data-stall-width={right.toFixed(2)}
-              >
-                <span className="op-pair-rule" aria-hidden="true" />
-                <span
-                  className={"op-dot site" + (p.isFrancis ? " subject" : "")}
-                  style={{ left: `${left}%` }}
-                  title={`${p.sitePct.toFixed(1)}% of sites`}
-                />
-                <span
-                  className={"op-dot stall" + (p.isFrancis ? " subject" : "")}
-                  style={{ left: `${right}%` }}
-                  title={`${p.stallPct.toFixed(1)}% of stalls`}
-                />
-              </div>
-              <span className="op-pair-end tnum">
-                {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
-              </span>
-            </li>
-          );
-        })}
+        {pairs
+          .filter((p) => p.key !== "__singles__")
+          .map((p) => {
+            const left = (p.sitePct / maxPct) * 100;
+            const right = (p.stallPct / maxPct) * 100;
+            return (
+              <li key={p.key} className={"op-pair-row" + (p.isFrancis ? " is-subject" : "")}>
+                <span className="op-pair-name">{p.label}</span>
+                <div
+                  className="op-pair-track"
+                  data-site-pct={p.sitePct.toFixed(2)}
+                  data-stall-pct={p.stallPct.toFixed(2)}
+                  data-site-width={left.toFixed(2)}
+                  data-stall-width={right.toFixed(2)}
+                >
+                  <span className="op-pair-rule" aria-hidden="true" />
+                  <span
+                    className={"op-dot site" + (p.isFrancis ? " subject" : "")}
+                    style={{ left: `${left}%` }}
+                    title={`${p.sitePct.toFixed(1)}% of sites`}
+                  />
+                  <span
+                    className={"op-dot stall" + (p.isFrancis ? " subject" : "")}
+                    style={{ left: `${right}%` }}
+                    title={`${p.stallPct.toFixed(1)}% of stalls`}
+                  />
+                </div>
+                <span className="op-pair-end tnum">
+                  {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
+                </span>
+              </li>
+            );
+          })}
       </ul>
+      {pairs.some((p) => p.key === "__singles__")
+        ? (() => {
+            const p = pairs.find((x) => x.key === "__singles__")!;
+            const left = (p.sitePct / maxPct) * 100;
+            const right = (p.stallPct / maxPct) * 100;
+            return (
+              <div className="op-longtail" aria-label={p.label}>
+                <div className="op-longtail-bracket" aria-hidden="true" />
+                <div className="op-longtail-body">
+                  <span className="op-pair-name">{p.label}</span>
+                  <div
+                    className="op-pair-track"
+                    data-site-pct={p.sitePct.toFixed(2)}
+                    data-stall-pct={p.stallPct.toFixed(2)}
+                    data-site-width={left.toFixed(2)}
+                    data-stall-width={right.toFixed(2)}
+                  >
+                    <span className="op-pair-rule" aria-hidden="true" />
+                    <span className="op-dot site" style={{ left: `${left}%` }} />
+                    <span className="op-dot stall" style={{ left: `${right}%` }} />
+                  </div>
+                  <span className="op-pair-end tnum">
+                    {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })()
+        : null}
     </aside>
   );
 }

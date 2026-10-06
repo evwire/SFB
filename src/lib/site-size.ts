@@ -156,12 +156,10 @@ function buildStory(
 
   const headline =
     singlesMin.length > 0 && singleOps.length > 0
-      ? `${singlesMin.length} of ${singleOps.length} single-site operators built the minimum.`
-      : slopeInsight
-        ? slopeInsight
-        : dominant
-          ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
-          : `${total} open US sites with a stall count.`;
+      ? `${singlesMin.length} of ${singleOps.length} single-site operators run a 4-stall site.`
+      : dominant
+        ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
+        : `${total} open US sites with a stall count.`;
 
   type Bigger = { operator: string; stalls: number[]; max: number; sites: number; median: number };
   const bigger: Bigger[] = [];
@@ -190,7 +188,7 @@ function buildStory(
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
   const subline = slopeInsight
-    ? "Post drawings share one scale; blue marks Francis share where the count is honest."
+    ? `${slopeInsight} Drawings below use one shared scale.`
     : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;
@@ -243,6 +241,8 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
       const francisSites = inLayer.filter((s) =>
         /francis energy/i.test(s.operator ?? "")
       ).length;
+      const francisIsLeader =
+        ranked.length > 0 && /francis energy/i.test(ranked[0]![0]);
 
       let buildersLabel = "";
       if (ranked.length === 0) {
@@ -279,6 +279,7 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
         sitesLabel,
         buildersLabel,
         francisSites,
+        francisIsLeader,
       };
     });
 }

@@ -431,64 +431,77 @@ export default function MapExplorer({
   return (
     <div className="map-wrap">
       <div className="controls map-filter-bar filter-bar" role="toolbar" aria-label="Map filters">
-        <div className="seg" role="group" aria-label="Status">
-          {(["open", "upcoming", "both"] as SitePhase[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              className={"seg-btn" + (phase === p ? " on" : "")}
-              aria-pressed={phase === p}
-              onClick={() => onPhaseChange?.(p)}
-            >
-              {p === "both" ? "Both" : p === "open" ? "Open" : "Upcoming"}
-            </button>
-          ))}
+        <div className="filter-group">
+          <span className="filter-group-label">Status</span>
+          <div className="seg" role="group" aria-label="Status">
+            {(["open", "upcoming", "both"] as SitePhase[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={"seg-btn" + (phase === p ? " on" : "")}
+                aria-pressed={phase === p}
+                onClick={() => onPhaseChange?.(p)}
+              >
+                {p === "both" ? "Both" : p === "open" ? "Open" : "Upcoming"}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="seg" role="group" aria-label="Region">
-          {(["us", "europe"] as Region[]).map((r) => (
-            <button
-              key={r}
-              type="button"
-              className={"seg-btn" + (region === r ? " on" : "")}
-              aria-pressed={region === r}
-              onClick={() => onRegionChange?.(r)}
-            >
-              {r === "us" ? "US" : "Europe"}
-            </button>
-          ))}
+        <div className="filter-group">
+          <span className="filter-group-label">Region</span>
+          <div className="seg" role="group" aria-label="Region">
+            {(["us", "europe"] as Region[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={"seg-btn" + (region === r ? " on" : "")}
+                aria-pressed={region === r}
+                onClick={() => onRegionChange?.(r)}
+              >
+                {r === "us" ? "US" : "Europe"}
+              </button>
+            ))}
+          </div>
         </div>
-        <label className="sr-only" htmlFor="map-op">Operator</label>
-        <select
-          id="map-op"
-          className="filter-select"
-          value={operator}
-          onChange={(e) => setOperator(e.target.value)}
-        >
-          {operators.map((o) => (
-            <option key={o} value={o}>{o}</option>
-          ))}
-        </select>
-        <label className="sr-only" htmlFor="map-state">State</label>
-        <select
-          id="map-state"
-          className="filter-select"
-          value={stateFilter}
-          onChange={(e) => setStateFilter(e.target.value)}
-        >
-          {stateOptions.map((st) => (
-            <option key={st} value={st}>
-              {st === allAreasLabel ? "All states" : st}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className={"filter-link-toggle" + (showCoverage ? " on" : "")}
-          aria-pressed={showCoverage}
-          onClick={() => setShowCoverage((v) => !v)}
-        >
-          {showCoverage ? "EVwire coverage on" : "EVwire coverage"}
-        </button>
+        <div className="filter-group">
+          <label className="filter-group-label" htmlFor="map-op">Operator</label>
+          <select
+            id="map-op"
+            className="filter-select"
+            value={operator}
+            onChange={(e) => setOperator(e.target.value)}
+          >
+            {operators.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label className="filter-group-label" htmlFor="map-state">State</label>
+          <select
+            id="map-state"
+            className="filter-select"
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+          >
+            {stateOptions.map((st) => (
+              <option key={st} value={st}>
+                {st === allAreasLabel ? "All states" : st}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
+          <span className="filter-group-label">Stories</span>
+          <button
+            type="button"
+            className={"seg-btn filter-toggle" + (showCoverage ? " on" : "")}
+            aria-pressed={showCoverage}
+            onClick={() => setShowCoverage((v) => !v)}
+          >
+            {showCoverage ? "On" : "Off"}
+          </button>
+        </div>
         {sites.some((s) => s.siteClass === "Heavy-duty") ? (
           <button
             type="button"
@@ -509,19 +522,21 @@ export default function MapExplorer({
             {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
           </span>
           <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
-            {([4, 6, 8, 12, 20] as const).map((n) => (
-              <span key={n} className="legend-size-step">
-                <span
-                  className="legend-size-dot"
-                  style={{ width: 6 + n * 0.55, height: 6 + n * 0.55 }}
-                  aria-hidden="true"
-                />
-                {n}
-              </span>
-            ))}
+            <span className="legend-size-step">
+              <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
+              4
+            </span>
+            <span className="legend-size-step">
+              <span className="legend-size-dot" style={{ width: 17, height: 17 }} aria-hidden="true" />
+              6–8
+            </span>
+            <span className="legend-size-step">
+              <span className="legend-size-dot" style={{ width: 24, height: 24 }} aria-hidden="true" />
+              12+
+            </span>
           </span>
         </div>
-        <div className="map-tools map-tools-corner" aria-label="Map zoom controls">
+        <div className="map-tools map-tools-corner map-tools-sw" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
           <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
@@ -597,8 +612,8 @@ export default function MapExplorer({
                   {isNewSite(s) && (
                     <circle
                       className="new-ring"
-                      r={r + 3.4}
-                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.4, strokeDasharray: "2.5 1.5" }}
+                      r={r + 3.6}
+                      style={{ fill: "none", stroke: "var(--new)", strokeWidth: 2 }}
                     />
                   )}
                   {ring ? (
@@ -613,14 +628,14 @@ export default function MapExplorer({
                       r={r}
                       style={
                         isHighlight
-                          ? { fill: "var(--subject)", stroke: "var(--paper)", strokeWidth: 1.25 }
+                          ? { fill: "var(--subject)", stroke: "#fff", strokeWidth: 1.6 }
                           : showCoverage && covered
-                            ? { fill: "var(--ink)", stroke: "var(--paper)", strokeWidth: 1.25, opacity: 0.9 }
+                            ? { fill: "var(--ink)", stroke: "#fff", strokeWidth: 1.25, opacity: 0.9 }
                             : {
                                 fill: "var(--dot-other)",
-                                stroke: "var(--paper)",
-                                strokeWidth: 1.25,
-                                opacity: showCoverage ? 0.35 : 0.92,
+                                stroke: "#fff",
+                                strokeWidth: 1.1,
+                                opacity: showCoverage ? 0.4 : 0.95,
                               }
                       }
                     />
@@ -706,6 +721,12 @@ export default function MapExplorer({
 
         </svg>
 
+        {newOpenIds.length > 0 ? (
+          <p className="map-new-callout">
+            <span className="map-new-mark" aria-hidden="true" />
+            {newOpenIds.length} new open sites since 25 Sep
+          </p>
+        ) : null}
         <figcaption className="map-caption">
           <div className="map-legend" aria-label="Map legend">
             <span className="legend-chip">
@@ -785,6 +806,28 @@ export default function MapExplorer({
                 }
               }
             }
+            // City labels: show when spaced; always keep New sites
+            type Lbl = Pt & { label: boolean; ly: number };
+            const labeled: Lbl[] = projected.map((p) => ({
+              ...p,
+              ly: p.y + p.r + 8,
+              label: true,
+            }));
+            labeled.sort(
+              (a, b) =>
+                (isNewSite(b.s) ? 1 : 0) - (isNewSite(a.s) ? 1 : 0) ||
+                (b.s.stalls ?? 0) - (a.s.stalls ?? 0)
+            );
+            const kept: Lbl[] = [];
+            for (const L of labeled) {
+              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 22);
+              if (!hit || isNewSite(L.s)) {
+                L.label = true;
+                kept.push(L);
+              } else {
+                L.label = false;
+              }
+            }
             return (
               <>
                 <svg viewBox="0 0 320 250" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites west to east">
@@ -801,10 +844,10 @@ export default function MapExplorer({
                         />
                       ))}
                   </g>
-                  {projected.map((p) => (
+                  {labeled.map((p) => (
                     <g key={`okzp-${p.s.slug}`}>
                       {isNewSite(p.s) ? (
-                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" />
+                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" style={{ stroke: "var(--new)" }} />
                       ) : null}
                       <circle
                         cx={p.x}
@@ -812,28 +855,26 @@ export default function MapExplorer({
                         r={p.r}
                         className={p.francis ? "ok-zoom-dot" : "ok-zoom-other"}
                       />
-                      <text
-                        x={p.x}
-                        y={p.y}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        className="ok-zoom-num"
-                      >
-                        {p.i}
-                      </text>
-                      <title>{`${p.i}. ${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}${isNewSite(p.s) ? " · New" : ""}`}</title>
+                      {p.francis && p.r >= 6 ? (
+                        <text
+                          x={p.x}
+                          y={p.y}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          className="ok-zoom-f"
+                        >
+                          F
+                        </text>
+                      ) : null}
+                      {p.label ? (
+                        <text x={p.x} y={p.ly} textAnchor="middle" className="ok-zoom-city">
+                          {(p.s.city ?? p.s.name).replace(/, OK$/, "").slice(0, 12)}
+                        </text>
+                      ) : null}
+                      <title>{`${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}${isNewSite(p.s) ? " · New" : ""}`}</title>
                     </g>
                   ))}
                 </svg>
-                <ol className="ok-zoom-list ok-zoom-list-full">
-                  {projected.map((p) => (
-                    <li key={p.s.slug}>
-                      {p.s.city ?? p.s.name}
-                      {p.s.stalls != null ? <span className="dim"> · {p.s.stalls}</span> : null}
-                      {isNewSite(p.s) ? <span className="badge-new">New</span> : null}
-                    </li>
-                  ))}
-                </ol>
               </>
             );
           })()}

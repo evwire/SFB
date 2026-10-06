@@ -32,9 +32,9 @@ function CellTip({ row, cell, open }: { row: SizeRow; cell: SizeCell; open: bool
   );
 }
 
-/** Large shared scale for iso drawings (Jaan: double them). */
-const ISO_SCALE = 1.5;
-const INK = "#1a1814";
+/** Doubled shared scale — every row uses this same scale. */
+const ISO_SCALE = 1.55;
+const INK = "#12141c";
 const SUBJECT = "var(--subject)";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
@@ -54,15 +54,15 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   const operatorRows = data.rows.filter((r) => !r.isRollup);
   const rollupRows = data.rows.filter((r) => r.isRollup);
 
-  // Column totals (marginal)
   const colTotals = data.sizeColumns.map((stalls) =>
     data.rows.reduce((a, r) => a + (r.cells.find((c) => c.stalls === stalls)?.count ?? 0), 0)
   );
   const grandSites = data.rows.reduce((a, r) => a + r.totalSites, 0);
-  const grandStalls = data.rows.reduce((a, r) => a + r.totalStalls, 0);
 
   const colCount = data.sizeColumns.length;
   const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.6rem, 1fr)) minmax(3.2rem, 4rem) minmax(7rem, 9rem)`;
+
+  // Shared scale only — row height hugs the drawing (no forced equal height dead space)
 
   function renderBar(totalStalls: number, isFrancis: boolean) {
     const pct = (totalStalls / maxRowStalls) * 100;
@@ -89,7 +89,9 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
     return (
       <React.Fragment key={row.key}>
         <div
-          className={"size-row-label" + (row.isFrancis ? " francis-row" : "") + (row.isRollup ? " rollup" : "")}
+          className={
+            "size-row-label" + (row.isFrancis ? " francis-row" : "") + (row.isRollup ? " rollup" : "")
+          }
           role="rowheader"
         >
           <span className="size-row-name">{row.label}</span>
@@ -165,46 +167,53 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
 
   return (
     <div className="size-page">
-      {/* Large iso strip integrated above matrix */}
+      {/* Jaan override: one ROW per stall size — number | large iso | counts */}
       <section className="mod size-mod size-mod-iso">
         <header className="mod-head flush-head">
           <h2 className="section-title">Layouts</h2>
           <p className="section-note">
-            One shared scale. Blue posts mark Francis share of that size class (rounded).
+            Same scale in every row. Posts are stalls. Francis sites are named on the right.
           </p>
         </header>
-        <div className="size-iso-strip" role="list">
+        <ul className="size-iso-rows-list" role="list">
           {data.isoLayers.map((layer) => {
-            const subjectPosts =
-              layer.sites > 0
-                ? Math.round((layer.francisSites / layer.sites) * layer.stalls)
-                : 0;
             const m = isoDisplaySize(layer.stalls, ISO_SCALE);
+            // Majority builder colour: whole drawing Francis blue only when Francis owns ≥ half the sites of this size
+            // Whole drawing Francis blue when Francis leads that size class — never fraction posts by site share
+            const francisLead = layer.francisIsLeader;
             return (
-              <div key={layer.stalls} className="size-iso-card" role="listitem">
-                <div className="size-iso-card-head">
+              <li key={layer.stalls} className="size-iso-row-line" role="listitem">
+                <div className="size-iso-row-num">
                   <span className="size-iso-n tnum">{layer.stalls}</span>
-                  <span className="size-iso-meta tnum">
-                    {layer.sites} site{layer.sites === 1 ? "" : "s"}
-                    {layer.francisSites > 0 ? `, ${layer.francisSites} Francis` : ""}
-                  </span>
+                  <span className="size-iso-unit">stalls</span>
                 </div>
-                <div className="size-iso-artboard" style={{ width: m.widthPx, height: m.heightPx }}>
+                <div
+                  className="size-iso-row-art"
+                  style={{ width: m.widthPx }}
+                >
                   <StallLayoutIso
                     stalls={layer.stalls}
-                    color={INK}
-                    subjectColor={SUBJECT}
-                    subjectCount={subjectPosts}
+                    color={francisLead ? SUBJECT : INK}
                     scale={ISO_SCALE}
                   />
                 </div>
-                <div className="size-iso-share tnum">
-                  {layer.pct}% of sites, {layer.stallPct}% of stalls
+                <div className="size-iso-row-meta">
+                  <p className="size-iso-sites tnum">
+                    {layer.sites} site{layer.sites === 1 ? "" : "s"}
+                    {layer.francisSites > 0
+                      ? ` — ${layer.francisSites} Francis`
+                      : layer.buildersLabel
+                        ? ` — ${layer.buildersLabel}`
+                        : ""}
+                  </p>
+                  <p className="size-iso-share tnum">
+                    {layer.pct}% of sites, {layer.stallPct}% of stalls
+                  </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </section>
 
       <section className="mod size-mod">
@@ -221,7 +230,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
           <span>
             <i className="key-dot" style={{ width: 28, height: 28 }} /> 8+
           </span>
-          <span>Bubble area ∝ sites · stall bars → {fmtNum(maxRowStalls)} max</span>
+          <span>Bubble area ∝ sites — stall bars to {fmtNum(maxRowStalls)}</span>
         </div>
         <div className="size-matrix-scroll">
           <div
@@ -248,7 +257,6 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
             {operatorRows.map(renderRow)}
             {rollupRows.map(renderRow)}
 
-            {/* Marginal totals */}
             <div className="size-row-label size-margin-label" role="rowheader">
               <span className="size-row-name">Total</span>
             </div>
@@ -261,7 +269,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               {grandSites}
             </div>
             <div className="size-total-cell size-total-stalls size-margin-cell" role="cell">
-              {renderBar(data.totalStalls || grandStalls, false)}
+              {renderBar(data.totalStalls, false)}
             </div>
           </div>
         </div>

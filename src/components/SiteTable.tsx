@@ -43,6 +43,14 @@ function splitPlace(s: Site): { site: string; city: string | null; street: strin
     // Prefer left as site label when no city match
     return { site: sentenceCase(raw), city, street: sentenceCase(right) };
   }
+  if (city && raw.toLowerCase() === city.toLowerCase()) {
+    const street = s.address?.split(",")[0]?.trim() || null;
+    return {
+      site: street ? sentenceCase(street) : sentenceCase(raw),
+      city,
+      street: street ? sentenceCase(street) : null,
+    };
+  }
   return { site: sentenceCase(raw), city, street: null };
 }
 
@@ -146,17 +154,26 @@ export default function SiteTable({
   const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
   const shown = visible.length;
 
+  const opTotals = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of rows) {
+      const op = s.operator ?? (upcoming ? "not stated until open" : "n/s");
+      m.set(op, (m.get(op) ?? 0) + 1);
+    }
+    return m;
+  }, [rows, upcoming]);
+
   const groups = useMemo(() => {
     if (!groupByOperator) return null;
-    const out: { op: string; rows: Site[] }[] = [];
+    const out: { op: string; rows: Site[]; total: number }[] = [];
     for (const s of visible) {
       const op = s.operator ?? (upcoming ? "not stated until open" : "n/s");
       const last = out[out.length - 1];
       if (last && last.op === op) last.rows.push(s);
-      else out.push({ op, rows: [s] });
+      else out.push({ op, rows: [s], total: opTotals.get(op) ?? 1 });
     }
     return out;
-  }, [visible, groupByOperator, upcoming]);
+  }, [visible, groupByOperator, upcoming, opTotals]);
 
   function onSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -196,12 +213,11 @@ export default function SiteTable({
       <tr key={s.slug} id={`site-${s.slug}`} className={neu ? "is-new" : undefined}>
         <th scope="row">
           <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
-            {place.street && place.city && place.site === place.street
+            {place.city && place.site.toLowerCase() === place.city.toLowerCase() && place.street
               ? place.street
               : place.site}
           </a>
-          {neu ? <span className="badge-new">New</span> : null}
-          {highlightCovered && covered ? <span className="badge-covered">EVwire</span> : null}
+          {highlightCovered && covered ? <span className="badge-covered">Covered</span> : null}
         </th>
         <td>{place.city ?? <span className="dim">–</span>}</td>
         <td>{s.state}</td>
@@ -261,7 +277,7 @@ export default function SiteTable({
                   <tr className="op-group-row">
                     <th scope="rowgroup" colSpan={colSpan}>
                       {g.op}
-                      <span className="op-group-n tnum"> {g.rows.length}</span>
+                      <span className="op-group-n tnum"> {g.total}</span>
                     </th>
                   </tr>
                   {g.rows.map(renderRow)}
@@ -274,13 +290,13 @@ export default function SiteTable({
         <div className="table-expand">
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
             {expanded
-              ? `Show ${DEFAULT_VISIBLE} of ${rows.length}`
-              : `${shown} of ${rows.length} shown · Show all ${rows.length}`}
+              ? `Show first ${DEFAULT_VISIBLE}`
+              : `Show all ${rows.length} (now ${shown})`}
           </button>
         </div>
       ) : (
         <p className="table-shown tnum">
-          {shown} of {rows.length} shown
+          Showing {shown} of {rows.length}
         </p>
       )}
     </div>

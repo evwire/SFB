@@ -215,12 +215,12 @@ export default function RegionApp({
         <section id="map" className="g12 map-section map-front">
           <div className="g12-span-full lead-compact">
             <p className="meta-line mono lead-meta lead-asof">Data as of {dataAsOf}</p>
-            <h1 className="lead-h1">
-              {h1}
-              {deltaInline ? (
-                <span className="lead-delta"> · {deltaInline}</span>
-              ) : null}
-            </h1>
+            <h1 className="lead-h1">{h1}</h1>
+            {deltaInline ? (
+              <p className="lead-delta-line">
+                <span className="lead-delta-chip">{deltaInline}</span>
+              </p>
+            ) : null}
             <p className="lead-standfirst">
               Third-party-owned Supercharger for Business sites that Tesla lists as customer-owned on
               its Find Us map. Operators are the businesses that bought them
@@ -263,11 +263,7 @@ export default function RegionApp({
         {!isUpcoming ? (
           <section id="operators" className="g12 module">
             <div className="g12-span-full module-head">
-              <h2 className="section-title">
-                {francisSitePct != null && francisStallPct != null
-                  ? `Site share versus stall share`
-                  : "Who runs the posts"}
-              </h2>
+              <h2 className="section-title">Operators</h2>
             </div>
             <div className="g12-span-full">
               <OperatorRank sites={sites} source={source} phase={phase} />
