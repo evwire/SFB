@@ -13,8 +13,45 @@ function bubbleRadius(count: number, maxCount: number): number {
   return minR + t * (maxR - minR);
 }
 
+
 function fmtPct(pct: number): string {
   return `${pct}%`;
+}
+
+/** Plain-English size headline for an operator card, derived from their sites. */
+function operatorHeadline(row: SizeRow): string {
+  const live = row.cells.filter((c) => c.count > 0);
+  if (live.length === 0) return "Stall count not stated";
+  if (live.length === 1) {
+    const only = live[0]!;
+    if (row.totalSites === 1) return `One ${only.stalls}-stall site`;
+    return `All ${only.stalls} stalls`;
+  }
+  const mode = [...live].sort((a, b) => b.count - a.count || a.stalls - b.stalls)[0]!;
+  if (mode.count / row.totalSites > 0.5) {
+    return `Mostly ${mode.stalls} stalls`;
+  }
+  const sizes = live.map((c) => c.stalls).sort((a, b) => a - b);
+  return `${sizes[0]}–${sizes[sizes.length - 1]} stalls`;
+}
+
+/** One coloured square per site, ordered by stall size then name. */
+function siteSquares(row: SizeRow): { key: string; stalls: number; name: string }[] {
+  const out: { key: string; stalls: number; name: string }[] = [];
+  for (const cell of row.cells) {
+    for (const name of cell.siteNames) {
+      out.push({ key: `${cell.stalls}:${name}`, stalls: cell.stalls, name });
+    }
+  }
+  return out.sort(
+    (a, b) => a.stalls - b.stalls || a.name.localeCompare(b.name)
+  );
+}
+
+function isFeatureCard(row: SizeRow): boolean {
+  if (row.isRollup) return false;
+  if (row.totalSites >= 2) return true;
+  return row.cells.some((c) => c.count > 0 && c.stalls >= 12);
 }
 
 function CellTip({
@@ -57,6 +94,20 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
     () => Math.max(1, ...data.rows.map((r) => r.totalStalls)),
     [data.rows]
   );
+
+  const featureRows = useMemo(
+    () =>
+      data.rows
+        .filter(isFeatureCard)
+        .sort(
+          (a, b) =>
+            b.totalSites - a.totalSites ||
+            b.totalStalls - a.totalStalls ||
+            a.label.localeCompare(b.label)
+        ),
+    [data.rows]
+  );
+  const rollupRow = useMemo(() => data.rows.find((r) => r.isRollup) ?? null, [data.rows]);
 
   const colCount = data.sizeColumns.length;
   const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.2rem, 1fr)) minmax(5.5rem, 7rem)`;
@@ -106,6 +157,86 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      <section className="size-cards-wrap" aria-label="Main builders">
+        <div className="size-cards-head">
+          <h3>The main builders</h3>
+          <p className="panel-sub mono">
+            Companies with more than one open site, plus anyone with a 12-stall site or larger
+          </p>
+        </div>
+        <div className="size-cards-grid">
+          {featureRows.map((row) => {
+            const squares = siteSquares(row);
+            const modeCell = [...row.cells]
+              .filter((c) => c.count > 0)
+              .sort((a, b) => b.count - a.count)[0];
+            return (
+              <article
+                key={row.key}
+                className={"size-op-card glass" + (row.isFrancis ? " francis" : "")}
+              >
+                <div className="size-op-card-top">
+                  {row.isFrancis ? (
+                    <span className="size-francis-mark" aria-hidden="true">
+                      F
+                    </span>
+                  ) : null}
+                  <h4 className="size-op-card-name">{row.label}</h4>
+                </div>
+                <p className="size-op-card-headline">{operatorHeadline(row)}</p>
+                <p className="size-op-card-sub mono">
+                  {modeCell &&
+                  row.totalSites > 1 &&
+                  modeCell.count / row.totalSites > 0.5 &&
+                  modeCell.count < row.totalSites
+                    ? `${modeCell.count} of ${row.totalSites} sites`
+                    : `${row.totalSites} site${row.totalSites === 1 ? "" : "s"}`}
+                  {" · "}
+                  {fmtNum(row.totalStalls)} stalls total
+                </p>
+                <div
+                  className="size-op-card-strip"
+                  aria-label={`${row.totalSites} sites coloured by stall count`}
+                >
+                  {squares.map((sq) => (
+                    <span
+                      key={sq.key}
+                      className={`size-op-card-sq size-seg-${sq.stalls}`}
+                      title={`${sq.name} · ${sq.stalls} stalls`}
+                    />
+                  ))}
+                </div>
+              </article>
+            );
+          })}
+          {rollupRow ? (
+            <article className="size-op-card glass size-op-card-rollup">
+              <div className="size-op-card-top">
+                <h4 className="size-op-card-name">{rollupRow.label}</h4>
+              </div>
+              <p className="size-op-card-headline">
+                {rollupRow.totalSites} companies · one 4-stall site each
+              </p>
+              <p className="size-op-card-sub mono">
+                {fmtNum(rollupRow.totalStalls)} stalls total
+              </p>
+              <div
+                className="size-op-card-strip"
+                aria-label={`${rollupRow.totalSites} single-site operators`}
+              >
+                {siteSquares(rollupRow).map((sq) => (
+                  <span
+                    key={sq.key}
+                    className={`size-op-card-sq size-seg-${sq.stalls}`}
+                    title={`${sq.name} · ${sq.stalls} stalls`}
+                  />
+                ))}
+              </div>
+            </article>
+          ) : null}
         </div>
       </section>
 
