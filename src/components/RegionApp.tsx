@@ -32,6 +32,7 @@ type Props = {
   sciCompare: SciCompare;
   snapshotDelta: SnapshotDelta;
   openHistory: OpenHistoryPoint[];
+  newOpenIds?: string[];
   feed: { items: FeedItem[]; source: string; asOf: string };
   coverageNote?: { source: string; asOf: string; tagCount: number; tagUrl: string };
 };
@@ -93,6 +94,19 @@ function thesis(
   }
   const topOp = [...byOp.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))[0];
 
+  if (region === "us" && topOp && /francis energy/i.test(topOp[0])) {
+    const otherOps = [...byOp.entries()].filter(([k]) => !/francis energy/i.test(k));
+    const otherSites = otherOps.reduce((a, [, v]) => a + v.n, 0);
+    return {
+      h1: (
+        <>
+          Francis has {topOp[1].n} sites. The other {otherOps.length} operators have {otherSites}{" "}
+          between them.
+        </>
+      ),
+    };
+  }
+
   if (topOp && topOp[1].n >= 2) {
     return {
       h1: (
@@ -114,6 +128,7 @@ export default function RegionApp({
   usUpcoming,
   europeUpcoming,
   openHistory,
+  newOpenIds = [],
 }: Props) {
   const [region, setRegion] = useState<Region>("us");
   const [phase, setPhase] = useState<SitePhase>("open");
@@ -199,17 +214,17 @@ export default function RegionApp({
       <main className="pub-paper pub-front pub-lean">
         <section id="map" className="g12 map-section map-front">
           <div className="g12-span-full lead-compact">
+            <p className="meta-line mono lead-meta lead-asof">Data as of {dataAsOf}</p>
             <h1 className="lead-h1">
               {h1}
               {deltaInline ? (
                 <span className="lead-delta"> · {deltaInline}</span>
               ) : null}
             </h1>
-            <p className="meta-line mono lead-meta">
-              Data as of {dataAsOf}
-              {region === "us" && phase === "open" ? (
-                <span className="lead-evgo"> · EVgo sites not on this map</span>
-              ) : null}
+            <p className="lead-standfirst">
+              Third-party-owned Supercharger for Business sites that Tesla lists as customer-owned on
+              its Find Us map. Operators are the businesses that bought them
+              {region === "us" && phase === "open" ? " (EVgo is not included)" : ""}.
             </p>
             {banner ? (
               <p className="coverage-banner" role="status">
@@ -240,6 +255,7 @@ export default function RegionApp({
               showCoverage={showCoverage}
               onShowCoverageChange={setShowCoverage}
               splitOklahoma={region === "us"}
+              newOpenIds={newOpenIds}
             />
           </div>
         </section>
@@ -249,7 +265,7 @@ export default function RegionApp({
             <div className="g12-span-full module-head">
               <h2 className="section-title">
                 {francisSitePct != null && francisStallPct != null
-                  ? `Francis holds ${francisSitePct}% of sites, ${francisStallPct}% of stalls`
+                  ? `Site share versus stall share`
                   : "Who runs the posts"}
               </h2>
             </div>
@@ -286,6 +302,7 @@ export default function RegionApp({
               groupByOperator
               highlightCovered={showCoverage}
               fullWidth
+              newOpenIds={newOpenIds}
             />
           </div>
         </section>

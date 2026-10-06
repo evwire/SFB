@@ -4,9 +4,9 @@ import { useMemo, useState, Fragment } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "site" | "state" | "operator" | "stalls" | "status" | "opened";
+type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened" | "new";
 
-const DEFAULT_VISIBLE = 40;
+const DEFAULT_VISIBLE = 15;
 
 function francisFirst(a: string, b: string): number {
   const af = /francis energy/i.test(a);
@@ -16,17 +16,38 @@ function francisFirst(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
-/** Sentence-case a site label; drop trailing ", ST" when State column exists. */
-function siteLabel(s: Site): string {
+function findusKey(s: Site): string {
+  const fromUrl = s.sourceUrl.match(/supercharger\/(\d+)/i);
+  if (fromUrl) return fromUrl[1]!;
+  return s.slug;
+}
+
+/** Split "Street – City" / "City - Street" style names. */
+function splitPlace(s: Site): { site: string; city: string | null; street: string | null } {
+  const city = s.city?.trim() || null;
   let raw = s.name;
   if (s.state && (raw.endsWith(`, ${s.state}`) || raw.includes(`, ${s.state} -`))) {
     raw = raw.replace(new RegExp(`, ${s.state}(?=\\s*-|$)`), "").trim();
   }
-  // Drop leading city if it matches City and we show city elsewhere — we drop City column when redundant
-  if (s.city && (raw === s.city || raw.startsWith(`${s.city} -`) || raw.startsWith(`${s.city},`))) {
-    // keep distinct names; if name is just the city, keep it
+  // "City - Street" or "City – Street"
+  const dash = raw.match(/^(.+?)\s+[–—-]\s+(.+)$/);
+  if (dash) {
+    const left = dash[1]!.trim();
+    const right = dash[2]!.trim();
+    if (city && left.toLowerCase() === city.toLowerCase()) {
+      return { site: sentenceCase(right), city, street: sentenceCase(right) };
+    }
+    if (city && right.toLowerCase() === city.toLowerCase()) {
+      return { site: sentenceCase(left), city, street: sentenceCase(left) };
+    }
+    // Prefer left as site label when no city match
+    return { site: sentenceCase(raw), city, street: sentenceCase(right) };
   }
-  // Sentence case: first letter upper, rest as written unless ALL CAPS
+  return { site: sentenceCase(raw), city, street: null };
+}
+
+function sentenceCase(raw: string): string {
+  if (!raw) return raw;
   if (raw === raw.toUpperCase() && /[A-Z]/.test(raw)) {
     return raw
       .toLowerCase()
@@ -38,13 +59,6 @@ function siteLabel(s: Site): string {
   return raw;
 }
 
-function cityRedundant(s: Site): boolean {
-  const label = siteLabel(s).toLowerCase();
-  const city = (s.city ?? "").toLowerCase();
-  if (!city) return true;
-  return label === city || label.startsWith(city + " ") || label.startsWith(city + "-") || label.startsWith(city + ",");
-}
-
 export default function SiteTable({
   sites,
   upcoming = false,
@@ -52,6 +66,7 @@ export default function SiteTable({
   highlightCovered = false,
   fullWidth = true,
   groupByOperator = false,
+  newOpenIds = [],
 }: {
   sites: Site[];
   areaNoun?: string;
@@ -60,27 +75,25 @@ export default function SiteTable({
   groupByOperator?: boolean;
   highlightCovered?: boolean;
   fullWidth?: boolean;
+  newOpenIds?: string[];
 }) {
+  const newSet = useMemo(() => new Set(newOpenIds), [newOpenIds]);
+  const isNew = (s: Site) => newSet.has(findusKey(s));
+
   const hasOpened = useMemo(() => sites.some((s) => Boolean(s.openedOn)), [sites]);
-  const showCity = useMemo(() => {
-    if (groupByOperator) return false;
-    return sites.some((s) => s.city && !cityRedundant(s));
-  }, [sites, groupByOperator]);
-  const [sortKey, setSortKey] = useState<SortKey>(groupByOperator ? "operator" : "operator");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sortKey, setSortKey] = useState<SortKey>("new");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState(false);
   const [q, setQ] = useState("");
-
-  const maxStalls = useMemo(
-    () => Math.max(1, ...sites.map((s) => s.stalls ?? 0)),
-    [sites]
-  );
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return sites;
     return sites.filter((s) => {
-      const blob = [s.name, s.operator, s.city, s.state, s.status].filter(Boolean).join(" ").toLowerCase();
+      const blob = [s.name, s.operator, s.city, s.state, s.status, s.address]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       return blob.includes(needle);
     });
   }, [sites, q]);
@@ -95,6 +108,19 @@ export default function SiteTable({
         if (y == null) return -1;
         return (x - y) * dir;
       };
+      // Default: keep operator groups contiguous; New first within group, then stalls desc
+      if (sortKey === "new") {
+        if (groupByOperator) {
+          const op = francisFirst(a.operator ?? "", b.operator ?? "");
+          if (op !== 0) return op;
+        }
+        const an = isNew(a) ? 1 : 0;
+        const bn = isNew(b) ? 1 : 0;
+        if (an !== bn) return (bn - an) * (sortDir === "desc" ? 1 : -1);
+        const stallCmp = cmpNum(a.stalls, b.stalls);
+        if (stallCmp !== 0) return stallCmp;
+        return a.name.localeCompare(b.name);
+      }
       switch (sortKey) {
         case "operator": {
           const base = francisFirst(a.operator ?? "", b.operator ?? "");
@@ -106,6 +132,8 @@ export default function SiteTable({
           return cmpStr(a.status, b.status);
         case "state":
           return cmpStr(a.state ?? "", b.state ?? "");
+        case "city":
+          return cmpStr(a.city ?? "", b.city ?? "");
         case "opened":
           return cmpStr(a.openedOn ?? "", b.openedOn ?? "");
         case "site":
@@ -113,12 +141,11 @@ export default function SiteTable({
           return cmpStr(a.name, b.name);
       }
     });
-  }, [filtered, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir, newSet, groupByOperator]);
 
   const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
-  const hidden = Math.max(0, rows.length - DEFAULT_VISIBLE);
+  const shown = visible.length;
 
-  // Group visible rows by operator when requested
   const groups = useMemo(() => {
     if (!groupByOperator) return null;
     const out: { op: string; rows: Site[] }[] = [];
@@ -135,7 +162,7 @@ export default function SiteTable({
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
       setSortKey(key);
-      setSortDir(key === "stalls" ? "desc" : "asc");
+      setSortDir(key === "stalls" || key === "new" ? "desc" : "asc");
     }
   }
 
@@ -163,16 +190,20 @@ export default function SiteTable({
   function renderRow(s: Site) {
     const st = STATUS_STYLE[s.status];
     const covered = Boolean(s.articles?.length);
-    const bar = s.stalls != null ? (s.stalls / maxStalls) * 100 : 0;
+    const place = splitPlace(s);
+    const neu = isNew(s);
     return (
-      <tr key={s.slug} id={`site-${s.slug}`}>
+      <tr key={s.slug} id={`site-${s.slug}`} className={neu ? "is-new" : undefined}>
         <th scope="row">
           <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
-            {siteLabel(s)}
+            {place.street && place.city && place.site === place.street
+              ? place.street
+              : place.site}
           </a>
+          {neu ? <span className="badge-new">New</span> : null}
           {highlightCovered && covered ? <span className="badge-covered">EVwire</span> : null}
         </th>
-        {showCity ? <td>{cityRedundant(s) ? "" : (s.city ?? "")}</td> : null}
+        <td>{place.city ?? <span className="dim">–</span>}</td>
         <td>{s.state}</td>
         {!groupByOperator ? (
           <td>
@@ -181,15 +212,9 @@ export default function SiteTable({
             )}
           </td>
         ) : null}
-        <td className="num stalls-cell">
-          <span className="tnum">{s.stalls ?? "—"}</span>
-          {s.stalls != null ? (
-            <span className="stall-micro" aria-hidden="true">
-              <i style={{ width: `${bar}%` }} />
-            </span>
-          ) : null}
-        </td>
-        {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">—</span>}</td> : null}
+        <td className="num tnum">{s.stalls ?? "–"}</td>
+        <td className="new-cell">{neu ? <span className="badge-new">New</span> : <span className="dim">–</span>}</td>
+        {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">–</span>}</td> : null}
         {showStatus ? (
           <td>
             <span aria-hidden="true">{st.glyph}</span> {st.label}
@@ -199,8 +224,11 @@ export default function SiteTable({
     );
   }
 
+  const colSpan =
+    5 + (groupByOperator ? 0 : 1) + (hasOpened ? 1 : 0) + (showStatus ? 1 : 0);
+
   return (
-    <div className={"table-wrap table-wrap-open" + (fullWidth ? " table-full" : "")}>
+    <div className={"table-wrap table-wrap-open table-tight" + (fullWidth ? " table-full" : "")}>
       <div className="table-tools">
         <label className="table-search">
           <span className="sr-only">Search sites</span>
@@ -212,15 +240,16 @@ export default function SiteTable({
           />
         </label>
       </div>
-      <table className="sites sites-full">
+      <table className="sites sites-full sites-tight">
         <caption className="sr-only">Every Tesla customer-owned Supercharger in this region.</caption>
         <thead>
           <tr>
             {th("site", "Site")}
-            {showCity ? <th scope="col">City</th> : null}
+            {th("city", "City")}
             {th("state", "State")}
             {!groupByOperator ? th("operator", "Operator") : null}
             {th("stalls", "Stalls", "right")}
+            {th("new", "New")}
             {hasOpened ? th("opened", "Opened") : null}
             {showStatus ? th("status", "Status") : null}
           </tr>
@@ -230,16 +259,7 @@ export default function SiteTable({
             ? groups.map((g) => (
                 <Fragment key={g.op}>
                   <tr className="op-group-row">
-                    <th
-                      scope="rowgroup"
-                      colSpan={
-                        2 +
-                        (showCity ? 1 : 0) +
-                        (hasOpened ? 1 : 0) +
-                        (showStatus ? 1 : 0) +
-                        1
-                      }
-                    >
+                    <th scope="rowgroup" colSpan={colSpan}>
                       {g.op}
                       <span className="op-group-n tnum"> {g.rows.length}</span>
                     </th>
@@ -250,13 +270,19 @@ export default function SiteTable({
             : visible.map(renderRow)}
         </tbody>
       </table>
-      {hidden > 0 || expanded ? (
+      {rows.length > DEFAULT_VISIBLE || expanded ? (
         <div className="table-expand">
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? `Show ${DEFAULT_VISIBLE} of ${rows.length}` : `Show all ${rows.length}`}
+            {expanded
+              ? `Show ${DEFAULT_VISIBLE} of ${rows.length}`
+              : `${shown} of ${rows.length} shown · Show all ${rows.length}`}
           </button>
         </div>
-      ) : null}
+      ) : (
+        <p className="table-shown tnum">
+          {shown} of {rows.length} shown
+        </p>
+      )}
     </div>
   );
 }

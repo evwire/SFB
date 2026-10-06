@@ -7,8 +7,8 @@ import StallLayoutIso, { isoDisplaySize } from "@/components/StallLayoutIso";
 
 function bubbleRadius(count: number, maxCount: number): number {
   if (count <= 0) return 0;
-  const minR = 10;
-  const maxR = 26;
+  const minR = 11;
+  const maxR = 28;
   if (maxCount <= 1) return minR + 2;
   return minR + Math.sqrt(count / maxCount) * (maxR - minR);
 }
@@ -32,9 +32,9 @@ function CellTip({ row, cell, open }: { row: SizeRow; cell: SizeCell; open: bool
   );
 }
 
-const ARTBOARD_H = 96;
-const ISO_SCALE = 0.85;
-const INK = "var(--ink)";
+/** Large shared scale for iso drawings (Jaan: double them). */
+const ISO_SCALE = 1.5;
+const INK = "#1a1814";
 const SUBJECT = "var(--subject)";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
@@ -47,124 +47,160 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
     [data.rows]
   );
   const maxRowStalls = useMemo(
-    () => Math.max(1, ...data.rows.map((r) => r.totalStalls)),
-    [data.rows]
+    () => Math.max(1, data.totalStalls, ...data.rows.map((r) => r.totalStalls)),
+    [data.rows, data.totalStalls]
   );
-  const drawColPx = useMemo(() => {
-    const widths = data.isoLayers.map((l) => isoDisplaySize(l.stalls, ISO_SCALE).widthPx);
-    return Math.max(140, ...widths, 0);
-  }, [data.isoLayers]);
 
   const operatorRows = data.rows.filter((r) => !r.isRollup);
   const rollupRows = data.rows.filter((r) => r.isRollup);
 
+  // Column totals (marginal)
+  const colTotals = data.sizeColumns.map((stalls) =>
+    data.rows.reduce((a, r) => a + (r.cells.find((c) => c.stalls === stalls)?.count ?? 0), 0)
+  );
+  const grandSites = data.rows.reduce((a, r) => a + r.totalSites, 0);
+  const grandStalls = data.rows.reduce((a, r) => a + r.totalStalls, 0);
+
   const colCount = data.sizeColumns.length;
-  const gridTemplate = `minmax(10rem, 14rem) repeat(${colCount}, minmax(3.2rem, 1fr)) minmax(3.5rem, 4.5rem) minmax(5rem, 6.5rem)`;
+  const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.6rem, 1fr)) minmax(3.2rem, 4rem) minmax(7rem, 9rem)`;
+
+  function renderBar(totalStalls: number, isFrancis: boolean) {
+    const pct = (totalStalls / maxRowStalls) * 100;
+    return (
+      <div
+        className="size-stall-bar"
+        data-value={totalStalls}
+        data-max={maxRowStalls}
+        data-width-pct={pct.toFixed(2)}
+      >
+        <div className="size-stall-track">
+          <div
+            className={"size-stall-fill" + (isFrancis ? " subject" : "")}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="size-stall-n tnum">{fmtNum(totalStalls)}</span>
+      </div>
+    );
+  }
+
+  function renderRow(row: SizeRow) {
+    const totalCount = row.cells.reduce((a, c) => a + c.count, 0);
+    return (
+      <React.Fragment key={row.key}>
+        <div
+          className={"size-row-label" + (row.isFrancis ? " francis-row" : "") + (row.isRollup ? " rollup" : "")}
+          role="rowheader"
+        >
+          <span className="size-row-name">{row.label}</span>
+          <span className="size-row-meta tnum">
+            {row.totalSites} site{row.totalSites === 1 ? "" : "s"}
+          </span>
+          {row.isRollup && row.operators && row.operators.length > 0 ? (
+            <button
+              type="button"
+              className="size-rollup-toggle"
+              aria-expanded={rollupOpen}
+              onClick={() => setRollupOpen(!rollupOpen)}
+            >
+              {rollupOpen ? "Hide names" : "Show names"}
+            </button>
+          ) : null}
+          {row.isRollup && rollupOpen && row.operators ? (
+            <ul className="size-rollup-list">
+              {row.operators.map((op) => (
+                <li key={op}>{op}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        {row.cells.map((cell) => {
+          const key = `${row.key}::${cell.stalls}`;
+          const r = bubbleRadius(cell.count, maxCell);
+          const isOn = active === key;
+          return (
+            <div
+              key={key}
+              className={"size-cell" + (row.isFrancis ? " francis-cell" : "")}
+              role="cell"
+            >
+              {cell.count > 0 ? (
+                <button
+                  type="button"
+                  className={
+                    "size-bubble size-bubble-silent" +
+                    (row.isFrancis ? " francis" : " ink") +
+                    (isOn ? " on" : "")
+                  }
+                  style={{ width: r * 2, height: r * 2 }}
+                  aria-label={`${row.label}: ${cell.count} with ${cell.stalls} stalls`}
+                  onMouseEnter={() => setActive(key)}
+                  onMouseLeave={() => setActive((cur) => (cur === key ? null : cur))}
+                  onFocus={() => setActive(key)}
+                  onBlur={() => setActive((cur) => (cur === key ? null : cur))}
+                  onClick={() => setActive(isOn ? null : key)}
+                >
+                  <span className="size-bubble-n tnum">{cell.count}</span>
+                </button>
+              ) : (
+                <span className="size-empty" aria-hidden="true">
+                  ·
+                </span>
+              )}
+              <div id={`${uid}-${key}`}>
+                <CellTip row={row} cell={cell} open={isOn} />
+              </div>
+            </div>
+          );
+        })}
+        <div className="size-total-cell num tnum" role="cell">
+          {totalCount}
+        </div>
+        <div className="size-total-cell size-total-stalls" role="cell">
+          {renderBar(row.totalStalls, row.isFrancis)}
+        </div>
+      </React.Fragment>
+    );
+  }
 
   return (
     <div className="size-page">
-      {/* Main visual: isometric posts */}
+      {/* Large iso strip integrated above matrix */}
       <section className="mod size-mod size-mod-iso">
         <header className="mod-head flush-head">
-          <div>
-            <h2 className="section-title">Layouts by stall count</h2>
-          </div>
+          <h2 className="section-title">Layouts</h2>
+          <p className="section-note">
+            One shared scale. Blue posts mark Francis share of that size class (rounded).
+          </p>
         </header>
-        <div className="size-iso size-iso-hero" role="list" aria-label="Open US sites by stall layout">
-          <div className="size-iso-heads label-caps" aria-hidden="true">
-            <span>Stalls</span>
-            <span>Layout</span>
-            <span>Open sites</span>
-            <span>Share</span>
-          </div>
-          <div
-            className="size-iso-rows"
-            style={{ ["--iso-draw-col" as string]: `${drawColPx}px` } as React.CSSProperties}
-          >
-            {data.isoLayers.map((layer) => {
-              const francisShare =
-                layer.sites > 0 ? layer.francisSites / layer.sites : 0;
-              return (
-                <div key={layer.stalls} className="size-iso-row" role="listitem">
-                  <div className="size-iso-num">
-                    <span className="size-iso-n">{layer.stalls}</span>
-                  </div>
-                  <div className="size-iso-artboard" style={{ height: ARTBOARD_H }}>
-                    <StallLayoutIso
-                      stalls={layer.stalls}
-                      color={francisShare >= 0.45 ? SUBJECT : INK}
-                      scale={ISO_SCALE}
-                    />
-                  </div>
-                  <div className="size-iso-sites">
-                    <span className="size-iso-count">
-                      {layer.sitesLabel}
-                      {layer.francisSites > 0
-                        ? ` · ${layer.francisSites} Francis`
-                        : layer.buildersLabel
-                          ? ` · ${layer.buildersLabel}`
-                          : ""}
-                    </span>
-                  </div>
-                  <div className="size-iso-share">
-                    <span className="size-iso-share-n">{layer.pct}%</span>
-                    <span className="size-iso-share-sub">{layer.stallPct}% stalls</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Labelled dumbbell with key */}
-      <section className="mod size-mod">
-        <header className="mod-head flush-head">
-          <div>
-            <h2 className="section-title">Site share and stall share</h2>
-          </div>
-        </header>
-        <div className="dumbbell-key" aria-hidden="true">
-          <span>
-            <i className="dumbbell-swatch site" /> Site share
-          </span>
-          <span>
-            <i className="dumbbell-swatch stall" /> Stall share
-          </span>
-        </div>
-        <div className="slope-chart dumbbell-chart" aria-label="Site share versus stall share">
+        <div className="size-iso-strip" role="list">
           {data.isoLayers.map((layer) => {
-            const left = 4;
-            const right = 96;
-            const xSite = left + (layer.pct / 100) * (right - left);
-            const xStall = left + (layer.stallPct / 100) * (right - left);
+            const subjectPosts =
+              layer.sites > 0
+                ? Math.round((layer.francisSites / layer.sites) * layer.stalls)
+                : 0;
+            const m = isoDisplaySize(layer.stalls, ISO_SCALE);
             return (
-              <div key={layer.stalls} className="slope-row">
-                <span className="slope-label">{layer.stalls}-stall</span>
-                <div className="slope-track">
-                  <div className="slope-line" aria-hidden="true" />
-                  <svg
-                    className="slope-connector"
-                    viewBox="0 0 100 28"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                  >
-                    <line
-                      x1={xSite}
-                      y1={14}
-                      x2={xStall}
-                      y2={14}
-                      stroke="var(--ink)"
-                      strokeWidth="1.5"
-                      opacity="0.4"
-                    />
-                  </svg>
-                  <span className="slope-dot site" style={{ left: `${xSite}%` }} />
-                  <span className="slope-dot stall" style={{ left: `${xStall}%` }} />
+              <div key={layer.stalls} className="size-iso-card" role="listitem">
+                <div className="size-iso-card-head">
+                  <span className="size-iso-n tnum">{layer.stalls}</span>
+                  <span className="size-iso-meta tnum">
+                    {layer.sites} site{layer.sites === 1 ? "" : "s"}
+                    {layer.francisSites > 0 ? `, ${layer.francisSites} Francis` : ""}
+                  </span>
                 </div>
-                <span className="slope-end tnum">
-                  {layer.pct}% / {layer.stallPct}%
-                </span>
+                <div className="size-iso-artboard" style={{ width: m.widthPx, height: m.heightPx }}>
+                  <StallLayoutIso
+                    stalls={layer.stalls}
+                    color={INK}
+                    subjectColor={SUBJECT}
+                    subjectCount={subjectPosts}
+                    scale={ISO_SCALE}
+                  />
+                </div>
+                <div className="size-iso-share tnum">
+                  {layer.pct}% of sites, {layer.stallPct}% of stalls
+                </div>
               </div>
             );
           })}
@@ -173,9 +209,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
 
       <section className="mod size-mod">
         <header className="mod-head flush-head">
-          <div>
-            <h2 className="section-title">Who builds which size</h2>
-          </div>
+          <h2 className="section-title">Who builds which size</h2>
         </header>
         <div className="size-bubble-key" aria-hidden="true">
           <span>
@@ -187,7 +221,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
           <span>
             <i className="key-dot" style={{ width: 28, height: 28 }} /> 8+
           </span>
-          <span>Bubble area ∝ sites in that size</span>
+          <span>Bubble area ∝ sites · stall bars → {fmtNum(maxRowStalls)} max</span>
         </div>
         <div className="size-matrix-scroll">
           <div
@@ -200,7 +234,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               Operator
             </div>
             {data.sizeColumns.map((stalls) => (
-              <div key={stalls} className="size-matrix-colhead" role="columnheader">
+              <div key={stalls} className="size-matrix-colhead tnum" role="columnheader">
                 {stalls}
               </div>
             ))}
@@ -211,133 +245,24 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               Stalls
             </div>
 
-            {operatorRows.map((row) => {
-              const barPct = (row.totalStalls / maxRowStalls) * 100;
-              const totalCount = row.cells.reduce((a, c) => a + c.count, 0);
-              return (
-                <React.Fragment key={row.key}>
-                  <div
-                    className={"size-row-label" + (row.isFrancis ? " francis-row" : "")}
-                    role="rowheader"
-                  >
-                    <span className="size-row-name">{row.label}</span>
-                    <span className="size-row-meta">
-                      {row.totalSites} site{row.totalSites === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  {row.cells.map((cell) => {
-                    const key = `${row.key}::${cell.stalls}`;
-                    const r = bubbleRadius(cell.count, maxCell);
-                    const isOn = active === key;
-                    return (
-                      <div
-                        key={key}
-                        className={"size-cell" + (row.isFrancis ? " francis-cell" : "")}
-                        role="cell"
-                      >
-                        {cell.count > 0 ? (
-                          <button
-                            type="button"
-                            className={
-                              "size-bubble size-bubble-silent" +
-                              (row.isFrancis ? " francis" : " ink") +
-                              (isOn ? " on" : "")
-                            }
-                            style={{ width: r * 2, height: r * 2 }}
-                            aria-label={`${row.label}: ${cell.count} with ${cell.stalls} stalls`}
-                            onMouseEnter={() => setActive(key)}
-                            onMouseLeave={() => setActive((cur) => (cur === key ? null : cur))}
-                            onFocus={() => setActive(key)}
-                            onBlur={() => setActive((cur) => (cur === key ? null : cur))}
-                            onClick={() => setActive(isOn ? null : key)}
-                          >
-                            <span className="size-bubble-n tnum">{cell.count}</span>
-                          </button>
-                        ) : (
-                          <span className="size-empty" aria-hidden="true">
-                            ·
-                          </span>
-                        )}
-                        <div id={`${uid}-${key}`}>
-                          <CellTip row={row} cell={cell} open={isOn} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div className="size-total-cell num" role="cell">
-                    {totalCount}
-                  </div>
-                  <div className="size-total-cell size-total-stalls" role="cell">
-                    <div className="hbar-end">
-                      <div className="hbar-fill flat" style={{ width: `${barPct}%` }} />
-                      <span className="hbar-end-label tnum">{fmtNum(row.totalStalls)}</span>
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })}
+            {operatorRows.map(renderRow)}
+            {rollupRows.map(renderRow)}
 
-            {rollupRows.map((row) => {
-              const barPct = (row.totalStalls / maxRowStalls) * 100;
-              const totalCount = row.cells.reduce((a, c) => a + c.count, 0);
-              return (
-                <React.Fragment key={row.key}>
-                  <div className="size-row-label rollup" role="rowheader">
-                    <span className="size-row-name">{row.label}</span>
-                    <span className="size-row-meta">
-                      {row.totalSites} site{row.totalSites === 1 ? "" : "s"}
-                    </span>
-                    {row.operators && row.operators.length > 0 ? (
-                      <button
-                        type="button"
-                        className="size-rollup-toggle"
-                        aria-expanded={rollupOpen}
-                        onClick={() => setRollupOpen(!rollupOpen)}
-                      >
-                        {rollupOpen ? "Hide names" : "Show names"}
-                      </button>
-                    ) : null}
-                    {rollupOpen && row.operators ? (
-                      <ul className="size-rollup-list">
-                        {row.operators.map((op) => (
-                          <li key={op}>{op}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                  {row.cells.map((cell) => {
-                    const key = `${row.key}::${cell.stalls}`;
-                    const r = bubbleRadius(cell.count, maxCell);
-                    return (
-                      <div key={key} className="size-cell" role="cell">
-                        {cell.count > 0 ? (
-                          <span
-                            className="size-bubble size-bubble-silent ink"
-                            style={{ width: r * 2, height: r * 2 }}
-                            title={`${cell.count} × ${cell.stalls}-stall`}
-                          >
-                            <span className="size-bubble-n tnum">{cell.count}</span>
-                          </span>
-                        ) : (
-                          <span className="size-empty" aria-hidden="true">
-                            ·
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <div className="size-total-cell num" role="cell">
-                    {totalCount}
-                  </div>
-                  <div className="size-total-cell size-total-stalls" role="cell">
-                    <div className="hbar-end">
-                      <div className="hbar-fill flat" style={{ width: `${barPct}%` }} />
-                      <span className="hbar-end-label tnum">{fmtNum(row.totalStalls)}</span>
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })}
+            {/* Marginal totals */}
+            <div className="size-row-label size-margin-label" role="rowheader">
+              <span className="size-row-name">Total</span>
+            </div>
+            {colTotals.map((n, i) => (
+              <div key={data.sizeColumns[i]} className="size-cell size-margin-cell tnum" role="cell">
+                {n > 0 ? n : "·"}
+              </div>
+            ))}
+            <div className="size-total-cell num tnum size-margin-cell" role="cell">
+              {grandSites}
+            </div>
+            <div className="size-total-cell size-total-stalls size-margin-cell" role="cell">
+              {renderBar(data.totalStalls || grandStalls, false)}
+            </div>
           </div>
         </div>
       </section>

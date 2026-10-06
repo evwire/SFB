@@ -32,10 +32,8 @@ export default async function SizePage() {
         <div className="g12 size-front">
           <div className="g12-span-full lead-compact">
             <h1 className="lead-h1">{overview.story.headline}</h1>
-            <p className="meta-line mono lead-meta">
-              Data as of {pulled}
-              <span className="lead-evgo"> · {overview.story.subline}</span>
-            </p>
+            <p className="meta-line mono lead-meta lead-asof">Data as of {pulled}</p>
+            <p className="lead-standfirst">{overview.story.subline}</p>
           </div>
           <div className="g12-span-full">
             <SiteSizeOverview data={overview} />

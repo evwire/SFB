@@ -28,6 +28,7 @@ export default function MapExplorer({
   showCoverage: showCoverageProp,
   onShowCoverageChange,
   splitOklahoma = false,
+  newOpenIds = [],
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -50,6 +51,7 @@ export default function MapExplorer({
   onShowCoverageChange?: (v: boolean) => void;
   /** Side-by-side Oklahoma zoom panel (US only). */
   splitOklahoma?: boolean;
+  newOpenIds?: string[];
 }) {
   const [showCoverageLocal, setShowCoverageLocal] = useState(false);
   const showCoverage = showCoverageProp ?? showCoverageLocal;
@@ -59,6 +61,12 @@ export default function MapExplorer({
     else setShowCoverageLocal(next);
   };
   const [showHeavy, setShowHeavy] = useState(false);
+  const newSet = useMemo(() => new Set(newOpenIds), [newOpenIds]);
+  const isNewSite = (s: Site) => {
+    const fromUrl = s.sourceUrl.match(/supercharger\/(\d+)/i);
+    const key = fromUrl ? fromUrl[1]! : s.slug;
+    return newSet.has(key);
+  };
   const [operator, setOperator] = useState<string>("All operators");
   const highlightOperator =
     operator !== "All operators" ? operator : defaultHighlightOperator;
@@ -501,18 +509,22 @@ export default function MapExplorer({
             {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
           </span>
           <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
-            <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
-            4
-            <span className="legend-size-dot" style={{ width: 16, height: 16 }} aria-hidden="true" />
-            8
-            <span className="legend-size-dot" style={{ width: 22, height: 22 }} aria-hidden="true" />
-            12+
+            {([4, 6, 8, 12, 20] as const).map((n) => (
+              <span key={n} className="legend-size-step">
+                <span
+                  className="legend-size-dot"
+                  style={{ width: 6 + n * 0.55, height: 6 + n * 0.55 }}
+                  aria-hidden="true"
+                />
+                {n}
+              </span>
+            ))}
           </span>
-          <div className="map-tools map-tools-inline" aria-label="Map zoom controls">
-            <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
-            <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
-            <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
-          </div>
+        </div>
+        <div className="map-tools map-tools-corner" aria-label="Map zoom controls">
+          <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
+          <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
+          <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
         </div>
         <svg
           ref={svgRef}
@@ -553,7 +565,7 @@ export default function MapExplorer({
               const isHighlight =
                 Boolean(highlightOperator) &&
                 (s.operator ?? "Brand not stated") === highlightOperator;
-              const pinColor = isHighlight ? "var(--subject)" : "var(--dot-muted)";
+              const pinColor = isHighlight ? "var(--subject)" : "var(--dot-other)";
               const r = pinRadius(s.stalls);
               const isArea = s.coordPrecision === "Area-Only";
               const on = selected?.slug === s.slug;
@@ -582,6 +594,13 @@ export default function MapExplorer({
                       style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.1, opacity: 0.75 }}
                     />
                   )}
+                  {isNewSite(s) && (
+                    <circle
+                      className="new-ring"
+                      r={r + 3.4}
+                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.4, strokeDasharray: "2.5 1.5" }}
+                    />
+                  )}
                   {ring ? (
                     <>
                       <circle className="hit" r={r + 2} />
@@ -598,7 +617,7 @@ export default function MapExplorer({
                           : showCoverage && covered
                             ? { fill: "var(--ink)", stroke: "var(--paper)", strokeWidth: 1.25, opacity: 0.9 }
                             : {
-                                fill: "var(--dot-warm)",
+                                fill: "var(--dot-other)",
                                 stroke: "var(--paper)",
                                 strokeWidth: 1.25,
                                 opacity: showCoverage ? 0.35 : 0.92,
@@ -667,7 +686,7 @@ export default function MapExplorer({
                             cy={s.y!}
                             r={rr}
                             style={{
-                              fill: isHl ? "var(--subject)" : "var(--dot-muted)",
+                              fill: isHl ? "var(--subject)" : "var(--dot-other)",
                               stroke: "none",
                               opacity: isHl ? 1 : 0.55,
                             }}
@@ -694,7 +713,7 @@ export default function MapExplorer({
               {highlightOperator ?? "Highlighted operator"}
             </span>
             <span className="legend-chip">
-              <span className="legend-swatch solid" style={{ background: "var(--dot-muted)", opacity: 0.6 }} aria-hidden="true" />
+              <span className="legend-swatch solid" style={{ background: "var(--dot-other)", opacity: 0.6 }} aria-hidden="true" />
               Other operators
             </span>
             {phase !== "open" || upcomingStyle ? (
@@ -731,28 +750,21 @@ export default function MapExplorer({
             </span>
           </h3>
           {(() => {
-            const francisPts = okDetail.points
-              .filter((s) => /francis energy/i.test(s.operator ?? ""))
-              .sort((a, b) => (a.city ?? a.name).localeCompare(b.city ?? b.name));
-            const otherPts = okDetail.points.filter(
-              (s) => !/francis energy/i.test(s.operator ?? "")
-            );
-            const listed = francisPts.slice(0, 12);
-            // Project into panel coords with simple collide separation
+            const all = [...okDetail.points].sort((a, b) => (a.x ?? 0) - (b.x ?? 0) || (a.city ?? a.name).localeCompare(b.city ?? b.name));
             const span = Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY, 1);
             const scale = 240 / span;
             const cx0 = (okDetail.minX + okDetail.maxX) / 2;
             const cy0 = (okDetail.minY + okDetail.maxY) / 2;
-            type Pt = { s: (typeof okDetail.points)[0]; i: number; x: number; y: number; r: number };
-            const projected: Pt[] = listed.map((s, i) => ({
+            type Pt = { s: (typeof okDetail.points)[0]; i: number; x: number; y: number; r: number; francis: boolean };
+            const projected: Pt[] = all.map((s, i) => ({
               s,
               i: i + 1,
               x: 160 + (s.x! - cx0) * scale,
-              y: 130 + (s.y! - cy0) * scale,
-              r: Math.max(5, Math.min(9, (s.stalls ?? 4) * 0.7)),
+              y: 125 + (s.y! - cy0) * scale,
+              r: Math.max(5, Math.min(9, (s.stalls ?? 4) * 0.65)),
+              francis: /francis energy/i.test(s.operator ?? ""),
             }));
-            // Force-separate overlapping dots
-            for (let pass = 0; pass < 8; pass++) {
+            for (let pass = 0; pass < 10; pass++) {
               for (let a = 0; a < projected.length; a++) {
                 for (let b = a + 1; b < projected.length; b++) {
                   const A = projected[a]!;
@@ -760,7 +772,7 @@ export default function MapExplorer({
                   let dx = B.x - A.x;
                   let dy = B.y - A.y;
                   let dist = Math.hypot(dx, dy) || 0.01;
-                  const minD = A.r + B.r + 3;
+                  const minD = A.r + B.r + 2.5;
                   if (dist < minD) {
                     const push = (minD - dist) / 2;
                     dx /= dist;
@@ -775,8 +787,8 @@ export default function MapExplorer({
             }
             return (
               <>
-                <svg viewBox="0 0 320 260" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites">
-                  <rect x="0" y="0" width="320" height="260" className="ok-zoom-bg" />
+                <svg viewBox="0 0 320 250" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites west to east">
+                  <rect x="0" y="0" width="320" height="250" className="ok-zoom-bg" />
                   <g>
                     {visibleShapes
                       .filter((st) => st.abbr === "OK")
@@ -785,26 +797,21 @@ export default function MapExplorer({
                           key={`okz-${st.abbr}`}
                           d={st.d}
                           className="state has"
-                          transform={`translate(160 130) scale(${scale.toFixed(4)}) translate(${(-cx0).toFixed(2)} ${(-cy0).toFixed(2)})`}
+                          transform={`translate(160 125) scale(${scale.toFixed(4)}) translate(${(-cx0).toFixed(2)} ${(-cy0).toFixed(2)})`}
                         />
                       ))}
                   </g>
-                  {otherPts.map((s) => {
-                    const x = 160 + (s.x! - cx0) * scale;
-                    const y = 130 + (s.y! - cy0) * scale;
-                    return (
-                      <circle
-                        key={`oko-${s.slug}`}
-                        cx={x}
-                        cy={y}
-                        r={4}
-                        className="ok-zoom-other"
-                      />
-                    );
-                  })}
                   {projected.map((p) => (
                     <g key={`okzp-${p.s.slug}`}>
-                      <circle cx={p.x} cy={p.y} r={p.r} className="ok-zoom-dot" />
+                      {isNewSite(p.s) ? (
+                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" />
+                      ) : null}
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={p.r}
+                        className={p.francis ? "ok-zoom-dot" : "ok-zoom-other"}
+                      />
                       <text
                         x={p.x}
                         y={p.y}
@@ -814,28 +821,24 @@ export default function MapExplorer({
                       >
                         {p.i}
                       </text>
-                      <title>{`${p.i}. ${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}`}</title>
+                      <title>{`${p.i}. ${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}${isNewSite(p.s) ? " · New" : ""}`}</title>
                     </g>
                   ))}
                 </svg>
-                <ol className="ok-zoom-list">
-                  {listed.map((s) => (
-                    <li key={s.slug}>
-                      {s.city ?? s.name}
-                      {s.stalls != null ? <span className="dim"> · {s.stalls}</span> : null}
+                <ol className="ok-zoom-list ok-zoom-list-full">
+                  {projected.map((p) => (
+                    <li key={p.s.slug}>
+                      {p.s.city ?? p.s.name}
+                      {p.s.stalls != null ? <span className="dim"> · {p.s.stalls}</span> : null}
+                      {isNewSite(p.s) ? <span className="badge-new">New</span> : null}
                     </li>
                   ))}
                 </ol>
-                {francisPts.length > 12 ? (
-                  <p className="ok-zoom-more dim">+{francisPts.length - 12} more Francis</p>
-                ) : null}
               </>
             );
           })()}
         </aside>
       ) : null}
-
-
 
       </div>
 

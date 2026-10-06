@@ -190,7 +190,7 @@ function buildStory(
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
   const subline = slopeInsight
-    ? "Site share versus stall share by size class. Post drawings below share one scale."
+    ? "Post drawings share one scale; blue marks Francis share where the count is honest."
     : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;

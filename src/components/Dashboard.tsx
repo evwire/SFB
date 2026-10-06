@@ -25,12 +25,10 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
   ).sort((a, b) => b.sites - a.sites || b.stalls - a.stalls || a.operator.localeCompare(b.operator));
 }
 
-function pct(n: number, d: number): number {
-  if (d <= 0) return 0;
-  return Math.round((n / d) * 1000) / 10;
-}
-
-/** Named operators: site share vs stall share as flat end-labelled bars; one grey long-tail. */
+/**
+ * One dense slope/dumbbell: site share vs stall share, scaled to the max
+ * share (not 0–100), one colour per operator (Francis = subject blue).
+ */
 export function OperatorRank({
   sites,
   phase = "open",
@@ -47,69 +45,71 @@ export function OperatorRank({
   const singleSites = singles.reduce((a, r) => a + r.sites, 0);
   const singleStalls = singles.reduce((a, r) => a + r.stalls, 0);
 
+  type Pair = { key: string; label: string; sitePct: number; stallPct: number; isFrancis: boolean };
+  const pairs: Pair[] = [
+    ...named.map((o) => ({
+      key: o.operator,
+      label: o.operator,
+      sitePct: (o.sites / totalSites) * 100,
+      stallPct: (o.stalls / totalStalls) * 100,
+      isFrancis: o.isFrancis,
+    })),
+  ];
+  if (singles.length > 0) {
+    pairs.push({
+      key: "__singles__",
+      label: `${singles.length} single-site operators`,
+      sitePct: (singleSites / totalSites) * 100,
+      stallPct: (singleStalls / totalStalls) * 100,
+      isFrancis: false,
+    });
+  }
+
+  const maxPct = Math.max(...pairs.flatMap((p) => [p.sitePct, p.stallPct]), 1);
+
   return (
-    <aside className="op-chart" aria-label="Operators by site and stall share">
-      <ul className="slope-list">
-        {named.map((o) => {
-          const sitePct = pct(o.sites, totalSites);
-          const stallPct = pct(o.stalls, totalStalls);
+    <aside className="op-chart op-pairs" aria-label="Operators by site and stall share">
+      <div className="op-pair-key" aria-hidden="true">
+        <span>
+          <i className="op-dot site" /> Sites
+        </span>
+        <span>
+          <i className="op-dot stall" /> Stalls
+        </span>
+        <span className="op-pair-scale">Scale → {maxPct.toFixed(1)}%</span>
+      </div>
+      <ul className="op-pair-list">
+        {pairs.map((p) => {
+          const left = (p.sitePct / maxPct) * 100;
+          const right = (p.stallPct / maxPct) * 100;
           return (
-            <li key={o.operator} className={"slope-op" + (o.isFrancis ? " is-subject" : "")}>
-              <div className="slope-op-name">{o.operator}</div>
-              <div className="paired-bars" aria-label={`${sitePct}% sites, ${stallPct}% stalls`}>
-                <div className="paired-row">
-                  <span className="paired-label">Sites</span>
-                  <div className="paired-track">
-                    <div
-                      className={"paired-fill" + (o.isFrancis ? " subject" : "")}
-                      style={{ width: `${Math.max(sitePct, 0.5)}%` }}
-                    />
-                  </div>
-                  <span className="paired-end tnum">{sitePct}%</span>
-                </div>
-                <div className="paired-row">
-                  <span className="paired-label">Stalls</span>
-                  <div className="paired-track">
-                    <div
-                      className={"paired-fill muted" + (o.isFrancis ? " subject" : "")}
-                      style={{ width: `${Math.max(stallPct, 0.5)}%` }}
-                    />
-                  </div>
-                  <span className="paired-end tnum">{stallPct}%</span>
-                </div>
+            <li key={p.key} className={"op-pair-row" + (p.isFrancis ? " is-subject" : "")}>
+              <span className="op-pair-name">{p.label}</span>
+              <div
+                className="op-pair-track"
+                data-site-pct={p.sitePct.toFixed(2)}
+                data-stall-pct={p.stallPct.toFixed(2)}
+                data-site-width={left.toFixed(2)}
+                data-stall-width={right.toFixed(2)}
+              >
+                <span className="op-pair-rule" aria-hidden="true" />
+                <span
+                  className={"op-dot site" + (p.isFrancis ? " subject" : "")}
+                  style={{ left: `${left}%` }}
+                  title={`${p.sitePct.toFixed(1)}% of sites`}
+                />
+                <span
+                  className={"op-dot stall" + (p.isFrancis ? " subject" : "")}
+                  style={{ left: `${right}%` }}
+                  title={`${p.stallPct.toFixed(1)}% of stalls`}
+                />
               </div>
+              <span className="op-pair-end tnum">
+                {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
+              </span>
             </li>
           );
         })}
-        {singles.length > 0 ? (
-          <li className="slope-op long-tail">
-            <div className="slope-op-name">
-              {singles.length} single-site operators
-            </div>
-            <div className="paired-bars">
-              <div className="paired-row">
-                <span className="paired-label">Sites</span>
-                <div className="paired-track">
-                  <div
-                    className="paired-fill tail"
-                    style={{ width: `${Math.max(pct(singleSites, totalSites), 0.5)}%` }}
-                  />
-                </div>
-                <span className="paired-end tnum">{pct(singleSites, totalSites)}%</span>
-              </div>
-              <div className="paired-row">
-                <span className="paired-label">Stalls</span>
-                <div className="paired-track">
-                  <div
-                    className="paired-fill tail muted"
-                    style={{ width: `${Math.max(pct(singleStalls, totalStalls), 0.5)}%` }}
-                  />
-                </div>
-                <span className="paired-end tnum">{pct(singleStalls, totalStalls)}%</span>
-              </div>
-            </div>
-          </li>
-        ) : null}
       </ul>
     </aside>
   );
@@ -154,7 +154,6 @@ export default function Dashboard({
     .sort((a, b) => b.avg - a.avg || b.sites - a.sites || a.state.localeCompare(b.state));
 
   const maxAvg = Math.max(...byState.map((o) => o.avg), 1);
-  // Nice axis: ceil to 0.5 steps so ticks are honest (0, mid, max)
   const axisMax = Math.ceil(maxAvg * 2) / 2;
   const maxSites = Math.max(...byState.map((o) => o.sites), 1);
   const ca = byState.find((s) => s.state === "CA");
@@ -165,15 +164,14 @@ export default function Dashboard({
   const singles = byState.filter((s) => s.sites === 1);
   const multi = byState.filter((s) => s.sites > 1);
   const singleAvg =
-    singles.length > 0
-      ? singles.reduce((a, s) => a + s.avg, 0) / singles.length
-      : 0;
+    singles.length > 0 ? singles.reduce((a, s) => a + s.avg, 0) / singles.length : 0;
 
   return (
     <div className="dash-dotplot">
       {ratio != null && ca && ok ? (
         <p className="insight-callout">
-          California averages {ca.avg.toFixed(1)} stalls per site; Oklahoma {ok.avg.toFixed(1)} ({ratio}×).
+          California averages {ca.avg.toFixed(1)} stalls per site; Oklahoma {ok.avg.toFixed(1)} (
+          {ratio}×).
         </p>
       ) : null}
       <div className="dotplot" role="img" aria-label="Stalls per site by state">
