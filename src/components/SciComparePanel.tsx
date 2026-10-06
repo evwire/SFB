@@ -8,6 +8,7 @@ export default function SciComparePanel({
   liveUpcomingUc,
   liveUpcomingInDev,
   livePulled,
+  hideTitle = false,
 }: {
   compare: SciCompare;
   region: Region;
@@ -16,6 +17,7 @@ export default function SciComparePanel({
   liveUpcomingUc?: number;
   liveUpcomingInDev?: number;
   livePulled: string;
+  hideTitle?: boolean;
 }) {
   const row = compare.regions[region];
   const regionLabel = region === "europe" ? "Europe" : "United States";
@@ -25,7 +27,7 @@ export default function SciComparePanel({
 
   return (
     <section id="compare" className="sci-compare">
-      <h2 className="section-title">Data check</h2>
+      {hideTitle ? null : <h2 className="section-title">Data check</h2>}
       <p className="section-note">{regionLabel}: Tesla Find Us vs Supercharge.info</p>
 
       <table className="sci-table sci-table-2x2">

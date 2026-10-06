@@ -63,11 +63,16 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
 
   return (
     <div className="size-page">
-      <section className="size-matrix-hero">
-        <h2 className="section-title">Site share → stall share</h2>
-        <p className="section-note" style={{ marginBottom: 8 }}>
-          Each size class as a slope from how common the site is to how much capacity it holds.
-        </p>
+      <section className="mod size-mod">
+        <header className="mod-head">
+          <span className="mod-num" aria-hidden="true">01</span>
+          <div>
+            <h2 className="section-title">Site share → stall share</h2>
+            <p className="section-note">
+              Each size class as a slope from how common the site is to how much capacity it holds.
+            </p>
+          </div>
+        </header>
         <div className="slope-chart" aria-label="Share of sites versus share of stalls">
           <div className="slope-heads">
             <span>Size</span>
@@ -119,9 +124,16 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
           })}
         </div>
 
-        <h2 className="section-title" style={{ marginTop: 28 }}>
-          Who builds which size
-        </h2>
+      </section>
+
+      <section className="mod size-mod">
+        <header className="mod-head">
+          <span className="mod-num" aria-hidden="true">02</span>
+          <div>
+            <h2 className="section-title">Who builds which size</h2>
+            <p className="section-note">Named operators first; single-site builders aggregated below.</p>
+          </div>
+        </header>
         <div className="size-matrix-scroll">
           <div
             className="size-matrix"
@@ -259,12 +271,17 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         ) : null}
       </section>
 
-      <section className="size-answer">
-        <h2 className="section-title">Layouts</h2>
-        <p className="size-iso-caption">
-          Each block is one charger post — the same pictogram used for counts on the map page. Same
-          scale in every row.
-        </p>
+      <section className="mod size-mod">
+        <header className="mod-head">
+          <span className="mod-num" aria-hidden="true">03</span>
+          <div>
+            <h2 className="section-title">Layouts</h2>
+            <p className="section-note size-iso-caption">
+              Each block is one charger post — the same pictogram used for counts on the map page. Same
+              scale in every row.
+            </p>
+          </div>
+        </header>
         <div className="size-iso size-iso-compact" role="list" aria-label="Open US sites by stall layout">
           <div className="size-iso-heads label-caps" aria-hidden="true">
             <span>Stalls</span>
