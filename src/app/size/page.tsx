@@ -25,14 +25,6 @@ export default async function SizePage() {
     }
   );
   const pulled = fmtTallinnStamp(us.generated);
-  const singles4 = overview.rows.find((r) => r.isRollup)?.totalSites ?? 0;
-  const byOp = new Map<string, number>();
-  for (const s of us.sites) {
-    if (s.siteClass && s.siteClass !== "SfB") continue;
-    const k = s.operator?.trim() || "Brand not stated";
-    byOp.set(k, (byOp.get(k) ?? 0) + 1);
-  }
-  const singleSiteOps = [...byOp.values()].filter((n) => n === 1).length;
 
   return (
     <>
@@ -62,11 +54,6 @@ export default async function SizePage() {
           <p className="eyebrow">Tesla Supercharger for Business · United States · site size</p>
           <h1 className="size-h1">{overview.story.headline}</h1>
           <p className="lede lede-prose">{overview.story.subline}</p>
-          {singles4 > 0 ? (
-            <p className="lede lede-prose size-singles-note">
-              {singleSiteOps} operators run one site each; {singles4} of them are 4-stall only.
-            </p>
-          ) : null}
           <p className="meta-line mono">Data as of {pulled}</p>
         </section>
 

@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
     "d3-geo": "^3.1.1",
     "next": "^14.2.35",

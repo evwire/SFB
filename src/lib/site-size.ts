@@ -144,11 +144,24 @@ function buildStory(
   const sharesEqual =
     four && eight && Math.abs(fourShare - eightShare) < 0.005 && fourShare > 0.3;
 
-  const headline = sharesEqual
-    ? `4-stall and 8-stall sites hold the same share of stalls: ${Math.round(fourShare * 1000) / 10}% each.`
-    : dominant
-      ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
-      : `${total} open US sites with a stall count.`;
+  const singleOps = [...byOp.values()].filter((b) => b.sites.length === 1);
+  const singlesMin = singleOps.filter((b) => {
+    const st = b.sites[0]?.stalls;
+    return st === 4;
+  });
+  const slopeInsight =
+    four && eight
+      ? `4-stall sites are ${four.pct}% of the network but only ${Math.round(fourShare * 1000) / 10}% of stalls; 8-stall sites flip that (${eight.pct}% of sites → ${Math.round(eightShare * 1000) / 10}% of stalls).`
+      : null;
+
+  const headline =
+    singlesMin.length > 0 && singleOps.length > 0
+      ? `${singlesMin.length} of ${singleOps.length} single-site operators built the minimum.`
+      : slopeInsight
+        ? slopeInsight
+        : dominant
+          ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
+          : `${total} open US sites with a stall count.`;
 
   type Bigger = { operator: string; stalls: number[]; max: number; sites: number; median: number };
   const bigger: Bigger[] = [];
@@ -176,8 +189,8 @@ function buildStory(
     const label = shortOperatorName(b.operator);
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
-  const subline = sharesEqual
-    ? "Forty small sites and twenty mid-size sites land on the same total capacity — so stall share, not site count, is the better read of who built what."
+  const subline = slopeInsight
+    ? "Follow the slope: site share on the left, stall share on the right. The post drawings below are the same scale in every row."
     : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;

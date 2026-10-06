@@ -90,7 +90,8 @@ export function fmtDate(iso: string | null): string {
   const day = parts.find((p) => p.type === "day")?.value ?? "";
   const mon = parts.find((p) => p.type === "month")?.value ?? "";
   const year = parts.find((p) => p.type === "year")?.value ?? "";
-  return `${day} ${mon} ${year}`;
+  const monShort = mon === "Sept" ? "Sep" : mon;
+  return `${day} ${monShort} ${year}`;
 }
 
 export function fmtNum(n: number): string {

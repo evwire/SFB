@@ -142,6 +142,7 @@ export default function RegionApp({
 }: Props) {
   const [region, setRegion] = useState<Region>("us");
   const [phase, setPhase] = useState<SitePhase>("open");
+  const [showCoverage, setShowCoverage] = useState(false);
 
   const openData = region === "europe" ? europe : us;
   const upcomingData = region === "europe" ? europeUpcoming : usUpcoming;
@@ -194,7 +195,7 @@ export default function RegionApp({
     region === "us" && phase === "open" && snapshotDelta.openUsDelta !== 0
       ? {
           value: `${snapshotDelta.openUsDelta > 0 ? "+" : ""}${snapshotDelta.openUsDelta}`,
-          label: `open sites since last snapshot`,
+          label: "Open sites since last snapshot",
           note: `${snapshotDelta.openUsBaseline} → ${snapshotDelta.openUsFresh}`,
         }
       : region === "us" && phase === "upcoming" && snapshotDelta.upcomingUsDelta !== 0
@@ -238,11 +239,20 @@ export default function RegionApp({
         <section className="hero hero-thesis rise">
           <div className="hero-thesis-grid">
             <div className="hero-thesis-copy">
+              <p className="hero-kicker eyebrow">
+                Tesla Supercharger for Business · {region === "europe" ? "Europe" : "US"} · updated
+                weekly
+              </p>
               <div className="hero-headline-row">
-                <h1 className="thesis-h1">{h1}</h1>
+                <div>
+                  <h1 className="thesis-h1">{h1}</h1>
+                  {region === "us" && phase === "open" ? (
+                    <p className="hero-evgo">EVgo sites are not on this map or in these counts.</p>
+                  ) : null}
+                </div>
                 {kpi ? (
                   <div className="hero-kpi" aria-label="Change since last snapshot">
-                    <span className="hero-kpi-n mono">{kpi.value}</span>
+                    <span className="hero-kpi-n">{kpi.value}</span>
                     <span className="hero-kpi-l">{kpi.label}</span>
                     <span className="hero-kpi-note mono">{kpi.note}</span>
                   </div>
@@ -281,6 +291,8 @@ export default function RegionApp({
                 euOpenCount={europe.sites.filter((s) => s.siteClass === "SfB").length}
                 euUpcomingCount={europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
                 defaultHighlightOperator={defaultHighlight}
+                showCoverage={showCoverage}
+                onShowCoverageChange={setShowCoverage}
               />
             </div>
             {!isUpcoming ? (
@@ -294,7 +306,7 @@ export default function RegionApp({
         <section id="dashboard">
           <h2 className="section-title">
             {region === "us" && phase === "open"
-              ? "Oklahoma has more open sites than Texas, California and Florida combined"
+              ? "California sites average more than twice Oklahoma’s stalls per site"
               : "Where the sites are"}
           </h2>
           <Dashboard
@@ -342,13 +354,15 @@ export default function RegionApp({
             sites={sites}
             areaNoun={areaNoun}
             upcoming={isUpcoming || isBoth}
-            showStatus
+            showStatus={phase !== "open"}
+            groupByOperator
+            highlightCovered={showCoverage}
           />
         </section>
 
         <section id="news">
           <h2 className="section-title">Latest coverage</h2>
-          <Feed items={feed.items} />
+          <Feed items={feed.items} sites={sites} />
         </section>
 
         <footer className="foot">

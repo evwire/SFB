@@ -46,9 +46,9 @@ export default function SciComparePanel({
         <tbody>
           <tr>
             <th scope="row">Open</th>
-            <td className="num mono">{liveOpen}</td>
-            <td className="num mono">{row.sci_open}</td>
-            <td className="num mono sci-diff">{fmtDiff(openDiff)}</td>
+            <td className="num">{liveOpen}</td>
+            <td className="num">{row.sci_open}</td>
+            <td className="num sci-diff">{fmtDiff(openDiff)}</td>
           </tr>
           <tr>
             <th scope="row">
@@ -58,17 +58,20 @@ export default function SciComparePanel({
                 {(liveUpcomingInDev ?? row.tesla_upcoming_in_dev)} in development
               </span>
             </th>
-            <td className="num mono">{liveUpcoming}</td>
-            <td className="num mono">{row.sci_upcoming}</td>
-            <td className="num mono sci-diff">{fmtDiff(upDiff)}</td>
+            <td className="num">{liveUpcoming}</td>
+            <td className="num">{row.sci_upcoming}</td>
+            <td className="num sci-diff">{fmtDiff(upDiff)}</td>
           </tr>
         </tbody>
       </table>
 
-      <p className="sci-method">
-        Tesla column is live ({livePulled}). Supercharge.info uses name-bracket counts from{" "}
-        {compare.snapshot_label}. Difference is Tesla minus SCI. {compare.why_they_differ}
-      </p>
+      <details className="sci-method-details">
+        <summary>How these counts are built</summary>
+        <p className="sci-method">
+          Tesla column is live ({livePulled}). Supercharge.info uses name-bracket counts from{" "}
+          {compare.snapshot_label}. Difference is Tesla minus SCI. {compare.why_they_differ}
+        </p>
+      </details>
     </section>
   );
 }

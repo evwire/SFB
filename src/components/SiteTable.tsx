@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "location" | "operator" | "stalls" | "status" | "state";
+type SortKey = "location" | "operator" | "stalls" | "status";
 
-const DEFAULT_VISIBLE = 15;
+const DEFAULT_VISIBLE = 20;
 
 function francisFirst(a: string, b: string): number {
   const af = /francis energy/i.test(a);
@@ -16,21 +16,35 @@ function francisFirst(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
+function nameIncludesState(s: Site): boolean {
+  if (!s.state) return false;
+  return s.name.includes(`, ${s.state}`) || s.name.endsWith(` ${s.state}`);
+}
+
 export default function SiteTable({
   sites,
-  areaNoun = "states",
   upcoming = false,
   showStatus = true,
+  groupByOperator = false,
+  highlightCovered = false,
 }: {
   sites: Site[];
   areaNoun?: string;
   upcoming?: boolean;
   showStatus?: boolean;
+  groupByOperator?: boolean;
+  /** When EVwire coverage is on, badge covered rows. */
+  highlightCovered?: boolean;
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>("operator");
+  const [sortKey, setSortKey] = useState<SortKey>(groupByOperator ? "operator" : "operator");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expanded, setExpanded] = useState(false);
   const [q, setQ] = useState("");
+
+  const showStateCol = useMemo(() => {
+    // Drop State when every visible name already carries the state abbr.
+    return !sites.every(nameIncludesState);
+  }, [sites]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -60,8 +74,6 @@ export default function SiteTable({
           return cmpNum(a.stalls, b.stalls);
         case "status":
           return cmpStr(a.status, b.status);
-        case "state":
-          return cmpStr(a.state ?? "", b.state ?? "");
         case "location":
         default: {
           const s = (a.state ?? "").localeCompare(b.state ?? "");
@@ -75,6 +87,19 @@ export default function SiteTable({
 
   const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
   const hidden = Math.max(0, rows.length - DEFAULT_VISIBLE);
+
+  // Group visible rows by operator for sub-headers
+  const groups = useMemo(() => {
+    if (!groupByOperator) return [{ op: null as string | null, sites: visible }];
+    const out: { op: string; sites: Site[] }[] = [];
+    for (const s of visible) {
+      const op = s.operator ?? "Brand not stated";
+      const last = out[out.length - 1];
+      if (last && last.op === op) last.sites.push(s);
+      else out.push({ op, sites: [s] });
+    }
+    return out;
+  }, [visible, groupByOperator]);
 
   function onSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -105,6 +130,8 @@ export default function SiteTable({
     );
   }
 
+  const colSpan = 2 + (showStateCol ? 1 : 0) + (showStatus ? 1 : 0);
+
   return (
     <div className="table-wrap table-wrap-open">
       <div className="table-tools">
@@ -123,43 +150,49 @@ export default function SiteTable({
         <thead>
           <tr>
             {th("location", "Site")}
-            {th("operator", "Operator")}
             {th("stalls", "Stalls", "right")}
-            {th("state", "State")}
+            {showStateCol ? th("location", "State") : null}
             {showStatus ? th("status", "Status") : null}
           </tr>
         </thead>
         <tbody>
-          {visible.map((s) => {
-            const st = STATUS_STYLE[s.status];
-            const place = s.city ? `${s.city}, ${s.state}` : null;
-            const nameHasCity = s.city ? s.name.includes(s.city) : false;
-            return (
-              <tr key={s.slug}>
-                <th scope="row">
-                  <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
-                    {s.name}
-                  </a>
-                  {!nameHasCity && place ? <span className="cell-sub">{place}</span> : null}
-                </th>
-                <td>
-                  {s.operator ?? (
-                    <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>
-                  )}
-                </td>
-                <td className="mono num">{s.stalls ?? <span className="dim">n/s</span>}</td>
-                <td className="mono">{s.state}</td>
-                {showStatus ? (
-                  <td>
-                    <span aria-hidden="true" style={{ color: st.color }}>
-                      {st.glyph}
-                    </span>{" "}
-                    {st.label}
-                  </td>
-                ) : null}
-              </tr>
-            );
-          })}
+          {groups.map((g) => (
+            <Fragment key={g.op ?? "all"}>
+              {g.op ? (
+                <tr className="op-group-row">
+                  <th scope="colgroup" colSpan={colSpan}>
+                    {g.op}
+                  </th>
+                </tr>
+              ) : null}
+              {g.sites.map((s) => {
+                const st = STATUS_STYLE[s.status];
+                const covered = Boolean(s.articles?.length);
+                return (
+                  <tr key={s.slug} id={`site-${s.slug}`}>
+                    <th scope="row">
+                      <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
+                        {s.name}
+                      </a>
+                      {highlightCovered && covered ? (
+                        <span className="badge-covered">EVwire</span>
+                      ) : null}
+                    </th>
+                    <td className="num">{s.stalls ?? <span className="dim">n/s</span>}</td>
+                    {showStateCol ? <td>{s.state}</td> : null}
+                    {showStatus ? (
+                      <td>
+                        <span aria-hidden="true" style={{ color: st.color }}>
+                          {st.glyph}
+                        </span>{" "}
+                        {st.label}
+                      </td>
+                    ) : null}
+                  </tr>
+                );
+              })}
+            </Fragment>
+          ))}
         </tbody>
       </table>
       {hidden > 0 || expanded ? (
