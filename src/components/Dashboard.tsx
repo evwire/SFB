@@ -30,7 +30,7 @@ function pct(n: number, d: number): number {
   return Math.round((n / d) * 1000) / 10;
 }
 
-/** Named operators: site share vs stall share as paired end-labelled bars; one grey long-tail. */
+/** Named operators: site share vs stall share as flat end-labelled bars; one grey long-tail. */
 export function OperatorRank({
   sites,
   phase = "open",
@@ -46,15 +46,9 @@ export function OperatorRank({
   const singles = rows.filter((r) => r.sites === 1);
   const singleSites = singles.reduce((a, r) => a + r.sites, 0);
   const singleStalls = singles.reduce((a, r) => a + r.stalls, 0);
-  const francis = rows.find((r) => r.isFrancis);
-  const insight =
-    francis != null
-      ? `${francis.operator} is ${pct(francis.sites, totalSites)}% of sites but ${pct(francis.stalls, totalStalls)}% of stalls — it builds small.`
-      : null;
 
   return (
     <aside className="op-chart" aria-label="Operators by site and stall share">
-      {insight ? <p className="insight-callout">{insight}</p> : null}
       <ul className="slope-list">
         {named.map((o) => {
           const sitePct = pct(o.sites, totalSites);
@@ -65,18 +59,22 @@ export function OperatorRank({
               <div className="paired-bars" aria-label={`${sitePct}% sites, ${stallPct}% stalls`}>
                 <div className="paired-row">
                   <span className="paired-label">Sites</span>
-                  <div
-                    className={"paired-fill" + (o.isFrancis ? " subject" : "")}
-                    style={{ width: `${Math.max(sitePct, 1)}%` }}
-                  />
+                  <div className="paired-track">
+                    <div
+                      className={"paired-fill" + (o.isFrancis ? " subject" : "")}
+                      style={{ width: `${Math.max(sitePct, 0.5)}%` }}
+                    />
+                  </div>
                   <span className="paired-end tnum">{sitePct}%</span>
                 </div>
                 <div className="paired-row">
                   <span className="paired-label">Stalls</span>
-                  <div
-                    className={"paired-fill muted" + (o.isFrancis ? " subject" : "")}
-                    style={{ width: `${Math.max(stallPct, 1)}%` }}
-                  />
+                  <div className="paired-track">
+                    <div
+                      className={"paired-fill muted" + (o.isFrancis ? " subject" : "")}
+                      style={{ width: `${Math.max(stallPct, 0.5)}%` }}
+                    />
+                  </div>
                   <span className="paired-end tnum">{stallPct}%</span>
                 </div>
               </div>
@@ -91,18 +89,22 @@ export function OperatorRank({
             <div className="paired-bars">
               <div className="paired-row">
                 <span className="paired-label">Sites</span>
-                <div
-                  className="paired-fill tail"
-                  style={{ width: `${Math.max(pct(singleSites, totalSites), 1)}%` }}
-                />
+                <div className="paired-track">
+                  <div
+                    className="paired-fill tail"
+                    style={{ width: `${Math.max(pct(singleSites, totalSites), 0.5)}%` }}
+                  />
+                </div>
                 <span className="paired-end tnum">{pct(singleSites, totalSites)}%</span>
               </div>
               <div className="paired-row">
                 <span className="paired-label">Stalls</span>
-                <div
-                  className="paired-fill tail muted"
-                  style={{ width: `${Math.max(pct(singleStalls, totalStalls), 1)}%` }}
-                />
+                <div className="paired-track">
+                  <div
+                    className="paired-fill tail muted"
+                    style={{ width: `${Math.max(pct(singleStalls, totalStalls), 0.5)}%` }}
+                  />
+                </div>
                 <span className="paired-end tnum">{pct(singleStalls, totalStalls)}%</span>
               </div>
             </div>
@@ -113,7 +115,7 @@ export function OperatorRank({
   );
 }
 
-/** Dot plot: stalls per site by state. Dot size = site count. */
+/** Dot plot: stalls per site by state. Dot size = site count. N=1 as one line. */
 export default function Dashboard({
   sites,
   aggregates: _aggregates,
@@ -152,6 +154,8 @@ export default function Dashboard({
     .sort((a, b) => b.avg - a.avg || b.sites - a.sites || a.state.localeCompare(b.state));
 
   const maxAvg = Math.max(...byState.map((o) => o.avg), 1);
+  // Nice axis: ceil to 0.5 steps so ticks are honest (0, mid, max)
+  const axisMax = Math.ceil(maxAvg * 2) / 2;
   const maxSites = Math.max(...byState.map((o) => o.sites), 1);
   const ca = byState.find((s) => s.state === "CA");
   const ok = byState.find((s) => s.state === "OK");
@@ -160,24 +164,32 @@ export default function Dashboard({
 
   const singles = byState.filter((s) => s.sites === 1);
   const multi = byState.filter((s) => s.sites > 1);
+  const singleAvg =
+    singles.length > 0
+      ? singles.reduce((a, s) => a + s.avg, 0) / singles.length
+      : 0;
 
   return (
     <div className="dash-dotplot">
       {ratio != null && ca && ok ? (
         <p className="insight-callout">
-          California averages {ca.avg.toFixed(1)} stalls/site; Oklahoma {ok.avg.toFixed(1)} —{" "}
-          {ratio}× denser.
+          California averages {ca.avg.toFixed(1)} stalls per site; Oklahoma {ok.avg.toFixed(1)} ({ratio}×).
         </p>
       ) : null}
       <div className="dotplot" role="img" aria-label="Stalls per site by state">
         <div className="dotplot-axis" aria-hidden="true">
-          <span>0</span>
-          <span>{(maxAvg / 2).toFixed(1)}</span>
-          <span>{maxAvg.toFixed(1)}</span>
+          <span className="dotplot-axis-spacer" />
+          <div className="dotplot-axis-track">
+            <span>0</span>
+            <span>{(axisMax / 2).toFixed(1)}</span>
+            <span>{axisMax.toFixed(1)}</span>
+          </div>
+          <span className="dotplot-axis-spacer" />
+          <span className="dotplot-axis-spacer" />
         </div>
         <ul className="dotplot-list">
           {multi.map((o) => {
-            const left = (o.avg / maxAvg) * 100;
+            const left = (o.avg / axisMax) * 100;
             const size = 10 + Math.sqrt(o.sites / maxSites) * 22;
             const hi = o.state === "CA" || o.state === "OK";
             return (
@@ -185,7 +197,7 @@ export default function Dashboard({
                 <span className="dotplot-state">{o.state}</span>
                 <div className="dotplot-track">
                   <span
-                    className={"dotplot-dot" + (o.state === "CA" || o.state === "OK" ? " subject" : "")}
+                    className={"dotplot-dot" + (hi ? " hi" : "")}
                     style={{ left: `${left}%`, width: size, height: size }}
                     title={`${o.state}: ${o.avg.toFixed(1)} stalls/site · ${o.sites} sites`}
                   />
@@ -197,26 +209,23 @@ export default function Dashboard({
           })}
         </ul>
         {singles.length > 0 ? (
-          <div className="dotplot-singles">
-            <p className="dotplot-singles-label">Single-site states (n=1)</p>
-            <ul className="dotplot-list muted-band">
-              {singles.map((o) => {
-                const left = (o.avg / maxAvg) * 100;
-                return (
-                  <li key={o.state} className="dotplot-row muted">
-                    <span className="dotplot-state">{o.state}</span>
-                    <div className="dotplot-track">
-                      <span
-                        className="dotplot-dot muted"
-                        style={{ left: `${left}%`, width: 10, height: 10 }}
-                      />
-                    </div>
-                    <span className="dotplot-val tnum">{o.avg.toFixed(1)}</span>
-                    <span className="dotplot-n tnum">1</span>
-                  </li>
-                );
-              })}
-            </ul>
+          <div className="dotplot-singles-line">
+            <span className="dotplot-state muted">n=1</span>
+            <div className="dotplot-track">
+              <span
+                className="dotplot-dot muted"
+                style={{
+                  left: `${(singleAvg / axisMax) * 100}%`,
+                  width: 10,
+                  height: 10,
+                }}
+              />
+            </div>
+            <span className="dotplot-val tnum">{singleAvg.toFixed(1)}</span>
+            <span className="dotplot-n tnum">{singles.length}</span>
+            <span className="dotplot-singles-note">
+              {singles.length} single-site states ({singles.map((s) => s.state).join(", ")})
+            </span>
           </div>
         ) : null}
         <p className="dotplot-key">Dot size = number of sites. Values are stalls per site.</p>

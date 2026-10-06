@@ -190,7 +190,7 @@ function buildStory(
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
   const subline = slopeInsight
-    ? "Follow the slope: site share on the left, stall share on the right. The post drawings below are the same scale in every row."
+    ? "Site share versus stall share by size class. Post drawings below share one scale."
     : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;
@@ -240,6 +240,9 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
       );
 
       const sitesLabel = share.sites === 1 ? "1 site" : `${share.sites} sites`;
+      const francisSites = inLayer.filter((s) =>
+        /francis energy/i.test(s.operator ?? "")
+      ).length;
 
       let buildersLabel = "";
       if (ranked.length === 0) {
@@ -275,6 +278,7 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
         stallPct,
         sitesLabel,
         buildersLabel,
+        francisSites,
       };
     });
 }
@@ -320,14 +324,10 @@ export function buildSizeOverview(
 
   for (const bucket of byOp.values()) {
     const siteCount = bucket.sites.length;
-    const hasLarge = bucket.sites.some((s) => (s.stalls ?? 0) >= 8);
-    const onlySingleFour = siteCount === 1 && bucket.sites[0]?.stalls === 4;
-
-    if (onlySingleFour) {
+    if (siteCount === 1) {
       rollupSites.push(...bucket.sites);
       rollupOps.push(bucket.operator);
     } else {
-      // Own row: 2+ sites, any 8+ stall site, or a single non-4 site (e.g. 6 stalls).
       named.push(bucket);
     }
   }
@@ -353,8 +353,8 @@ export function buildSizeOverview(
 
   if (rollupSites.length > 0) {
     rows.push({
-      key: "__single_site_4__",
-      label: "Single-site · 4 stalls only",
+      key: "__single_site__",
+      label: "Single-site operators",
       isFrancis: false,
       isRollup: true,
       totalSites: rollupSites.length,

@@ -415,7 +415,7 @@ export default function MapExplorer({
         lx: shape.cx + off.dx,
         ly: shape.cy + off.dy,
       });
-      if (out.length >= 5) break;
+      if (out.length >= 6) break;
     }
     return out;
   }, [stateCounts, shapes]);
@@ -475,11 +475,11 @@ export default function MapExplorer({
         </select>
         <button
           type="button"
-          className={"chip-toggle" + (showCoverage ? " on" : "")}
+          className={"filter-link-toggle" + (showCoverage ? " on" : "")}
           aria-pressed={showCoverage}
           onClick={() => setShowCoverage((v) => !v)}
         >
-          EVwire coverage
+          {showCoverage ? "EVwire coverage on" : "EVwire coverage"}
         </button>
         {sites.some((s) => s.siteClass === "Heavy-duty") ? (
           <button
@@ -506,14 +506,13 @@ export default function MapExplorer({
             <span className="legend-size-dot" style={{ width: 16, height: 16 }} aria-hidden="true" />
             8
             <span className="legend-size-dot" style={{ width: 22, height: 22 }} aria-hidden="true" />
-            12+ stalls
+            12+
           </span>
-        </div>
-
-        <div className="map-tools map-tools-neat" aria-label="Map zoom controls">
-          <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
-          <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
-          <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
+          <div className="map-tools map-tools-inline" aria-label="Map zoom controls">
+            <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
+            <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
+            <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
+          </div>
         </div>
         <svg
           ref={svgRef}
@@ -595,10 +594,15 @@ export default function MapExplorer({
                       r={r}
                       style={
                         isHighlight
-                          ? { fill: "var(--subject)", stroke: "none" }
+                          ? { fill: "var(--subject)", stroke: "var(--paper)", strokeWidth: 1.25 }
                           : showCoverage && covered
-                            ? { fill: "var(--ink)", stroke: "none", opacity: 0.85 }
-                            : { fill: "var(--dot-muted)", stroke: "none", opacity: showCoverage ? 0.28 : 0.55 }
+                            ? { fill: "var(--ink)", stroke: "var(--paper)", strokeWidth: 1.25, opacity: 0.9 }
+                            : {
+                                fill: "var(--dot-warm)",
+                                stroke: "var(--paper)",
+                                strokeWidth: 1.25,
+                                opacity: showCoverage ? 0.35 : 0.92,
+                              }
                       }
                     />
                   )}
@@ -726,66 +730,108 @@ export default function MapExplorer({
               · {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length} Francis
             </span>
           </h3>
-          <svg viewBox="0 0 320 300" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites">
-            <rect x="0" y="0" width="320" height="300" className="ok-zoom-bg" />
-            <g
-              transform={`translate(160 140) scale(${(260 / Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY)).toFixed(4)}) translate(${(-(okDetail.minX + okDetail.maxX) / 2).toFixed(2)} ${(-(okDetail.minY + okDetail.maxY) / 2).toFixed(2)})`}
-            >
-              {visibleShapes
-                .filter((st) => st.abbr === "OK")
-                .map((st) => (
-                  <path key={`okz-${st.abbr}`} d={st.d} className="state has" />
-                ))}
-              {okDetail.points.map((s, i) => {
-                const isHl =
-                  Boolean(highlightOperator) &&
-                  (s.operator ?? "Brand not stated") === highlightOperator;
-                const rr = Math.max(3, pinRadius(s.stalls) * 0.7);
-                return (
-                  <g key={`okzp-${s.slug}`}>
-                    <circle
-                      cx={s.x!}
-                      cy={s.y!}
-                      r={rr}
-                      style={{
-                        fill: isHl ? "var(--subject)" : "var(--dot-muted)",
-                        stroke: "none",
-                        opacity: isHl ? 1 : 0.55,
-                      }}
-                    />
-                    {isHl ? (
+          {(() => {
+            const francisPts = okDetail.points
+              .filter((s) => /francis energy/i.test(s.operator ?? ""))
+              .sort((a, b) => (a.city ?? a.name).localeCompare(b.city ?? b.name));
+            const otherPts = okDetail.points.filter(
+              (s) => !/francis energy/i.test(s.operator ?? "")
+            );
+            const listed = francisPts.slice(0, 12);
+            // Project into panel coords with simple collide separation
+            const span = Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY, 1);
+            const scale = 240 / span;
+            const cx0 = (okDetail.minX + okDetail.maxX) / 2;
+            const cy0 = (okDetail.minY + okDetail.maxY) / 2;
+            type Pt = { s: (typeof okDetail.points)[0]; i: number; x: number; y: number; r: number };
+            const projected: Pt[] = listed.map((s, i) => ({
+              s,
+              i: i + 1,
+              x: 160 + (s.x! - cx0) * scale,
+              y: 130 + (s.y! - cy0) * scale,
+              r: Math.max(5, Math.min(9, (s.stalls ?? 4) * 0.7)),
+            }));
+            // Force-separate overlapping dots
+            for (let pass = 0; pass < 8; pass++) {
+              for (let a = 0; a < projected.length; a++) {
+                for (let b = a + 1; b < projected.length; b++) {
+                  const A = projected[a]!;
+                  const B = projected[b]!;
+                  let dx = B.x - A.x;
+                  let dy = B.y - A.y;
+                  let dist = Math.hypot(dx, dy) || 0.01;
+                  const minD = A.r + B.r + 3;
+                  if (dist < minD) {
+                    const push = (minD - dist) / 2;
+                    dx /= dist;
+                    dy /= dist;
+                    A.x -= dx * push;
+                    A.y -= dy * push;
+                    B.x += dx * push;
+                    B.y += dy * push;
+                  }
+                }
+              }
+            }
+            return (
+              <>
+                <svg viewBox="0 0 320 260" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites">
+                  <rect x="0" y="0" width="320" height="260" className="ok-zoom-bg" />
+                  <g>
+                    {visibleShapes
+                      .filter((st) => st.abbr === "OK")
+                      .map((st) => (
+                        <path
+                          key={`okz-${st.abbr}`}
+                          d={st.d}
+                          className="state has"
+                          transform={`translate(160 130) scale(${scale.toFixed(4)}) translate(${(-cx0).toFixed(2)} ${(-cy0).toFixed(2)})`}
+                        />
+                      ))}
+                  </g>
+                  {otherPts.map((s) => {
+                    const x = 160 + (s.x! - cx0) * scale;
+                    const y = 130 + (s.y! - cy0) * scale;
+                    return (
+                      <circle
+                        key={`oko-${s.slug}`}
+                        cx={x}
+                        cy={y}
+                        r={4}
+                        className="ok-zoom-other"
+                      />
+                    );
+                  })}
+                  {projected.map((p) => (
+                    <g key={`okzp-${p.s.slug}`}>
+                      <circle cx={p.x} cy={p.y} r={p.r} className="ok-zoom-dot" />
                       <text
-                        x={s.x!}
-                        y={s.y!}
+                        x={p.x}
+                        y={p.y}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        className="ok-zoom-f"
+                        className="ok-zoom-num"
                       >
-                        F
+                        {p.i}
                       </text>
-                    ) : null}
-                    <title>{`${i + 1}. ${s.name}${s.stalls != null ? ` · ${s.stalls} stalls` : ""}`}</title>
-                  </g>
-                );
-              })}
-            </g>
-          </svg>
-          <ol className="ok-zoom-list">
-            {okDetail.points
-              .filter((s) => /francis energy/i.test(s.operator ?? ""))
-              .slice(0, 12)
-              .map((s, i) => (
-                <li key={s.slug}>
-                  <span className="tnum">{i + 1}</span> {s.city ?? s.name}
-                  {s.stalls != null ? <span className="dim"> · {s.stalls}</span> : null}
-                </li>
-              ))}
-            {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length > 12 ? (
-              <li className="dim">
-                +{okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length - 12} more Francis
-              </li>
-            ) : null}
-          </ol>
+                      <title>{`${p.i}. ${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}`}</title>
+                    </g>
+                  ))}
+                </svg>
+                <ol className="ok-zoom-list">
+                  {listed.map((s) => (
+                    <li key={s.slug}>
+                      {s.city ?? s.name}
+                      {s.stalls != null ? <span className="dim"> · {s.stalls}</span> : null}
+                    </li>
+                  ))}
+                </ol>
+                {francisPts.length > 12 ? (
+                  <p className="ok-zoom-more dim">+{francisPts.length - 12} more Francis</p>
+                ) : null}
+              </>
+            );
+          })()}
         </aside>
       ) : null}
 
