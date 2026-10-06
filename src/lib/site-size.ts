@@ -134,9 +134,21 @@ function buildStory(
 ): SizeStory {
   const total = sites.length;
   const dominant = [...sizeShares].sort((a, b) => b.sites - a.sites || a.stalls - b.stalls)[0];
-  const headline = dominant
-    ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
-    : `${total} open US sites with a stall count.`;
+  const four = sizeShares.find((s) => s.stalls === 4);
+  const eight = sizeShares.find((s) => s.stalls === 8);
+  const fourStalls = four ? four.stalls * four.sites : 0;
+  const eightStalls = eight ? eight.stalls * eight.sites : 0;
+  const allStalls = sites.reduce((a, s) => a + (s.stalls ?? 0), 0);
+  const fourShare = allStalls > 0 ? fourStalls / allStalls : 0;
+  const eightShare = allStalls > 0 ? eightStalls / allStalls : 0;
+  const sharesEqual =
+    four && eight && Math.abs(fourShare - eightShare) < 0.005 && fourShare > 0.3;
+
+  const headline = sharesEqual
+    ? `4-stall and 8-stall sites hold the same share of stalls: ${Math.round(fourShare * 1000) / 10}% each.`
+    : dominant
+      ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
+      : `${total} open US sites with a stall count.`;
 
   type Bigger = { operator: string; stalls: number[]; max: number; sites: number; median: number };
   const bigger: Bigger[] = [];
@@ -164,8 +176,11 @@ function buildStory(
     const label = shortOperatorName(b.operator);
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
-  const subline =
-    named.length === 0
+  const subline = sharesEqual
+    ? dominant
+      ? `${dominant.sites} of ${total} sites are ${dominant.stalls}-stall, but eight-stall sites match them on stalls (${fourStalls} each of ${allStalls}).`
+      : `Same stall weight, different site counts.`
+    : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;
 

@@ -9,7 +9,7 @@ import type { SiteStatus, EvidenceGrade } from "./types";
 export const COVERED_STYLE = { color: "var(--ink)", hex: "#070A0C", glyph: "◆", label: "Covered by EVwire" } as const;
 
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
-  Operational: { color: "var(--volt)", glyph: "●", label: "Open" },
+  Operational: { color: "var(--ink)", glyph: "●", label: "Open" },
   Construction: { color: "var(--upcoming)", glyph: "◐", label: "Under construction" },
   Planned: { color: "var(--upcoming)", glyph: "○", label: "Planned" },
   "At risk": { color: "var(--amber)", glyph: "▲", label: "At risk" },

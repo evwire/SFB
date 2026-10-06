@@ -29,7 +29,6 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
 
 const TOP_N = 6;
 
-/** Compact operator ranking beside the map: top N + expandable single-site tail. */
 export function OperatorRank({
   sites,
   phase = "open",
@@ -130,9 +129,8 @@ export default function Dashboard({
   regionLabel: _regionLabel = "US",
   phase = "open",
   coverage: _coverage = null,
-  hideOperatorSites = false,
   hideOperatorTable = false,
-  statesAsBars = false,
+  statesAsBars = true,
 }: {
   sites: Site[];
   aggregates: Aggregate[];
@@ -149,18 +147,7 @@ export default function Dashboard({
 }) {
   const isTesla = source === "tesla";
   const sfb = sites.filter((s) => s.siteClass === "SfB");
-  const rows = useMemo(() => buildOperatorRows(sites, phase), [sites, phase]);
   const [tailOpen, setTailOpen] = useState(false);
-  const multi = rows.filter((r) => r.sites >= 2);
-  const singles = rows.filter((r) => r.sites === 1);
-  const top = (multi.length >= TOP_N ? multi : rows).slice(0, TOP_N);
-  const topKeys = new Set(top.map((r) => r.operator));
-  const restSingles = singles.filter((r) => !topKeys.has(r.operator));
-  const restMulti = multi.filter((r) => !topKeys.has(r.operator));
-  const maxSites = Math.max(...top.map((r) => r.sites), 1);
-  const singleStalls = restSingles.flatMap((r) => (r.stalls > 0 ? [r.stalls] : []));
-  const stallLo = singleStalls.length ? Math.min(...singleStalls) : 0;
-  const stallHi = singleStalls.length ? Math.max(...singleStalls) : 0;
 
   const byState = Object.values(
     sfb.reduce<Record<string, { state: string; sites: number; stalls: number }>>((acc, s) => {
@@ -171,111 +158,62 @@ export default function Dashboard({
     }, {})
   ).sort((a, b) => b.sites - a.sites || a.state.localeCompare(b.state));
   const maxState = Math.max(...byState.map((o) => o.sites), 1);
-
-  const showOps = !hideOperatorSites && !hideOperatorTable;
+  const top = byState.slice(0, 6);
+  const rest = byState.slice(6);
+  const oneSite = rest.filter((s) => s.sites === 1);
+  const multiRest = rest.filter((s) => s.sites > 1);
 
   return (
     <div className="dash dash-r2">
-      <div className={"dash-r2-grid" + (!showOps ? " dash-r2-states-only" : "")}>
-        {showOps ? (
-          <section className="dash-block">
-            <h3 className="label-caps">Who owns what</h3>
-            <table className="rank-table rank-table-wide">
-              <thead>
-                <tr>
-                  <th scope="col">Operator</th>
-                  <th scope="col" className="num">
-                    Sites
-                  </th>
-                  <th scope="col" className="num">
-                    Stalls
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {top.map((o) => (
-                  <tr key={o.operator}>
-                    <th scope="row">
-                      <span className="rank-name">{o.operator}</span>
-                      <span
-                        className="rank-bar"
-                        style={{ width: `${(o.sites / maxSites) * 100}%` }}
-                        aria-hidden="true"
-                      />
-                    </th>
-                    <td className="num mono">{o.sites}</td>
-                    <td className="num mono">{o.stalls > 0 ? fmtNum(o.stalls) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {restSingles.length > 0 || restMulti.length > 0 ? (
-              <div className="rank-tail">
-                <button
-                  type="button"
-                  className="rank-tail-btn"
-                  aria-expanded={tailOpen}
-                  onClick={() => setTailOpen((v) => !v)}
-                >
-                  {tailOpen
-                    ? "Hide the rest"
-                    : restSingles.length > 0 && restMulti.length === 0
-                      ? `+${restSingles.length} operators with one site each${
-                          stallLo > 0 ? ` (${stallLo}–${stallHi} stalls)` : ""
-                        }`
-                      : `+${restSingles.length + restMulti.length} more operators`}
-                </button>
-                {tailOpen ? (
-                  <ul className="rank-tail-list mono">
-                    {restMulti.map((o) => (
-                      <li key={o.operator}>
-                        {o.operator} · {o.sites} sites · {o.stalls} stalls
-                      </li>
-                    ))}
-                    {restSingles.map((o) => (
-                      <li key={o.operator}>
-                        {o.operator} · 1 site
-                        {o.stalls > 0 ? ` · ${o.stalls} stalls` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+      <section className="dash-block dash-block-full">
+        <ul className="state-bars">
+          {top.map((o) => (
+            <li key={o.state}>
+              <div className="bar-label">
+                <span>{o.state}</span>
+                <span className="mono">
+                  {o.sites} · {o.stalls} stalls
+                </span>
               </div>
+              <div className="bar-track">
+                <div className="bar-fill" style={{ width: `${(o.sites / maxState) * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+        {rest.length > 0 ? (
+          <div className="rank-tail">
+            <button
+              type="button"
+              className="rank-tail-btn"
+              aria-expanded={tailOpen}
+              onClick={() => setTailOpen((v) => !v)}
+            >
+              {tailOpen
+                ? "Hide the rest"
+                : oneSite.length === rest.length
+                  ? `+${oneSite.length} more states with one site each`
+                  : `+${rest.length} more states${
+                      oneSite.length ? ` (${oneSite.length} with one site each)` : ""
+                    }`}
+            </button>
+            {tailOpen ? (
+              <ul className="rank-tail-list mono">
+                {multiRest.map((o) => (
+                  <li key={o.state}>
+                    {o.state} · {o.sites} sites · {o.stalls} stalls
+                  </li>
+                ))}
+                {oneSite.map((o) => (
+                  <li key={o.state}>
+                    {o.state} · 1 site · {o.stalls} stalls
+                  </li>
+                ))}
+              </ul>
             ) : null}
-          </section>
+          </div>
         ) : null}
-
-        <section className="dash-block">
-          <h3 className="label-caps">By {areaNoun.slice(0, -1)}</h3>
-          {statesAsBars ? (
-            <ul className="state-bars">
-              {byState.map((o) => (
-                <li key={o.state}>
-                  <div className="bar-label">
-                    <span>{o.state}</span>
-                    <span className="mono">
-                      {o.sites} site{o.sites === 1 ? "" : "s"}
-                      {o.stalls > 0 ? ` · ${o.stalls} stalls` : ""}
-                    </span>
-                  </div>
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width: `${(o.sites / maxState) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <ul className="state-tiles" aria-label={`Sites by ${areaNoun.slice(0, -1)}`}>
-              {byState.map((o) => (
-                <li key={o.state} title={`${o.sites} sites · ${o.stalls} stalls`}>
-                  <span className="state-abbr mono">{o.state}</span>
-                  <span className="state-n mono">{o.sites}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+      </section>
 
       {!isTesla &&
         pipeline.map((p) => (

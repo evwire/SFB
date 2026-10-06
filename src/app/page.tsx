@@ -2,6 +2,7 @@ import { getRegionalSiteData } from "@/lib/data";
 import { getFeed, getCoverageArticles } from "@/lib/feed";
 import { attachCoverage } from "@/lib/coverage";
 import RegionApp from "@/components/RegionApp";
+import { getSnapshotDelta } from "@/lib/snapshot-delta";
 import type { SiteData } from "@/lib/types";
 
 export const revalidate = 300;
@@ -13,6 +14,7 @@ function withCoverage(data: SiteData, articles: Awaited<ReturnType<typeof getCov
 
 export default async function Page() {
   const { us, europe, usUpcoming, europeUpcoming, sciCompare } = await getRegionalSiteData();
+  const snapshotDelta = getSnapshotDelta();
   const feed = await getFeed(12);
   const coverage = await getCoverageArticles();
 
@@ -71,6 +73,7 @@ export default async function Page() {
         usUpcoming={usUpcomingCovered}
         europeUpcoming={europeUpcomingCovered}
         sciCompare={sciCompare}
+        snapshotDelta={snapshotDelta}
         feed={feed}
         coverageNote={{
           source: coverage.source,

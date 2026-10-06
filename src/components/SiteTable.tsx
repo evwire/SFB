@@ -103,7 +103,7 @@ export default function SiteTable({
             return (
               <tr key={s.slug}>
                 <th scope="row">
-                  <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">
+                  <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
                     {s.name}
                   </a>
                   {!nameHasCity && place ? <span className="cell-sub">{place}</span> : null}
@@ -135,8 +135,8 @@ export default function SiteTable({
         </div>
       ) : null}
       <p className="table-foot">
-        Peak power is on each Tesla Find Us page. <span className="mono">n/s</span> means Tesla did
-        not publish that figure.
+        <span className="mono">n/s</span> means Tesla did not publish that figure. Links open Tesla
+        Find Us.
       </p>
     </div>
   );

@@ -12,12 +12,25 @@ import { EUROPE_COUNTRIES, EU_VIEW_W, EU_VIEW_H } from "@/lib/europe-countries.g
 import { fmtNum, fmtTallinnStamp } from "@/lib/style";
 import type { FeedItem, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
 
+type SnapshotDelta = {
+  openUsBaseline: number;
+  openUsFresh: number;
+  openUsDelta: number;
+  upcomingUsBaseline: number;
+  upcomingUsFresh: number;
+  upcomingUsDelta: number;
+  baselineLabel: string;
+  freshLabel: string;
+  sourcePath: string;
+};
+
 type Props = {
   us: SiteData;
   europe: SiteData;
   usUpcoming: SiteData;
   europeUpcoming: SiteData;
   sciCompare: SciCompare;
+  snapshotDelta: SnapshotDelta;
   feed: { items: FeedItem[]; source: string; asOf: string };
   coverageNote?: { source: string; asOf: string; tagCount: number; tagUrl: string };
 };
@@ -28,9 +41,8 @@ function thesis(
   openSites: SiteData["sites"],
   openCount: number,
   upcomingCount: number
-): { h1: ReactNode; lede: string; summary?: { sites: number; stalls: number } } {
+): { h1: ReactNode; lede: string } {
   const sfb = openSites.filter((s) => s.siteClass === "SfB");
-  const stalls = sfb.reduce((a, s) => a + (s.stalls ?? 0), 0);
 
   if (phase === "upcoming") {
     return {
@@ -54,7 +66,6 @@ function thesis(
         </>
       ),
       lede: region === "europe" ? "Europe, from Tesla Find Us." : "United States, from Tesla Find Us.",
-      summary: { sites: openCount + upcomingCount, stalls },
     };
   }
 
@@ -72,8 +83,7 @@ function thesis(
             {top[0]} runs {top[1]} of {openCount} open Europe sites
           </>
         ),
-        lede: `${fmtNum(stalls)} stalls across ${new Set(sfb.map((s) => s.state)).size} markets.`,
-        summary: { sites: openCount, stalls },
+        lede: `${fmtNum(sfb.reduce((a, s) => a + (s.stalls ?? 0), 0))} stalls across ${new Set(sfb.map((s) => s.state)).size} markets.`,
       };
     }
   }
@@ -90,6 +100,7 @@ function thesis(
   }
   const topOp = [...byOp.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))[0];
   const topState = [...byState.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  const stalls = sfb.reduce((a, s) => a + (s.stalls ?? 0), 0);
 
   if (topOp && topOp[1].n >= 2 && topState) {
     const opInTopState = topOp[1].states.get(topState[0]) ?? 0;
@@ -109,16 +120,14 @@ function thesis(
       ),
       lede:
         opInTopState > 0
-          ? `Most of them in ${stateName}, where it has ${opInTopState} of the state’s ${topState[1]}. ${fmtNum(stalls)} stalls in ${byState.size} states.`
-          : `${fmtNum(stalls)} stalls in ${byState.size} states.`,
-      summary: { sites: openCount, stalls },
+          ? `Most of them in ${stateName}, where it has ${opInTopState} of the state’s ${topState[1]}. Across the US: ${fmtNum(stalls)} stalls in ${byState.size} states.`
+          : `Across the US: ${fmtNum(stalls)} stalls in ${byState.size} states.`,
     };
   }
 
   return {
     h1: <>{openCount} open customer-owned Superchargers in the US</>,
-    lede: `${fmtNum(stalls)} stalls in ${byState.size} states.`,
-    summary: { sites: openCount, stalls },
+    lede: `Across the US: ${fmtNum(stalls)} stalls in ${byState.size} states.`,
   };
 }
 
@@ -128,6 +137,7 @@ export default function RegionApp({
   usUpcoming,
   europeUpcoming,
   sciCompare,
+  snapshotDelta,
   feed,
 }: Props) {
   const [region, setRegion] = useState<Region>("us");
@@ -164,8 +174,7 @@ export default function RegionApp({
           }
         : openData;
 
-  const { sites, aggregates, pipeline, programme, source, regionLabel, areaNoun, coverage } =
-    data;
+  const { sites, aggregates, pipeline, programme, source, regionLabel, areaNoun, coverage } = data;
   const isTesla = source === "tesla";
   const isUpcoming = phase === "upcoming";
   const isBoth = phase === "both";
@@ -173,16 +182,34 @@ export default function RegionApp({
   const viewW = region === "europe" ? EU_VIEW_W : VIEW_W;
   const viewH = region === "europe" ? EU_VIEW_H : VIEW_H;
   const openPulled = useMemo(() => fmtTallinnStamp(openData.generated), [openData.generated]);
-  const upcomingPulled = useMemo(
-    () => fmtTallinnStamp(upcomingData.generated),
-    [upcomingData.generated]
-  );
+  const dataAsOf = openPulled;
 
   const underConstruction = upcomingData.sites.filter((s) => s.status === "Construction").length;
   const inDevelopment = upcomingData.sites.filter((s) => s.status === "Planned").length;
 
-  const { h1, lede, summary } = thesis(region, phase, openData.sites, openCount, upcomingCount);
+  const { h1, lede } = thesis(region, phase, openData.sites, openCount, upcomingCount);
   const banner = isUpcoming || isBoth ? coverage?.honesty_banner ?? null : null;
+
+  const kpi =
+    region === "us" && phase === "open" && snapshotDelta.openUsDelta !== 0
+      ? {
+          value: `${snapshotDelta.openUsDelta > 0 ? "+" : ""}${snapshotDelta.openUsDelta}`,
+          label: `open sites since last snapshot`,
+          note: `${snapshotDelta.openUsBaseline} → ${snapshotDelta.openUsFresh}`,
+        }
+      : region === "us" && phase === "upcoming" && snapshotDelta.upcomingUsDelta !== 0
+        ? {
+            value: `${snapshotDelta.upcomingUsDelta > 0 ? "+" : ""}${snapshotDelta.upcomingUsDelta}`,
+            label: `upcoming since last snapshot`,
+            note: `${snapshotDelta.upcomingUsBaseline} → ${snapshotDelta.upcomingUsFresh}`,
+          }
+        : null;
+
+  // Default highlight: Francis Energy when present in view
+  const defaultHighlight = useMemo(() => {
+    const hasFrancis = sites.some((s) => /francis energy/i.test(s.operator ?? ""));
+    return hasFrancis ? "Francis Energy" : null;
+  }, [sites]);
 
   return (
     <>
@@ -196,7 +223,7 @@ export default function RegionApp({
               <a href="#map" aria-current="page">
                 Map
               </a>
-              <a href="#dashboard">Operators</a>
+              <a href="#dashboard">States</a>
               <a href="/size">Site size</a>
               <a href="#compare">vs Supercharge.info</a>
               <a href="#sites">All sites</a>
@@ -213,17 +240,15 @@ export default function RegionApp({
             <div className="hero-thesis-copy">
               <p className="eyebrow">Tesla Supercharger for Business</p>
               <h1 className="thesis-h1">{h1}</h1>
-              <p className="lede">{lede}</p>
+              <p className="lede lede-prose">{lede}</p>
+              <p className="meta-line mono">Data as of {dataAsOf}</p>
             </div>
-            {summary && phase === "open" ? (
-              <div className="hero-summary" aria-label="Roster totals">
+            {kpi ? (
+              <div className="hero-summary" aria-label="Change since last snapshot">
                 <div>
-                  <span className="hero-summary-n mono">{summary.sites}</span>
-                  <span className="hero-summary-l">open sites</span>
-                </div>
-                <div>
-                  <span className="hero-summary-n mono">{fmtNum(summary.stalls)}</span>
-                  <span className="hero-summary-l">stalls</span>
+                  <span className="hero-summary-n mono">{kpi.value}</span>
+                  <span className="hero-summary-l">{kpi.label}</span>
+                  <span className="hero-summary-note mono">{kpi.note}</span>
                 </div>
               </div>
             ) : null}
@@ -236,8 +261,8 @@ export default function RegionApp({
         </section>
 
         <section id="map" className="map-hero">
-          <div className="map-rank map-rank-flush">
-            <div className="map-panel">
+          <div className="map-rank map-rank-12">
+            <div className="map-panel map-col-8">
               <MapExplorer
                 key={`${region}-${phase}`}
                 sites={sites}
@@ -256,14 +281,23 @@ export default function RegionApp({
                 usUpcomingCount={usUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
                 euOpenCount={europe.sites.filter((s) => s.siteClass === "SfB").length}
                 euUpcomingCount={europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
+                defaultHighlightOperator={defaultHighlight}
               />
             </div>
-            {!isUpcoming ? <OperatorRank sites={sites} source={source} phase={phase} /> : null}
+            {!isUpcoming ? (
+              <div className="map-col-4">
+                <OperatorRank sites={sites} source={source} phase={phase} />
+              </div>
+            ) : null}
           </div>
         </section>
 
         <section id="dashboard">
-          <h2 className="section-title">By state</h2>
+          <h2 className="section-title">
+            {region === "us" && phase === "open"
+              ? "Oklahoma has more open sites than Texas, California and Florida combined"
+              : "Where the sites are"}
+          </h2>
           <Dashboard
             sites={sites}
             aggregates={aggregates}
@@ -274,9 +308,8 @@ export default function RegionApp({
             phase={phase}
             coverage={coverage ?? null}
             hideStats
-            hideOperatorSites={false}
-            statesAsBars
             hideOperatorTable
+            statesAsBars
           />
         </section>
 
@@ -287,7 +320,7 @@ export default function RegionApp({
           liveUpcoming={upcomingCount}
           liveUpcomingUc={underConstruction}
           liveUpcomingInDev={inDevelopment}
-          livePulled={phase === "upcoming" ? upcomingPulled : openPulled}
+          livePulled={openPulled}
         />
 
         {!isTesla && !isUpcoming && programme ? (
@@ -323,7 +356,7 @@ export default function RegionApp({
           <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
-          <p>
+          <p className="lede-prose">
             Operator names and published coordinates come from Tesla Find Us.{" "}
             <a
               className="link"
@@ -332,10 +365,6 @@ export default function RegionApp({
               Tell us
             </a>{" "}
             if something looks wrong.
-          </p>
-          <p className="mono foot-meta">
-            Open list {openPulled}
-            {upcomingCount > 0 ? ` · Upcoming list ${upcomingPulled}` : ""}
           </p>
         </footer>
       </main>

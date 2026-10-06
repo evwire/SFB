@@ -44,7 +44,7 @@ export default async function SizePage() {
           <div className="topbar-actions">
             <nav className="topnav">
               <Link href="/">Map</Link>
-              <Link href="/#dashboard">Operators</Link>
+              <Link href="/#dashboard">States</Link>
               <Link href="/size" aria-current="page">
                 Site size
               </Link>
@@ -61,16 +61,13 @@ export default async function SizePage() {
         <section className="hero hero-compact" style={{ marginTop: 32 }}>
           <p className="eyebrow">Tesla Supercharger for Business · United States · site size</p>
           <h1 className="size-h1">{overview.story.headline}</h1>
-          <p className="lede">{overview.story.subline}</p>
+          <p className="lede lede-prose">{overview.story.subline}</p>
           {singles4 > 0 ? (
-            <p className="lede size-singles-note">
+            <p className="lede lede-prose size-singles-note">
               {singleSiteOps} operators run one site each; {singles4} of them are 4-stall only.
             </p>
           ) : null}
-          <p className="meta-line mono">
-            {overview.totalSites} open sites · {overview.totalStalls} stalls · median{" "}
-            {overview.median} · Tesla Find Us · Pulled {pulled}
-          </p>
+          <p className="meta-line mono">Data as of {pulled}</p>
         </section>
 
         <SiteSizeOverview data={overview} />
@@ -79,7 +76,7 @@ export default async function SizePage() {
           <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
-          <p>
+          <p className="lede-prose">
             Stall counts from Tesla Find Us for open US customer-owned Superchargers. Upcoming sites
             have no stall count until they open. Operator names and coordinates come from Tesla.{" "}
             <a
@@ -90,7 +87,6 @@ export default async function SizePage() {
             </a>{" "}
             if something looks wrong.
           </p>
-          <p className="mono foot-meta">US open list updated {pulled}.</p>
         </footer>
       </main>
     </>

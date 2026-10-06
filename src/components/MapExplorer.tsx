@@ -24,6 +24,7 @@ export default function MapExplorer({
   usUpcomingCount = 0,
   euOpenCount = 0,
   euUpcomingCount = 0,
+  defaultHighlightOperator = null,
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -41,10 +42,13 @@ export default function MapExplorer({
   usUpcomingCount?: number;
   euOpenCount?: number;
   euUpcomingCount?: number;
+  defaultHighlightOperator?: string | null;
 }) {
   const [coveredOnly, setCoveredOnly] = useState(false);
   const [showHeavy, setShowHeavy] = useState(false);
   const [operator, setOperator] = useState<string>("All operators");
+  const highlightOperator =
+    operator !== "All operators" ? operator : defaultHighlightOperator;
   const allAreasLabel = `All ${areaNoun}`;
   const [stateFilter, setStateFilter] = useState<string>(allAreasLabel);
   const [selected, setSelected] = useState<Site | null>(null);
@@ -335,98 +339,137 @@ export default function MapExplorer({
   }, [selected, close]);
 
   // State label positions: densest states get an on-map callout.
+  const visibleShapes = useMemo(() => {
+    if (region !== "us") return shapes;
+    return shapes.filter((st) => {
+      if (st.abbr === "AK" || st.abbr === "HI") return (stateCounts[st.abbr] ?? 0) > 0;
+      return true;
+    });
+  }, [shapes, region, stateCounts]);
+
+  const okDetail = useMemo(() => {
+    if (region !== "us") return null;
+    const pts = plotted.filter((s) => s.state === "OK");
+    if (pts.length < 5) return null;
+    const xs = pts.map((s) => s.x!);
+    const ys = pts.map((s) => s.y!);
+    const pad = 14;
+    return {
+      n: pts.length,
+      minX: Math.min(...xs) - pad,
+      maxX: Math.max(...xs) + pad,
+      minY: Math.min(...ys) - pad,
+      maxY: Math.max(...ys) + pad,
+      points: pts,
+    };
+  }, [plotted, region]);
+
   const stateLabels = useMemo(() => {
     const entries = Object.entries(stateCounts).sort((a, b) => b[1] - a[1]);
-    const out: { abbr: string; name: string; n: number; x: number; y: number }[] = [];
+    // Offsets push labels into empty space (Pacific / Gulf / Atlantic).
+    const offset: Record<string, { dx: number; dy: number }> = {
+      OK: { dx: -72, dy: -8 },
+      TX: { dx: -20, dy: 36 },
+      CA: { dx: -70, dy: 8 },
+      FL: { dx: 48, dy: 10 },
+      NY: { dx: 40, dy: -6 },
+      GA: { dx: 36, dy: 18 },
+    };
+    const out: { abbr: string; name: string; n: number; x: number; y: number; lx: number; ly: number }[] = [];
     for (const [abbr, n] of entries) {
       if (n < 3) continue;
       const shape = shapes.find((s) => s.abbr === abbr);
       if (!shape || shape.cx == null || shape.cy == null) continue;
       const name =
-        abbr === "OK" ? "Oklahoma" : abbr === "TX" ? "Texas" : abbr === "CA" ? "California" : shape.name;
-      out.push({ abbr, name, n, x: shape.cx, y: shape.cy });
-      if (out.length >= 4) break;
+        abbr === "OK"
+          ? "Oklahoma"
+          : abbr === "TX"
+            ? "Texas"
+            : abbr === "CA"
+              ? "California"
+              : abbr === "FL"
+                ? "Florida"
+                : shape.name;
+      const off = offset[abbr] ?? { dx: 0, dy: -18 };
+      out.push({
+        abbr,
+        name,
+        n,
+        x: shape.cx,
+        y: shape.cy,
+        lx: shape.cx + off.dx,
+        ly: shape.cy + off.dy,
+      });
+      if (out.length >= 5) break;
     }
     return out;
   }, [stateCounts, shapes]);
 
   return (
     <div className="map-wrap">
-      <div className="controls map-filter-bar">
-        <div className="seg" role="group" aria-label="Region">
-          <button
-            type="button"
-            className={"seg-btn" + (region === "us" ? " on" : "")}
-            onClick={() => onRegionChange?.("us")}
-            aria-pressed={region === "us"}
-          >
-            United States
-          </button>
-          <button
-            type="button"
-            className={"seg-btn" + (region === "europe" ? " on" : "")}
-            onClick={() => onRegionChange?.("europe")}
-            aria-pressed={region === "europe"}
-          >
-            Europe
-          </button>
-        </div>
-        <div className="seg" role="group" aria-label="Status">
-          <button
-            type="button"
-            className={"seg-btn" + (phase === "open" ? " on" : "")}
-            onClick={() => onPhaseChange?.("open")}
-            aria-pressed={phase === "open"}
-          >
-            Open
-          </button>
-          <button
-            type="button"
-            className={"seg-btn" + (phase === "upcoming" ? " on" : "")}
-            onClick={() => onPhaseChange?.("upcoming")}
-            aria-pressed={phase === "upcoming"}
-          >
-            Upcoming
-          </button>
-          <button
-            type="button"
-            className={"seg-btn" + (phase === "both" ? " on" : "")}
-            onClick={() => onPhaseChange?.("both")}
-            aria-pressed={phase === "both"}
-          >
-            Both
-          </button>
-        </div>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={coveredOnly}
-            onChange={(e) => setCoveredOnly(e.target.checked)}
-          />
-          <span>EVwire coverage only</span>
-        </label>
-        <label className="sel">
-          <span className="sr-only">Filter by operator</span>
-          <select value={operator} onChange={(e) => setOperator(e.target.value)}>
-            {operators.map((o) => (
-              <option key={o}>{o}</option>
-            ))}
-          </select>
-        </label>
-        <label className="sel">
-          <span className="sr-only">Filter by {areaNoun.slice(0, -1)}</span>
-          <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
-            {stateOptions.map((st) => (
-              <option key={st}>{st}</option>
-            ))}
-          </select>
-        </label>
-        {sites.some((s) => s.siteClass === "Heavy-duty") ? (
-          <label className="check">
-            <input type="checkbox" checked={showHeavy} onChange={(e) => setShowHeavy(e.target.checked)} />
-            <span>Heavy-duty MCS</span>
+      <div className="controls map-filter-bar filter-sentence">
+        <p className="filter-line">
+          Showing{" "}
+          <label className="inline-sel">
+            <span className="sr-only">Status</span>
+            <select
+              value={phase}
+              onChange={(e) => onPhaseChange?.(e.target.value as SitePhase)}
+            >
+              <option value="open">open</option>
+              <option value="upcoming">upcoming</option>
+              <option value="both">open and upcoming</option>
+            </select>
+          </label>{" "}
+          sites in the{" "}
+          <label className="inline-sel">
+            <span className="sr-only">Region</span>
+            <select
+              value={region}
+              onChange={(e) => onRegionChange?.(e.target.value as Region)}
+            >
+              <option value="us">US</option>
+              <option value="europe">Europe</option>
+            </select>
           </label>
-        ) : null}
+          ,{" "}
+          <label className="inline-sel">
+            <span className="sr-only">Operator</span>
+            <select value={operator} onChange={(e) => setOperator(e.target.value)}>
+              {operators.map((o) => (
+                <option key={o} value={o}>
+                  {o === "All operators" ? "all operators" : o}
+                </option>
+              ))}
+            </select>
+          </label>
+          ,{" "}
+          <label className="inline-sel">
+            <span className="sr-only">State</span>
+            <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
+              {stateOptions.map((st) => (
+                <option key={st} value={st}>
+                  {st === allAreasLabel ? "all states" : st}
+                </option>
+              ))}
+            </select>
+          </label>
+          .
+          <label className="check check-inline">
+            <input
+              type="checkbox"
+              checked={coveredOnly}
+              onChange={(e) => setCoveredOnly(e.target.checked)}
+            />
+            <span>EVwire coverage only</span>
+          </label>
+          {sites.some((s) => s.siteClass === "Heavy-duty") ? (
+            <label className="check check-inline">
+              <input type="checkbox" checked={showHeavy} onChange={(e) => setShowHeavy(e.target.checked)} />
+              <span>Heavy-duty MCS</span>
+            </label>
+          ) : null}
+        </p>
       </div>
 
       <figure className="map-figure map-figure-flush">
@@ -453,9 +496,9 @@ export default function MapExplorer({
         >
           <g transform={`translate(${mapView.x} ${mapView.y}) scale(${mapView.scale})`}>
             <g>
-              {shapes.map((st) => {
+              {visibleShapes.map((st) => {
                 const n = stateCounts[st.abbr] ?? 0;
-                const heat = n > 0 ? 0.05 + (n / maxStateCount) * 0.14 : 0;
+                const heat = n > 0 ? 0.04 + (n / maxStateCount) * 0.1 : 0;
                 return (
                   <path
                     key={st.abbr}
@@ -472,7 +515,10 @@ export default function MapExplorer({
               {plotted.map((s) => {
               const style = STATUS_STYLE[s.status];
               const covered = Boolean(s.articles?.length);
-              const pinColor = style.color;
+              const isHighlight =
+                Boolean(highlightOperator) &&
+                (s.operator ?? "Brand not stated") === highlightOperator;
+              const pinColor = isHighlight ? "var(--volt)" : "var(--dot-muted)";
               const r = pinRadius(s.stalls);
               const isArea = s.coordPrecision === "Area-Only";
               const on = selected?.slug === s.slug;
@@ -485,7 +531,7 @@ export default function MapExplorer({
               return (
                 <g
                   key={s.slug}
-                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "") + (isFrancis ? " francis" : "")}
+                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "") + (isFrancis ? " francis" : "") + (isHighlight ? " highlight" : "")}
                   transform={`translate(${s.x} ${s.y})`}
                   onClick={() => setSelected(s)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(s); } }}
@@ -526,8 +572,21 @@ export default function MapExplorer({
               );
               })}
               {stateLabels.map((lab) => (
-                <g key={`lab-${lab.abbr}`} className="state-callout" transform={`translate(${lab.x} ${lab.y})`}>
-                  <text className="state-callout-text" textAnchor="middle" dy="-10">
+                <g key={`lab-${lab.abbr}`} className="state-callout">
+                  <line
+                    className="state-leader"
+                    x1={lab.x}
+                    y1={lab.y}
+                    x2={lab.lx}
+                    y2={lab.ly}
+                  />
+                  <text
+                    className="state-callout-text"
+                    x={lab.lx}
+                    y={lab.ly}
+                    textAnchor={lab.lx < lab.x ? "end" : "start"}
+                    dy="0.35em"
+                  >
                     {lab.n} in {lab.name}
                   </text>
                 </g>
@@ -541,7 +600,11 @@ export default function MapExplorer({
           <div className="map-legend" aria-label="Map legend">
             <span className="legend-chip">
               <span className="legend-swatch solid legend-swatch-outlined" style={{ background: "var(--volt)" }} aria-hidden="true" />
-              Open
+              {highlightOperator ?? "Highlighted operator"}
+            </span>
+            <span className="legend-chip">
+              <span className="legend-swatch solid legend-swatch-outlined" style={{ background: "var(--dot-muted)" }} aria-hidden="true" />
+              Other operators
             </span>
             <span className="legend-chip">
               <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
@@ -550,10 +613,6 @@ export default function MapExplorer({
             <span className="legend-chip covered">
               <span className="legend-swatch ring" style={{ borderColor: "var(--ink)" }} aria-hidden="true" />
               <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
-            </span>
-            <span className="legend-chip francis">
-              <span className="legend-swatch solid francis-swatch legend-swatch-outlined" aria-hidden="true">F</span>
-              Francis Energy
             </span>
             <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
               <span className="legend-size-dot" style={{ width: 8, height: 8 }} aria-hidden="true" />
@@ -573,6 +632,44 @@ export default function MapExplorer({
           )}
         </figcaption>
       </figure>
+
+      {okDetail ? (
+        <aside className="ok-detail" aria-label="Oklahoma detail">
+          <h3 className="label-caps">Oklahoma detail · {okDetail.n} sites</h3>
+          <svg
+            viewBox={`${okDetail.minX} ${okDetail.minY} ${okDetail.maxX - okDetail.minX} ${okDetail.maxY - okDetail.minY}`}
+            className="ok-detail-svg"
+            role="img"
+            aria-label={`${okDetail.n} open sites in Oklahoma`}
+          >
+            {visibleShapes
+              .filter((st) => st.abbr === "OK")
+              .map((st) => (
+                <path key={`ok-${st.abbr}`} d={st.d} className="state has inset-state" />
+              ))}
+            {okDetail.points.map((s) => {
+              const isHighlight =
+                Boolean(highlightOperator) &&
+                (s.operator ?? "Brand not stated") === highlightOperator;
+              const r = Math.max(2.2, pinRadius(s.stalls) * 0.5);
+              return (
+                <circle
+                  key={`okp-${s.slug}`}
+                  cx={s.x!}
+                  cy={s.y!}
+                  r={r}
+                  className="core"
+                  style={{
+                    fill: isHighlight ? "var(--volt)" : "var(--dot-muted)",
+                    stroke: "var(--ink)",
+                    strokeWidth: 0.8,
+                  }}
+                />
+              );
+            })}
+          </svg>
+        </aside>
+      ) : null}
 
       {mounted && selected && createPortal(
         <div className="scrim" onClick={close} role="presentation">

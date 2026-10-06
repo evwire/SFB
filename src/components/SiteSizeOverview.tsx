@@ -7,8 +7,8 @@ import StallLayoutIso, { isoDisplaySize } from "@/components/StallLayoutIso";
 
 function bubbleRadius(count: number, maxCount: number): number {
   if (count <= 0) return 0;
-  const minR = 14;
-  const maxR = 34;
+  const minR = 12;
+  const maxR = 32;
   if (maxCount <= 1) return minR + 4;
   const t = Math.sqrt(count / maxCount);
   return minR + t * (maxR - minR);
@@ -41,8 +41,7 @@ function CellTip({
   );
 }
 
-/** Darker plate so drawings read as illustrations, not ghosts. */
-const ISO_DRAW_COLOR = "#3a424a";
+const ISO_DRAW_COLOR = "#2a3036";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   const uid = useId();
@@ -59,20 +58,47 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   );
   const drawColPx = useMemo(() => {
     const widths = data.isoLayers.map((l) => isoDisplaySize(l.stalls).widthPx);
-    return Math.max(120, ...widths, 0);
+    return Math.max(100, ...widths, 0);
   }, [data.isoLayers]);
   const rowMinH = useMemo(() => {
     const heights = data.isoLayers.map((l) => isoDisplaySize(l.stalls).heightPx);
-    return Math.max(72, ...heights, 0);
+    return Math.min(60, Math.max(48, ...heights, 0));
   }, [data.isoLayers]);
 
   const colCount = data.sizeColumns.length;
-  const gridTemplate = `minmax(10rem, 13rem) repeat(${colCount}, minmax(3.6rem, 1fr)) minmax(5.5rem, 7rem)`;
+  const gridTemplate = `minmax(10rem, 13rem) repeat(${colCount}, minmax(3.6rem, 1fr)) minmax(4.5rem, 6rem) minmax(5.5rem, 7rem)`;
 
   return (
     <div className="size-page">
       <section className="size-matrix-hero">
         <h2 className="section-title">Who builds which size</h2>
+        <div className="size-share-pair" aria-label="Share of sites versus share of stalls">
+          {data.isoLayers.map((layer) => (
+            <div key={layer.stalls} className="size-share-row">
+              <span className="size-share-label mono">{layer.stalls}-stall</span>
+              <div className="size-share-bars">
+                <div className="size-share-track" title={`${layer.pct}% of sites`}>
+                  <div className="size-share-fill sites" style={{ width: `${layer.pct}%` }} />
+                </div>
+                <div className="size-share-track" title={`${layer.stallPct}% of stalls`}>
+                  <div className="size-share-fill stalls" style={{ width: `${layer.stallPct}%` }} />
+                </div>
+              </div>
+              <span className="size-share-vals mono">
+                {layer.pct}% sites · {layer.stallPct}% stalls
+              </span>
+            </div>
+          ))}
+          <p className="size-share-key">
+            <span>
+              <i className="swatch sites" /> Share of sites
+            </span>
+            <span>
+              <i className="swatch stalls" /> Share of stalls
+            </span>
+          </p>
+        </div>
+
         <div className="size-matrix-scroll">
           <div
             className="size-matrix"
@@ -88,6 +114,9 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
                 {stalls}
               </div>
             ))}
+            <div className="size-matrix-colhead mono" role="columnheader">
+              Count
+            </div>
             <div className="size-matrix-colhead mono" role="columnheader">
               Stalls
             </div>
@@ -110,15 +139,15 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
       </section>
 
       <section className="size-answer">
-        <h2 className="section-title">Layouts at a glance</h2>
+        <h2 className="section-title">Layouts</h2>
         <p className="size-iso-caption">Each block is one charger post.</p>
         <div className="size-iso-wrap">
-          <div className="size-iso" role="list" aria-label="Open US sites by stall layout">
+          <div className="size-iso size-iso-compact" role="list" aria-label="Open US sites by stall layout">
             <div className="size-iso-heads label-caps" aria-hidden="true">
               <span>Stalls</span>
               <span>Layout</span>
               <span>Open sites</span>
-              <span>Share of sites</span>
+              <span>Share</span>
             </div>
             <div
               className="size-iso-rows"
@@ -144,8 +173,13 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
                     </span>
                   </div>
                   <div className="size-iso-share">
-                    <span className="size-iso-share-n mono">{layer.pct}%</span>
-                    <span className="size-iso-share-sub">{layer.stallPct}% of stalls</span>
+                    <span
+                      className="size-iso-share-n mono"
+                      style={{ fontSize: `${Math.max(14, Math.min(28, 12 + layer.pct * 0.22))}px` }}
+                    >
+                      {layer.pct}%
+                    </span>
+                    <span className="size-iso-share-sub">{layer.stallPct}% stalls</span>
                   </div>
                 </div>
               ))}
@@ -177,10 +211,18 @@ function SizeMatrixRow({
   setRollupOpen: (v: boolean) => void;
 }) {
   const barPct = (row.totalStalls / maxRowStalls) * 100;
+  const totalCount = row.cells.reduce((a, c) => a + c.count, 0);
 
   return (
     <>
-      <div className={"size-row-label" + (row.isRollup ? " rollup" : "")} role="rowheader">
+      <div
+        className={
+          "size-row-label" +
+          (row.isRollup ? " rollup" : "") +
+          (row.isFrancis ? " francis-row" : "")
+        }
+        role="rowheader"
+      >
         <span className="size-row-name">{row.label}</span>
         <span className="mono size-row-meta">
           {row.totalSites} site{row.totalSites === 1 ? "" : "s"}
@@ -209,11 +251,15 @@ function SizeMatrixRow({
         const r = bubbleRadius(cell.count, maxCell);
         const isOn = active === key;
         return (
-          <div key={key} className="size-cell" role="cell">
+          <div key={key} className={"size-cell" + (row.isFrancis ? " francis-cell" : "")} role="cell">
             {cell.count > 0 ? (
               <button
                 type="button"
-                className={"size-bubble size-bubble-ink" + (isOn ? " on" : "")}
+                className={
+                  "size-bubble size-bubble-ink size-bubble-silent" +
+                  (row.isFrancis ? " francis" : "") +
+                  (isOn ? " on" : "")
+                }
                 style={{ width: r * 2, height: r * 2 }}
                 aria-label={`${row.label}: ${cell.count} site${cell.count === 1 ? "" : "s"} with ${cell.stalls} stalls`}
                 aria-describedby={isOn ? `${uid}-${key}` : undefined}
@@ -223,7 +269,7 @@ function SizeMatrixRow({
                 onBlur={() => setActive((cur) => (cur === key ? null : cur))}
                 onClick={() => setActive(isOn ? null : key)}
               >
-                <span className="size-bubble-n mono">{cell.count}</span>
+                <span className="sr-only">{cell.count}</span>
               </button>
             ) : (
               <span className="size-empty" aria-hidden="true">
@@ -237,6 +283,9 @@ function SizeMatrixRow({
         );
       })}
 
+      <div className="size-total-cell mono num" role="cell">
+        {totalCount}
+      </div>
       <div className="size-total-cell" role="cell">
         <div className="size-total-track" aria-hidden="true">
           <div className="size-total-fill" style={{ width: `${barPct}%` }} />
