@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import MapExplorer from "@/components/MapExplorer";
-import Dashboard from "@/components/Dashboard";
+import Dashboard, { OperatorRank } from "@/components/Dashboard";
 import Feed from "@/components/Feed";
 import SiteTable from "@/components/SiteTable";
 import SciComparePanel from "@/components/SciComparePanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
 import { EUROPE_COUNTRIES, EU_VIEW_W, EU_VIEW_H } from "@/lib/europe-countries.generated";
-import { fmtDate, fmtNum } from "@/lib/style";
+import { fmtDate, fmtNum, fmtTallinnStamp } from "@/lib/style";
 import type { FeedItem, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
 
 type Props = {
@@ -23,24 +23,7 @@ type Props = {
 };
 
 function pulledLabel(generated: string) {
-  try {
-    const d = new Date(generated);
-    if (!Number.isNaN(d.getTime())) {
-      return (
-        d.toLocaleString("en-GB", {
-          timeZone: "Europe/Tallinn",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }) + " EET"
-      );
-    }
-  } catch {
-    /* fall through */
-  }
-  return generated;
+  return fmtTallinnStamp(generated);
 }
 
 export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciCompare, feed, coverageNote }: Props) {
@@ -124,7 +107,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
           </a>
           <div className="topbar-actions">
             <nav className="topnav">
-              <a href="#map">Map</a>
+              <a href="#map" aria-current="page">Map</a>
               <a href="#dashboard">Rollout</a>
               <a href="/size">Site size</a>
               <a href="#compare">vs SCI</a>
@@ -136,8 +119,9 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
         </div>
       </header>
 
-      <main className="shell">
-        <section className="hero rise" style={{ marginTop: 40 }}>
+      <main className="shell shell-wide">
+        <section className="hero hero-compact hero-split rise" style={{ marginTop: 28 }}>
+          <div className="hero-copy">
           <div className="eyebrow">Tesla Supercharger for Business</div>
           <div className="region-toggle" role="tablist" aria-label="Region">
             <button
@@ -234,26 +218,14 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
           <h1>
             {isTesla ? (
               isBoth ? (
-                <>
-                  Open and upcoming<br />
-                  <span className="hero-accent">third-party Superchargers.</span>
-                </>
+                <>Open and upcoming third-party Superchargers</>
               ) : isUpcoming ? (
-                <>
-                  Third-party Superchargers<br />
-                  <span className="hero-accent">coming soon.</span>
-                </>
+                <>Third-party Superchargers coming soon</>
               ) : (
-                <>
-                  Customer-owned Superchargers,<br />
-                  <span className="hero-accent">as Tesla lists them.</span>
-                </>
+                <>Customer-owned Superchargers, as Tesla lists them</>
               )
             ) : (
-              <>
-                Anyone can buy a Supercharger now.<br />
-                <span className="hero-accent">Here is who actually did.</span>
-              </>
+              <>Anyone can buy a Supercharger now. Here is who actually did.</>
             )}
           </h1>
           <p className="lede">
@@ -290,85 +262,58 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
               </>
             )}
           </p>
-          <div className="hero-stats">
-            {isBoth ? (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--signal)" }} />
-                  <span className="num-moment">{openCount}</span> open
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{upcomingCount}</span> upcoming
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{bothCount}</span> total
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{areas}</span> {areaNoun}
-                </span>
-              </>
-            ) : isUpcoming ? (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{sfb.length}</span> upcoming third-party
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{underConstruction}</span> under construction
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--violet)" }} />
-                  <span className="num-moment">{inDevelopment}</span> in development
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--signal)" }} />
-                  <span className="num-moment">{sfb.length}</span> open sites
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{fmtNum(stallSum)}</span> stalls
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{areas}</span> {areaNoun}
-                </span>
-              </>
-            )}
-            <span className="chip">Source: {sourceLabel}</span>
-            {isTesla && <span className="chip">Pulled {pulled}</span>}
+          <p className="meta-line mono">
+            {isBoth
+              ? `${openCount} open · ${upcomingCount} upcoming · ${areas} ${areaNoun}`
+              : isUpcoming
+                ? `${sfb.length} upcoming · ${underConstruction} under construction · ${inDevelopment} in development`
+                : `${sfb.length} open sites · ${fmtNum(stallSum)} stalls · ${areas} ${areaNoun}`}
+            {" · "}Source: {sourceLabel}
+            {isTesla ? ` · Pulled ${pulled}` : ""}
+          </p>
+          </div>
+          <div className="hero-key" aria-hidden="true">
+            <div className="hero-key-value">{isBoth ? bothCount : sfb.length}</div>
+            <div className="hero-key-label">
+              {isBoth ? "sites on the map" : isUpcoming ? "upcoming sites" : "open sites"}
+            </div>
           </div>
         </section>
 
-        <section id="map">
-          <div className="section-head">
+        <section id="map" className="map-hero">
+          <div className="section-head section-head-inline">
             <h2>The map</h2>
             <p className="section-note">
               {isBoth
-                ? "Solid pins = open · ring pins = upcoming. Click a pin for details."
+                ? "Solid = open · ring = upcoming."
                 : isUpcoming
-                  ? "Hollow pins = upcoming third-party sites. Click a pin for details."
+                  ? "Hollow pins = upcoming third-party sites."
                   : isTesla
-                    ? "Pins use Tesla’s published coordinates. Click a pin for details."
-                    : "Click a pin for the full record and its source"}
+                    ? "Pins use Tesla’s published coordinates."
+                    : "Click a pin for the full record."}
             </p>
           </div>
-          <MapExplorer
-            key={`${region}-${phase}`}
-            sites={sites}
-            shapes={shapes}
-            viewW={viewW}
-            viewH={viewH}
-            region={region}
-            areaNoun={areaNoun}
-            upcomingStyle={isUpcoming}
-            phase={phase}
-            onPhaseChange={setPhase}
-            openCount={openCount}
-            upcomingCount={upcomingCount}
-          />
+          <div className="map-rank">
+            <div className="map-panel">
+              <MapExplorer
+                key={`${region}-${phase}`}
+                sites={sites}
+                shapes={shapes}
+                viewW={viewW}
+                viewH={viewH}
+                region={region}
+                areaNoun={areaNoun}
+                upcomingStyle={isUpcoming}
+                phase={phase}
+                onPhaseChange={setPhase}
+                openCount={openCount}
+                upcomingCount={upcomingCount}
+              />
+            </div>
+            {!isUpcoming ? (
+              <OperatorRank sites={sites} source={source} phase={phase} />
+            ) : null}
+          </div>
         </section>
 
         <section id="dashboard">
@@ -384,12 +329,12 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             </h2>
             <p className="section-note">
               {isBoth
-                ? `${openCount} open + ${upcomingCount} upcoming from Tesla`
+                ? `${openCount} open and ${upcomingCount} upcoming · ${fmtNum(stallSum)} open stalls · ${areas} ${areaNoun}.`
                 : isUpcoming
-                  ? "Coming-soon third-party sites — no invented operators"
+                  ? `${sfb.length} coming-soon third-party sites; operators appear only when a site opens.`
                   : isTesla
-                    ? "Totals from Tesla’s customer-owned list"
-                    : "Counts describe our coverage, not the whole programme"}
+                    ? `${sfb.length} open sites · ${fmtNum(stallSum)} stalls · ${areas} ${areaNoun}.`
+                    : "Counts describe our coverage, not the whole programme."}
             </p>
           </div>
           <Dashboard
@@ -401,6 +346,8 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             regionLabel={regionLabel}
             phase={phase}
             coverage={coverage ?? null}
+            hideStats={isTesla}
+            hideOperatorSites={!isUpcoming}
           />
         </section>
 

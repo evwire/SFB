@@ -1,18 +1,17 @@
 import type { SiteStatus, EvidenceGrade } from "./types";
 
 /**
- * Colour never carries meaning on its own (BRAND.md section 2), so every status
- * ships a glyph and a word alongside its colour. Status coding follows CHARTS.md:
- * green is live, blue is coming, amber wants attention.
+ * Colour never carries meaning alone — every status ships a glyph and a word.
+ * Volt = open/live; cool slate = upcoming; amber wants attention.
  */
 
 /** Sites EVwire has written about. Amber is BRAND extended accent; always pair with the word. */
 export const COVERED_STYLE = { color: "var(--amber)", hex: "#D97706", glyph: "◆", label: "Covered by EVwire" } as const;
 
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
-  Operational: { color: "var(--signal)", glyph: "●", label: "Open" },
-  Construction: { color: "var(--blue)", glyph: "◐", label: "Under construction" },
-  Planned: { color: "var(--violet)", glyph: "○", label: "Planned" },
+  Operational: { color: "var(--volt)", glyph: "●", label: "Open" },
+  Construction: { color: "var(--upcoming)", glyph: "◐", label: "Under construction" },
+  Planned: { color: "var(--upcoming)", glyph: "○", label: "Planned" },
   "At risk": { color: "var(--amber)", glyph: "▲", label: "At risk" },
   Closed: { color: "var(--faint)", glyph: "×", label: "Closed" },
   Unknown: { color: "var(--faint)", glyph: "?", label: "Status not stated" },
@@ -102,4 +101,29 @@ export function humanisePublicCopy(text: string): string {
     .replace(/\s+([.,;:])/g, "$1")
     .replace(/([.!?])\s*([.!?])/g, "$1")
     .trim();
+}
+
+
+/** Format an instant in Europe/Tallinn with the correct EET/EEST abbreviation. */
+export function fmtTallinnStamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const body = d.toLocaleString("en-GB", {
+    timeZone: "Europe/Tallinn",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const offset =
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Tallinn",
+      timeZoneName: "shortOffset",
+    })
+      .formatToParts(d)
+      .find((p) => p.type === "timeZoneName")?.value ?? "";
+  // GMT+3 / GMT+03:00 → EEST (DST); GMT+2 → EET
+  const zone = /[+]?0?3\b/.test(offset) ? "EEST" : /[+]?0?2\b/.test(offset) ? "EET" : offset || "EET";
+  return `${body} ${zone}`;
 }

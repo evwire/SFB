@@ -4,6 +4,7 @@ import { getRegionalSiteData } from "@/lib/data";
 import { buildSizeOverview } from "@/lib/site-size";
 import SiteSizeOverview from "@/components/SiteSizeOverview";
 import ThemeToggle from "@/components/ThemeToggle";
+import { fmtTallinnStamp } from "@/lib/style";
 
 export const revalidate = 300;
 
@@ -14,35 +15,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function pulledLabel(generated: string, pulledAt: string | null) {
-  const raw = pulledAt ?? generated;
-  try {
-    const d = new Date(raw);
-    if (!Number.isNaN(d.getTime())) {
-      return (
-        d.toLocaleString("en-GB", {
-          timeZone: "Europe/Tallinn",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }) + " EET"
-      );
-    }
-  } catch {
-    /* fall through */
-  }
-  return raw;
-}
-
 export default async function SizePage() {
   const { us } = await getRegionalSiteData();
   const overview = buildSizeOverview(us.sites.filter((s) => s.siteClass === "SfB"), {
     generated: us.generated,
     pulledAt: us.generated,
   });
-  const pulled = pulledLabel(us.generated, overview.pulledAt);
+  const pulled = fmtTallinnStamp(us.generated);
+  const singles = overview.rows.find((r) => r.isRollup)?.totalSites ?? 0;
 
   return (
     <>
@@ -67,47 +47,31 @@ export default async function SizePage() {
       </header>
 
       <main className="shell">
-        <section className="hero rise" style={{ marginTop: 40 }}>
-          <div className="eyebrow">Tesla Supercharger for Business · United States</div>
-          <h1>
-            Site size,
-            <br />
-            <span className="hero-accent">by who builds it.</span>
-          </h1>
-          <p className="lede">
-            Which operators put up 4-stall sites, who goes bigger, and how the open US roster
-            breaks down by stall count. Figures come from Tesla&rsquo;s open customer-owned list.
+        <section className="hero hero-compact" style={{ marginTop: 32 }}>
+          <p className="eyebrow">Tesla Supercharger for Business · United States · site size</p>
+          <h1 className="size-h1">{overview.story.headline}</h1>
+          <p className="lede">{overview.story.subline}</p>
+          {singles > 0 ? (
+            <p className="lede size-singles-note">
+              {singles} companies run one 4-stall site each — the long tail beside the named
+              builders below.
+            </p>
+          ) : null}
+          <p className="meta-line mono">
+            {overview.totalSites} open sites · {overview.totalStalls} stalls · median{" "}
+            {overview.median} · Source: {us.sourceLabel} · Pulled {pulled}
           </p>
-          <div className="hero-stats">
-            <span className="chip">
-              <span className="num-moment">{overview.totalSites}</span> open sites
-            </span>
-            <span className="chip">
-              <span className="num-moment">{overview.totalStalls}</span> stalls
-            </span>
-            <span className="chip">
-              <span className="num-moment">{overview.median}</span> median
-            </span>
-            <span className="chip">Source: {us.sourceLabel}</span>
-            <span className="chip">Pulled {pulled}</span>
-          </div>
         </section>
 
         <SiteSizeOverview data={overview} />
-
-        <p className="size-back">
-          <Link className="link" href="/">
-            ← Back to the map
-          </Link>
-        </p>
 
         <footer className="foot">
           <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
           <p>
-            Stall counts are from Tesla Find Us for open US customer-owned Superchargers.
-            Upcoming sites have no stall count until they open. Spotted a mismatch?{" "}
+            Stall counts are from Tesla Find Us for open US customer-owned Superchargers. Upcoming
+            sites have no stall count until they open. Spotted a mismatch?{" "}
             <a
               className="link"
               href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20site%20size"

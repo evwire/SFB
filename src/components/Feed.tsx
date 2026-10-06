@@ -1,6 +1,7 @@
 import { fmtDate } from "@/lib/style";
 import type { FeedItem } from "@/lib/types";
 
+/** Text-only coverage list — dates + headlines, no image cards. */
 export default function Feed({
   items,
   source,
@@ -12,29 +13,19 @@ export default function Feed({
 }) {
   return (
     <>
-      <ul className="feed">
+      <ul className="feed feed-textlist">
         {items.map((it) => (
-          <li key={it.url} className="feed-item">
+          <li key={it.url} className="feed-item-text">
             <a href={it.url} target="_blank" rel="noopener">
-              {it.image ? (
-                // Plain img: these are beehiiv CDN URLs already sized by cdn-cgi.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.image} alt="" loading="lazy" className="feed-img" />
-              ) : (
-                <span className="feed-img placeholder" aria-hidden="true" />
-              )}
-              <span className="feed-text">
-                <span className="feed-date mono">{fmtDate(it.published)}</span>
-                <span className="feed-title">{it.title}</span>
-                {it.description && <span className="feed-desc">{it.description}</span>}
-              </span>
+              <span className="feed-date mono">{fmtDate(it.published)}</span>
+              <span className="feed-title">{it.title}</span>
             </a>
           </li>
         ))}
       </ul>
       <p className="section-note" style={{ marginTop: 14 }}>
-        Pulled from the {source} for the Supercharger for Business and Tesla Third Party
-        Superchargers tags. Last refreshed {asOf}.
+        From the {source} Supercharger for Business and Tesla Third Party Superchargers tags.
+        Last refreshed {asOf}.
       </p>
     </>
   );

@@ -17,6 +17,64 @@ function Stat({ value, label, note }: { value: string; label: string; note?: str
   );
 }
 
+
+export function OperatorRank({
+  sites,
+  source = "tesla",
+  phase = "open",
+  limit = 12,
+}: {
+  sites: Site[];
+  source?: DataSource;
+  phase?: SitePhase;
+  limit?: number;
+}) {
+  const sfb = sites.filter((s) => s.siteClass === "SfB");
+  const open = sfb.filter((s) => s.status === "Operational" || s.pinStyle === "open");
+  const operatorSites = phase === "both" ? open : sfb;
+  const byOperator = Object.values(
+    operatorSites.reduce<Record<string, { operator: string; sites: number; stalls: number; unknown: number }>>(
+      (acc, s) => {
+        const k = s.operator ?? "Brand not stated";
+        acc[k] ??= { operator: k, sites: 0, stalls: 0, unknown: 0 };
+        acc[k].sites += 1;
+        if (s.stalls == null) acc[k].unknown += 1;
+        else acc[k].stalls += s.stalls;
+        return acc;
+      },
+      {}
+    )
+  ).sort((a, b) => b.sites - a.sites || b.stalls - a.stalls || a.operator.localeCompare(b.operator));
+  const maxOpSites = Math.max(...byOperator.map((o) => o.sites), 1);
+  const rows = byOperator.slice(0, limit);
+  const isTesla = source === "tesla";
+
+  return (
+    <aside className="rank-aside" aria-label="Operators by site count">
+      <h3>Who owns the most sites</h3>
+      <p className="panel-sub mono">
+        {isTesla ? "By operator name from Tesla" : "Sites in EVwire coverage"}
+      </p>
+      <ul className="bars">
+        {rows.map((o) => (
+          <li key={o.operator}>
+            <div className="bar-label">
+              <span>{o.operator}</span>
+              <span className="mono">
+                {o.sites} site{o.sites > 1 ? "s" : ""}
+                {o.stalls > 0 && ` · ${o.stalls} stalls`}
+              </span>
+            </div>
+            <div className="bar-track">
+              <div className="bar-fill" style={{ width: `${(o.sites / maxOpSites) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}
+
 export default function Dashboard({
   sites,
   aggregates,
@@ -26,6 +84,8 @@ export default function Dashboard({
   regionLabel = "US",
   phase = "open",
   coverage = null,
+  hideStats = false,
+  hideOperatorSites = false,
 }: {
   sites: Site[];
   aggregates: Aggregate[];
@@ -35,6 +95,8 @@ export default function Dashboard({
   regionLabel?: string;
   phase?: SitePhase;
   coverage?: UpcomingCoverage | null;
+  hideStats?: boolean;
+  hideOperatorSites?: boolean;
 }) {
   const sfb = sites.filter((s) => s.siteClass === "SfB");
   const open = sfb.filter((s) => s.status === "Operational" || s.pinStyle === "open");
@@ -78,7 +140,8 @@ export default function Dashboard({
   const maxStateSites = Math.max(...byState.map((o) => o.sites), 1);
 
   return (
-    <div className="dash">
+    <div className={"dash" + (hideStats ? " dash-condensed" : "")}>
+      {!hideStats ? (
       <div className="dash-grid">
         <Stat
           value={String(sfb.length)}
@@ -139,8 +202,10 @@ export default function Dashboard({
           }
         />
       </div>
+      ) : null}
 
       <div className="dash-cols">
+        {!hideOperatorSites ? (
         <section className="dash-panel glass">
           <h3>Who owns the most sites</h3>
           <p className="panel-sub mono">
@@ -164,6 +229,7 @@ export default function Dashboard({
             ))}
           </ul>
         </section>
+        ) : null}
 
         <section className="dash-panel glass">
           <h3>Who owns the most stalls</h3>
