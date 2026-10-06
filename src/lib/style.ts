@@ -6,7 +6,7 @@ import type { SiteStatus, EvidenceGrade } from "./types";
  */
 
 /** Sites EVwire has written about. Amber is BRAND extended accent; always pair with the word. */
-export const COVERED_STYLE = { color: "var(--covered)", hex: "#2F5BFF", glyph: "◆", label: "Covered by EVwire" } as const;
+export const COVERED_STYLE = { color: "var(--ink)", hex: "#070A0C", glyph: "◆", label: "Covered by EVwire" } as const;
 
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
   Operational: { color: "var(--volt)", glyph: "●", label: "Open" },
@@ -77,9 +77,20 @@ export function pinRadius(stalls: number | null): number {
 
 export function fmtDate(iso: string | null): string {
   if (!iso) return "not stated";
-  const d = new Date(iso + (iso.length === 10 ? "T00:00:00Z" : ""));
+  const raw = iso.length === 10 ? iso + "T00:00:00Z" : iso;
+  const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  // Always "6 Oct 2026" (en-GB day Mon year, no comma).
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: iso.length === 10 ? "UTC" : "Europe/Tallinn",
+  }).formatToParts(d);
+  const day = parts.find((p) => p.type === "day")?.value ?? "";
+  const mon = parts.find((p) => p.type === "month")?.value ?? "";
+  const year = parts.find((p) => p.type === "year")?.value ?? "";
+  return `${day} ${mon} ${year}`;
 }
 
 export function fmtNum(n: number): string {

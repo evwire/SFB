@@ -25,12 +25,19 @@ export default async function SizePage() {
     }
   );
   const pulled = fmtTallinnStamp(us.generated);
-  const singles = overview.rows.find((r) => r.isRollup)?.totalSites ?? 0;
+  const singles4 = overview.rows.find((r) => r.isRollup)?.totalSites ?? 0;
+  const byOp = new Map<string, number>();
+  for (const s of us.sites) {
+    if (s.siteClass && s.siteClass !== "SfB") continue;
+    const k = s.operator?.trim() || "Brand not stated";
+    byOp.set(k, (byOp.get(k) ?? 0) + 1);
+  }
+  const singleSiteOps = [...byOp.values()].filter((n) => n === 1).length;
 
   return (
     <>
       <header className="topbar">
-        <div className="shell shell-wide topbar-inner">
+        <div className="shell grid-shell topbar-inner">
           <a className="brand" href="https://evwire.com" aria-label="EVwire">
             <img className="brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
@@ -41,7 +48,7 @@ export default async function SizePage() {
               <Link href="/size" aria-current="page">
                 Site size
               </Link>
-              <Link href="/#compare">vs SCI</Link>
+              <Link href="/#compare">vs Supercharge.info</Link>
               <Link href="/#sites">All sites</Link>
               <Link href="/#news">News</Link>
             </nav>
@@ -50,19 +57,19 @@ export default async function SizePage() {
         </div>
       </header>
 
-      <main className="shell shell-wide">
+      <main className="shell grid-shell">
         <section className="hero hero-compact" style={{ marginTop: 32 }}>
           <p className="eyebrow">Tesla Supercharger for Business · United States · site size</p>
           <h1 className="size-h1">{overview.story.headline}</h1>
           <p className="lede">{overview.story.subline}</p>
-          {singles > 0 ? (
+          {singles4 > 0 ? (
             <p className="lede size-singles-note">
-              {singles} companies run one 4-stall site each.
+              {singleSiteOps} operators run one site each; {singles4} of them are 4-stall only.
             </p>
           ) : null}
           <p className="meta-line mono">
             {overview.totalSites} open sites · {overview.totalStalls} stalls · median{" "}
-            {overview.median} · Source: {us.sourceLabel} · Pulled {pulled}
+            {overview.median} · Tesla Find Us · Pulled {pulled}
           </p>
         </section>
 

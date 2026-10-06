@@ -1,8 +1,21 @@
 import type { Region, SciCompare } from "@/lib/types";
 
+function plainStatusBreakdown(breakdown: Record<string, number>): string {
+  const labels: Record<string, string> = {
+    PLAN: "planned",
+    CONSTRUCTION: "under construction",
+    PERMIT: "permit",
+    VOTING: "voting",
+    EXPANDING: "expanding",
+  };
+  return Object.entries(breakdown)
+    .map(([k, v]) => `${v} ${labels[k] ?? k.toLowerCase()}`)
+    .join(" · ");
+}
+
 /**
  * Tesla Find Us (live) vs Supercharge.info brackets (snapshot).
- * Live Tesla counts are passed in so the panel cannot contradict the header.
+ * Simple 4-column table with a difference column.
  */
 export default function SciComparePanel({
   compare,
@@ -25,66 +38,70 @@ export default function SciComparePanel({
   const regionLabel = region === "europe" ? "Europe" : "United States";
   const teslaDrift =
     liveOpen !== row.tesla_open || liveUpcoming !== row.tesla_upcoming
-      ? `Tesla column is live (${livePulled}). Snapshot had Tesla at ${row.tesla_open} open / ${row.tesla_upcoming} upcoming on ${compare.snapshot_label}.`
-      : `Tesla and SCI figures share snapshot ${compare.snapshot_label}.`;
+      ? `Tesla column is live (${livePulled}). On ${compare.snapshot_label} Tesla stood at ${row.tesla_open} open / ${row.tesla_upcoming} upcoming.`
+      : `Figures share snapshot ${compare.snapshot_label}.`;
+
+  const rows = [
+    {
+      status: "Open",
+      tesla: liveOpen,
+      sci: row.sci_open,
+      note: "customer-owned",
+      sciNote: "status open",
+    },
+    {
+      status: "Upcoming",
+      tesla: liveUpcoming,
+      sci: row.sci_upcoming,
+      note: `${liveUpcomingUc ?? row.tesla_upcoming_uc} under construction · ${liveUpcomingInDev ?? row.tesla_upcoming_in_dev} in development`,
+      sciNote: plainStatusBreakdown(row.sci_upcoming_breakdown),
+    },
+  ];
 
   return (
     <section id="compare" className="sci-compare">
-      <div className="sci-compare-head">
-        <div>
-          <h2>Tesla Find Us vs Supercharge.info</h2>
-          <p className="section-note">{regionLabel}</p>
-        </div>
-      </div>
+      <h2 className="section-title">Tesla Find Us vs Supercharge.info</h2>
+      <p className="section-note">{regionLabel}</p>
 
-      <div className="sci-grid" role="table" aria-label="Tesla vs SCI counts">
-        <div className="sci-col sci-col-head" role="row">
-          <div role="columnheader" className="sci-cell sci-label">
-            Status
-          </div>
-          <div role="columnheader" className="sci-cell">
-            Tesla Find Us
-            <span className="sci-sub">live</span>
-          </div>
-          <div role="columnheader" className="sci-cell">
-            SCI brackets
-            <span className="sci-sub">{compare.snapshot_label}</span>
-          </div>
-        </div>
-        <div className="sci-col" role="row">
-          <div role="cell" className="sci-cell sci-label">
-            Open
-          </div>
-          <div role="cell" className="sci-cell sci-num tesla">
-            {liveOpen}
-            <span className="sci-sub">customer-owned</span>
-          </div>
-          <div role="cell" className="sci-cell sci-num sci">
-            {row.sci_open}
-            <span className="sci-sub">status OPEN</span>
-          </div>
-        </div>
-        <div className="sci-col" role="row">
-          <div role="cell" className="sci-cell sci-label">
-            Upcoming
-          </div>
-          <div role="cell" className="sci-cell sci-num tesla">
-            {liveUpcoming}
-            <span className="sci-sub">
-              {(liveUpcomingUc ?? row.tesla_upcoming_uc)} UC ·{" "}
-              {(liveUpcomingInDev ?? row.tesla_upcoming_in_dev)} In Dev
-            </span>
-          </div>
-          <div role="cell" className="sci-cell sci-num sci">
-            {row.sci_upcoming}
-            <span className="sci-sub">
-              {Object.entries(row.sci_upcoming_breakdown)
-                .map(([k, v]) => `${v} ${k}`)
-                .join(" · ")}
-            </span>
-          </div>
-        </div>
-      </div>
+      <table className="sci-table">
+        <thead>
+          <tr>
+            <th scope="col">Status</th>
+            <th scope="col" className="num">
+              Tesla Find Us
+            </th>
+            <th scope="col" className="num">
+              Supercharge.info
+            </th>
+            <th scope="col" className="num">
+              Difference
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => {
+            const diff = r.tesla - r.sci;
+            const diffLabel = diff === 0 ? "0" : diff > 0 ? `+${diff}` : String(diff);
+            return (
+              <tr key={r.status}>
+                <th scope="row">
+                  {r.status}
+                  <span className="sci-sub-line">{r.note}</span>
+                </th>
+                <td className="num mono">
+                  {r.tesla}
+                  <span className="sci-sub-line">live</span>
+                </td>
+                <td className="num mono">
+                  {r.sci}
+                  <span className="sci-sub-line">{r.sciNote}</span>
+                </td>
+                <td className="num mono">{diffLabel}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
       <p className="sci-note mono">{teslaDrift}</p>
       <p className="sci-note">{compare.why_they_differ}</p>

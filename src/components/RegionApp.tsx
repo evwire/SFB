@@ -28,8 +28,10 @@ function thesis(
   openSites: SiteData["sites"],
   openCount: number,
   upcomingCount: number
-): { h1: ReactNode; lede: string } {
+): { h1: ReactNode; lede: string; summary?: { sites: number; stalls: number } } {
   const sfb = openSites.filter((s) => s.siteClass === "SfB");
+  const stalls = sfb.reduce((a, s) => a + (s.stalls ?? 0), 0);
+
   if (phase === "upcoming") {
     return {
       h1: (
@@ -51,11 +53,11 @@ function thesis(
           {openCount} open and {upcomingCount} upcoming customer-owned sites
         </>
       ),
-      lede: `${region === "europe" ? "Europe" : "US"} from Tesla Find Us.`,
+      lede: region === "europe" ? "Europe, from Tesla Find Us." : "United States, from Tesla Find Us.",
+      summary: { sites: openCount + upcomingCount, stalls },
     };
   }
 
-  // Open
   if (region === "europe") {
     const byOp = new Map<string, number>();
     for (const s of sfb) {
@@ -70,38 +72,53 @@ function thesis(
             {top[0]} runs {top[1]} of {openCount} open Europe sites
           </>
         ),
-        lede: `${fmtNum(sfb.reduce((a, s) => a + (s.stalls ?? 0), 0))} stalls across ${new Set(sfb.map((s) => s.state)).size} markets.`,
+        lede: `${fmtNum(stalls)} stalls across ${new Set(sfb.map((s) => s.state)).size} markets.`,
+        summary: { sites: openCount, stalls },
       };
     }
   }
 
-  const byOp = new Map<string, number>();
+  const byOp = new Map<string, { n: number; states: Map<string, number> }>();
   const byState = new Map<string, number>();
   for (const s of sfb) {
     const k = s.operator ?? "Brand not stated";
-    byOp.set(k, (byOp.get(k) ?? 0) + 1);
+    if (!byOp.has(k)) byOp.set(k, { n: 0, states: new Map() });
+    const row = byOp.get(k)!;
+    row.n += 1;
+    row.states.set(s.state, (row.states.get(s.state) ?? 0) + 1);
     byState.set(s.state, (byState.get(s.state) ?? 0) + 1);
   }
-  const topOp = [...byOp.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  const topOp = [...byOp.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))[0];
   const topState = [...byState.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
-  const stalls = sfb.reduce((a, s) => a + (s.stalls ?? 0), 0);
 
-  if (topOp && topOp[1] >= 2) {
+  if (topOp && topOp[1].n >= 2 && topState) {
+    const opInTopState = topOp[1].states.get(topState[0]) ?? 0;
+    const stateName =
+      topState[0] === "OK"
+        ? "Oklahoma"
+        : topState[0] === "TX"
+          ? "Texas"
+          : topState[0] === "CA"
+            ? "California"
+            : topState[0];
     return {
       h1: (
         <>
-          {topOp[0]} runs {topOp[1]} of {openCount} open US sites
+          {topOp[0]} runs {topOp[1].n} of {openCount} open US sites
         </>
       ),
-      lede: topState
-        ? `${topState[0]} alone has ${topState[1]}. ${fmtNum(stalls)} stalls in ${byState.size} states.`
-        : `${fmtNum(stalls)} stalls in ${byState.size} states.`,
+      lede:
+        opInTopState > 0
+          ? `Most of them in ${stateName}, where it has ${opInTopState} of the state’s ${topState[1]}. ${fmtNum(stalls)} stalls in ${byState.size} states.`
+          : `${fmtNum(stalls)} stalls in ${byState.size} states.`,
+      summary: { sites: openCount, stalls },
     };
   }
 
   return {
     h1: <>{openCount} open customer-owned Superchargers in the US</>,
     lede: `${fmtNum(stalls)} stalls in ${byState.size} states.`,
+    summary: { sites: openCount, stalls },
   };
 }
 
@@ -147,16 +164,14 @@ export default function RegionApp({
           }
         : openData;
 
-  const { sites, aggregates, pipeline, programme, source, generated, sourceLabel, regionLabel, areaNoun, coverage } =
+  const { sites, aggregates, pipeline, programme, source, regionLabel, areaNoun, coverage } =
     data;
   const isTesla = source === "tesla";
   const isUpcoming = phase === "upcoming";
   const isBoth = phase === "both";
-  const sfb = sites.filter((s) => s.siteClass === "SfB");
   const shapes = region === "europe" ? EUROPE_COUNTRIES : US_STATES;
   const viewW = region === "europe" ? EU_VIEW_W : VIEW_W;
   const viewH = region === "europe" ? EU_VIEW_H : VIEW_H;
-  const pulled = useMemo(() => fmtTallinnStamp(generated), [generated]);
   const openPulled = useMemo(() => fmtTallinnStamp(openData.generated), [openData.generated]);
   const upcomingPulled = useMemo(
     () => fmtTallinnStamp(upcomingData.generated),
@@ -166,15 +181,13 @@ export default function RegionApp({
   const underConstruction = upcomingData.sites.filter((s) => s.status === "Construction").length;
   const inDevelopment = upcomingData.sites.filter((s) => s.status === "Planned").length;
 
-  const { h1, lede } = thesis(region, phase, openData.sites, openCount, upcomingCount);
-
-  const showCoverage = isUpcoming || isBoth;
-  const banner = showCoverage ? coverage?.honesty_banner ?? null : null;
+  const { h1, lede, summary } = thesis(region, phase, openData.sites, openCount, upcomingCount);
+  const banner = isUpcoming || isBoth ? coverage?.honesty_banner ?? null : null;
 
   return (
     <>
       <header className="topbar">
-        <div className="shell shell-wide topbar-inner">
+        <div className="shell grid-shell topbar-inner">
           <a className="brand" href="https://evwire.com" aria-label="EVwire">
             <img className="brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
@@ -185,7 +198,7 @@ export default function RegionApp({
               </a>
               <a href="#dashboard">Operators</a>
               <a href="/size">Site size</a>
-              <a href="#compare">vs SCI</a>
+              <a href="#compare">vs Supercharge.info</a>
               <a href="#sites">All sites</a>
               <a href="#news">News</a>
             </nav>
@@ -194,11 +207,27 @@ export default function RegionApp({
         </div>
       </header>
 
-      <main className="shell shell-wide">
-        <section className="hero hero-thesis rise" style={{ marginTop: 28 }}>
-          <p className="eyebrow">Tesla Supercharger for Business</p>
-          <h1 className="thesis-h1">{h1}</h1>
-          <p className="lede">{lede}</p>
+      <main className="shell grid-shell">
+        <section className="hero hero-thesis rise">
+          <div className="hero-thesis-grid">
+            <div className="hero-thesis-copy">
+              <p className="eyebrow">Tesla Supercharger for Business</p>
+              <h1 className="thesis-h1">{h1}</h1>
+              <p className="lede">{lede}</p>
+            </div>
+            {summary && phase === "open" ? (
+              <div className="hero-summary" aria-label="Roster totals">
+                <div>
+                  <span className="hero-summary-n mono">{summary.sites}</span>
+                  <span className="hero-summary-l">open sites</span>
+                </div>
+                <div>
+                  <span className="hero-summary-n mono">{fmtNum(summary.stalls)}</span>
+                  <span className="hero-summary-l">stalls</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
           {banner ? (
             <div className="coverage-banner" role="status">
               <strong>Incomplete coverage.</strong> {banner}
@@ -207,7 +236,7 @@ export default function RegionApp({
         </section>
 
         <section id="map" className="map-hero">
-          <div className="map-rank">
+          <div className="map-rank map-rank-flush">
             <div className="map-panel">
               <MapExplorer
                 key={`${region}-${phase}`}
@@ -234,9 +263,7 @@ export default function RegionApp({
         </section>
 
         <section id="dashboard">
-          <div className="section-head section-head-inline">
-            <h2>Where they are</h2>
-          </div>
+          <h2 className="section-title">By state</h2>
           <Dashboard
             sites={sites}
             aggregates={aggregates}
@@ -247,7 +274,9 @@ export default function RegionApp({
             phase={phase}
             coverage={coverage ?? null}
             hideStats
-            hideOperatorSites
+            hideOperatorSites={false}
+            statesAsBars
+            hideOperatorTable
           />
         </section>
 
@@ -263,25 +292,18 @@ export default function RegionApp({
 
         {!isTesla && !isUpcoming && programme ? (
           <section id="how">
-            <div className="section-head">
-              <h2>How the programme works</h2>
-              <p className="section-note">Tesla published terms, {programme.economics.as_of}</p>
-            </div>
-            <div className="how-grid">
-              <div className="dash-panel">
-                <ul className="how-list">
-                  {programme.how_it_works.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <h2 className="section-title">How the programme works</h2>
+            <ul className="how-list">
+              {programme.how_it_works.map((h) => (
+                <li key={h}>{h}</li>
+              ))}
+            </ul>
           </section>
         ) : null}
 
         <section id="sites">
-          <div className="section-head section-head-inline">
-            <h2>Every site</h2>
+          <div className="section-head-inline">
+            <h2 className="section-title">Every site</h2>
             <p className="section-note mono">{sites.length} records</p>
           </div>
           <SiteTable
@@ -293,9 +315,7 @@ export default function RegionApp({
         </section>
 
         <section id="news">
-          <div className="section-head">
-            <h2>Latest coverage</h2>
-          </div>
+          <h2 className="section-title">Latest coverage</h2>
           <Feed items={feed.items} />
         </section>
 
@@ -304,7 +324,7 @@ export default function RegionApp({
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
           <p>
-            Operator names and published coordinates come from Tesla Find Us ({sourceLabel}).{" "}
+            Operator names and published coordinates come from Tesla Find Us.{" "}
             <a
               className="link"
               href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
@@ -315,7 +335,7 @@ export default function RegionApp({
           </p>
           <p className="mono foot-meta">
             Open list {openPulled}
-            {region === "us" || upcomingCount > 0 ? ` · Upcoming list ${upcomingPulled}` : ""}
+            {upcomingCount > 0 ? ` · Upcoming list ${upcomingPulled}` : ""}
           </p>
         </footer>
       </main>

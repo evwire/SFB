@@ -7,8 +7,8 @@ import StallLayoutIso, { isoDisplaySize } from "@/components/StallLayoutIso";
 
 function bubbleRadius(count: number, maxCount: number): number {
   if (count <= 0) return 0;
-  const minR = 10;
-  const maxR = 28;
+  const minR = 14;
+  const maxR = 34;
   if (maxCount <= 1) return minR + 4;
   const t = Math.sqrt(count / maxCount);
   return minR + t * (maxR - minR);
@@ -41,7 +41,8 @@ function CellTip({
   );
 }
 
-const ISO_DRAW_COLOR = "var(--muted)";
+/** Darker plate so drawings read as illustrations, not ghosts. */
+const ISO_DRAW_COLOR = "#3a424a";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   const uid = useId();
@@ -66,19 +67,58 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   }, [data.isoLayers]);
 
   const colCount = data.sizeColumns.length;
-  const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.2rem, 1fr)) minmax(5.5rem, 7rem)`;
+  const gridTemplate = `minmax(10rem, 13rem) repeat(${colCount}, minmax(3.6rem, 1fr)) minmax(5.5rem, 7rem)`;
 
   return (
     <div className="size-page">
+      <section className="size-matrix-hero">
+        <h2 className="section-title">Who builds which size</h2>
+        <div className="size-matrix-scroll">
+          <div
+            className="size-matrix"
+            style={{ gridTemplateColumns: gridTemplate }}
+            role="table"
+            aria-label="Operators by stall size"
+          >
+            <div className="size-matrix-corner label-caps" role="columnheader">
+              Operator
+            </div>
+            {data.sizeColumns.map((stalls) => (
+              <div key={stalls} className="size-matrix-colhead mono" role="columnheader">
+                {stalls}
+              </div>
+            ))}
+            <div className="size-matrix-colhead mono" role="columnheader">
+              Stalls
+            </div>
+
+            {data.rows.map((row) => (
+              <SizeMatrixRow
+                key={row.key}
+                row={row}
+                maxCell={maxCell}
+                maxRowStalls={maxRowStalls}
+                active={active}
+                setActive={setActive}
+                uid={uid}
+                rollupOpen={rollupOpen}
+                setRollupOpen={setRollupOpen}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="size-answer">
-        <p className="size-iso-caption mono">Each block is one charger post.</p>
+        <h2 className="section-title">Layouts at a glance</h2>
+        <p className="size-iso-caption">Each block is one charger post.</p>
         <div className="size-iso-wrap">
           <div className="size-iso" role="list" aria-label="Open US sites by stall layout">
-            <div className="size-iso-heads" aria-hidden="true">
+            <div className="size-iso-heads label-caps" aria-hidden="true">
               <span>Stalls</span>
               <span>Layout</span>
-              <span>Open sites · builders</span>
-              <span>Share</span>
+              <span>Open sites</span>
+              <span>Share of sites</span>
             </div>
             <div
               className="size-iso-rows"
@@ -92,19 +132,20 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               {data.isoLayers.map((layer) => (
                 <div key={layer.stalls} className="size-iso-row" role="listitem">
                   <div className="size-iso-num">
-                    <span className="size-iso-n">{layer.stalls}</span>
-                    <span className="size-iso-n-unit">stalls</span>
+                    <span className="size-iso-n mono">{layer.stalls}</span>
                   </div>
                   <div className="size-iso-draw">
                     <StallLayoutIso stalls={layer.stalls} color={ISO_DRAW_COLOR} />
                   </div>
                   <div className="size-iso-sites">
-                    <span className="size-iso-count">{layer.sitesLabel}</span>
-                    <span className="size-iso-who">{layer.buildersLabel}</span>
+                    <span className="size-iso-count">
+                      {layer.sitesLabel}
+                      {layer.buildersLabel ? ` · ${layer.buildersLabel}` : ""}
+                    </span>
                   </div>
-                  <div className="size-iso-share mono">
-                    <span>{layer.pct}% of sites</span>
-                    <span>{layer.stallPct}% of stalls</span>
+                  <div className="size-iso-share">
+                    <span className="size-iso-share-n mono">{layer.pct}%</span>
+                    <span className="size-iso-share-sub">{layer.stallPct}% of stalls</span>
                   </div>
                 </div>
               ))}
@@ -112,60 +153,6 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
           </div>
         </div>
       </section>
-
-      <details className="size-details" open>
-        <summary className="size-details-summary">Full breakdown by company</summary>
-        <div className="size-details-body">
-          <section className="size-matrix-wrap">
-            <div className="size-matrix-head">
-              <h3>Who builds which size</h3>
-            </div>
-            <div className="size-matrix-scroll">
-              <div
-                className="size-matrix"
-                style={{ gridTemplateColumns: gridTemplate }}
-                role="table"
-                aria-label="Operators by stall size"
-              >
-                <div className="size-matrix-corner" role="columnheader">
-                  Operator
-                </div>
-                {data.sizeColumns.map((stalls) => (
-                  <div key={stalls} className="size-matrix-colhead mono" role="columnheader">
-                    {stalls}
-                  </div>
-                ))}
-                <div className="size-matrix-colhead mono" role="columnheader">
-                  Total stalls
-                </div>
-
-                {data.rows.map((row) => (
-                  <SizeMatrixRow
-                    key={row.key}
-                    row={row}
-                    maxCell={maxCell}
-                    maxRowStalls={maxRowStalls}
-                    active={active}
-                    setActive={setActive}
-                    uid={uid}
-                    rollupOpen={rollupOpen}
-                    setRollupOpen={setRollupOpen}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="size-takeaways">
-            <h3>What the numbers say</h3>
-            <ul className="size-takeaway-list">
-              {data.takeaways.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </details>
     </div>
   );
 }
@@ -226,7 +213,7 @@ function SizeMatrixRow({
             {cell.count > 0 ? (
               <button
                 type="button"
-                className={"size-bubble" + (isOn ? " on" : "")}
+                className={"size-bubble size-bubble-ink" + (isOn ? " on" : "")}
                 style={{ width: r * 2, height: r * 2 }}
                 aria-label={`${row.label}: ${cell.count} site${cell.count === 1 ? "" : "s"} with ${cell.stalls} stalls`}
                 aria-describedby={isOn ? `${uid}-${key}` : undefined}

@@ -4,13 +4,10 @@ import { useMemo, useState } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "location" | "operator" | "stalls" | "status" | "area";
+type SortKey = "location" | "operator" | "stalls" | "status";
 
 const DEFAULT_VISIBLE = 15;
 
-/**
- * Site roster under the map. Compact columns; expand for the full list.
- */
 export default function SiteTable({
   sites,
   areaNoun = "states",
@@ -20,7 +17,6 @@ export default function SiteTable({
   sites: Site[];
   areaNoun?: string;
   upcoming?: boolean;
-  /** When false (open view), status is omitted — every row is open. */
   showStatus?: boolean;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("stalls");
@@ -44,8 +40,6 @@ export default function SiteTable({
           return cmpNum(a.stalls, b.stalls);
         case "status":
           return cmpStr(a.status, b.status);
-        case "area":
-          return cmpStr(a.state ?? "", b.state ?? "");
         case "location":
         default: {
           const s = (a.state ?? "").localeCompare(b.state ?? "");
@@ -90,11 +84,9 @@ export default function SiteTable({
   }
 
   return (
-    <div className="table-wrap">
+    <div className="table-wrap table-wrap-open">
       <table className="sites">
-        <caption className="sr-only">
-          Every Tesla customer-owned Supercharger in this region.
-        </caption>
+        <caption className="sr-only">Every Tesla customer-owned Supercharger in this region.</caption>
         <thead>
           <tr>
             {th("location", "Site")}
@@ -107,17 +99,14 @@ export default function SiteTable({
           {visible.map((s) => {
             const st = STATUS_STYLE[s.status];
             const place = s.city ? `${s.city}, ${s.state}` : s.state;
+            const nameHasCity = s.city ? s.name.includes(s.city) : false;
             return (
               <tr key={s.slug}>
                 <th scope="row">
                   <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">
                     {s.name}
                   </a>
-                  {place && !s.name.includes(s.city ?? "\0") ? (
-                    <span className="cell-sub">{place}</span>
-                  ) : s.city ? null : (
-                    <span className="cell-sub">{s.state}</span>
-                  )}
+                  {!nameHasCity && place ? <span className="cell-sub">{place}</span> : null}
                 </th>
                 <td>
                   {s.operator ?? (
@@ -141,9 +130,7 @@ export default function SiteTable({
       {hidden > 0 || expanded ? (
         <div className="table-expand">
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
-            {expanded
-              ? `Show ${DEFAULT_VISIBLE} of ${rows.length}`
-              : `Show all ${rows.length} sites`}
+            {expanded ? `Show ${DEFAULT_VISIBLE} of ${rows.length}` : `Show all ${rows.length}`}
           </button>
         </div>
       ) : null}

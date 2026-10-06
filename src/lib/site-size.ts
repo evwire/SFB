@@ -76,10 +76,16 @@ function buildTakeaways(
     }
   }
 
+  const byOpCount = new Map<string, number>();
+  for (const s of sites) {
+    const k = s.operator?.trim() || "Brand not stated";
+    byOpCount.set(k, (byOpCount.get(k) ?? 0) + 1);
+  }
+  const singleSiteOps = [...byOpCount.values()].filter((n) => n === 1).length;
   const rollup = rows.find((r) => r.isRollup);
   if (rollup && rollup.totalSites > 0) {
     out.push(
-      `${rollup.totalSites} single-site operators each run one 4-stall site.`
+      `${rollup.totalSites} of ${singleSiteOps} single-site operators run a 4-stall site only.`
     );
   }
 
@@ -221,12 +227,9 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
             : name;
       } else {
         const top = ranked[0]!;
-        const pluralityShare = top[1] / share.sites;
         const clearLead = ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0);
-        if (pluralityShare >= 0.5 && clearLead) {
-          buildersLabel = `mostly ${shortOperatorName(top[0])}`;
-        } else if (pluralityShare >= 0.35 && clearLead) {
-          buildersLabel = `led by ${shortOperatorName(top[0])}`;
+        if (clearLead && top[1] >= 2) {
+          buildersLabel = `${shortOperatorName(top[0])} ${top[1]}`;
         } else {
           const named = ranked.slice(0, 3).map(([op]) => shortOperatorName(op));
           const rest = ranked.length - named.length;
@@ -324,8 +327,8 @@ export function buildSizeOverview(
 
   if (rollupSites.length > 0) {
     rows.push({
-      key: "__single_site__",
-      label: "Single-site operators",
+      key: "__single_site_4__",
+      label: "Single-site · 4 stalls only",
       isFrancis: false,
       isRollup: true,
       totalSites: rollupSites.length,
