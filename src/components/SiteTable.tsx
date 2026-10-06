@@ -4,27 +4,45 @@ import { useMemo, useState } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "location" | "operator" | "stalls" | "status";
+type SortKey = "location" | "operator" | "stalls" | "status" | "state";
 
 const DEFAULT_VISIBLE = 15;
+
+function francisFirst(a: string, b: string): number {
+  const af = /francis energy/i.test(a);
+  const bf = /francis energy/i.test(b);
+  if (af && !bf) return -1;
+  if (!af && bf) return 1;
+  return a.localeCompare(b);
+}
 
 export default function SiteTable({
   sites,
   areaNoun = "states",
   upcoming = false,
-  showStatus = false,
+  showStatus = true,
 }: {
   sites: Site[];
   areaNoun?: string;
   upcoming?: boolean;
   showStatus?: boolean;
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>("stalls");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("operator");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expanded, setExpanded] = useState(false);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return sites;
+    return sites.filter((s) => {
+      const blob = [s.name, s.operator, s.city, s.state, s.status].filter(Boolean).join(" ").toLowerCase();
+      return blob.includes(needle);
+    });
+  }, [sites, q]);
 
   const rows = useMemo(() => {
-    const sorted = [...sites].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const dir = sortDir === "asc" ? 1 : -1;
       const cmpStr = (x: string, y: string) => x.localeCompare(y) * dir;
       const cmpNum = (x: number | null, y: number | null) => {
@@ -34,12 +52,16 @@ export default function SiteTable({
         return (x - y) * dir;
       };
       switch (sortKey) {
-        case "operator":
-          return cmpStr(a.operator ?? "", b.operator ?? "");
+        case "operator": {
+          const base = francisFirst(a.operator ?? "", b.operator ?? "");
+          return (sortDir === "asc" ? base : -base) || cmpStr(a.name, b.name);
+        }
         case "stalls":
           return cmpNum(a.stalls, b.stalls);
         case "status":
           return cmpStr(a.status, b.status);
+        case "state":
+          return cmpStr(a.state ?? "", b.state ?? "");
         case "location":
         default: {
           const s = (a.state ?? "").localeCompare(b.state ?? "");
@@ -49,7 +71,7 @@ export default function SiteTable({
       }
     });
     return sorted;
-  }, [sites, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir]);
 
   const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
   const hidden = Math.max(0, rows.length - DEFAULT_VISIBLE);
@@ -85,6 +107,17 @@ export default function SiteTable({
 
   return (
     <div className="table-wrap table-wrap-open">
+      <div className="table-tools">
+        <label className="table-search">
+          <span className="sr-only">Search sites</span>
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search sites, operators, states…"
+          />
+        </label>
+      </div>
       <table className="sites">
         <caption className="sr-only">Every Tesla customer-owned Supercharger in this region.</caption>
         <thead>
@@ -92,13 +125,14 @@ export default function SiteTable({
             {th("location", "Site")}
             {th("operator", "Operator")}
             {th("stalls", "Stalls", "right")}
+            {th("state", "State")}
             {showStatus ? th("status", "Status") : null}
           </tr>
         </thead>
         <tbody>
           {visible.map((s) => {
             const st = STATUS_STYLE[s.status];
-            const place = s.city ? `${s.city}, ${s.state}` : s.state;
+            const place = s.city ? `${s.city}, ${s.state}` : null;
             const nameHasCity = s.city ? s.name.includes(s.city) : false;
             return (
               <tr key={s.slug}>
@@ -114,6 +148,7 @@ export default function SiteTable({
                   )}
                 </td>
                 <td className="mono num">{s.stalls ?? <span className="dim">n/s</span>}</td>
+                <td className="mono">{s.state}</td>
                 {showStatus ? (
                   <td>
                     <span aria-hidden="true" style={{ color: st.color }}>
@@ -134,10 +169,6 @@ export default function SiteTable({
           </button>
         </div>
       ) : null}
-      <p className="table-foot">
-        <span className="mono">n/s</span> means Tesla did not publish that figure. Links open Tesla
-        Find Us.
-      </p>
     </div>
   );
 }

@@ -177,9 +177,7 @@ function buildStory(
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
   const subline = sharesEqual
-    ? dominant
-      ? `${dominant.sites} of ${total} sites are ${dominant.stalls}-stall, but eight-stall sites match them on stalls (${fourStalls} each of ${allStalls}).`
-      : `Same stall weight, different site counts.`
+    ? "Forty small sites and twenty mid-size sites land on the same total capacity — so stall share, not site count, is the better read of who built what."
     : named.length === 0
       ? "Almost every open site is the same size."
       : `Only a few builders go bigger: ${named.join(", ")}.`;

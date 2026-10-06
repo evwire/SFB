@@ -225,7 +225,7 @@ export default function RegionApp({
               </a>
               <a href="#dashboard">States</a>
               <a href="/size">Site size</a>
-              <a href="#compare">vs Supercharge.info</a>
+              <a href="#compare">Data check</a>
               <a href="#sites">All sites</a>
               <a href="#news">News</a>
             </nav>
@@ -238,20 +238,19 @@ export default function RegionApp({
         <section className="hero hero-thesis rise">
           <div className="hero-thesis-grid">
             <div className="hero-thesis-copy">
-              <p className="eyebrow">Tesla Supercharger for Business</p>
-              <h1 className="thesis-h1">{h1}</h1>
+              <div className="hero-headline-row">
+                <h1 className="thesis-h1">{h1}</h1>
+                {kpi ? (
+                  <div className="hero-kpi" aria-label="Change since last snapshot">
+                    <span className="hero-kpi-n mono">{kpi.value}</span>
+                    <span className="hero-kpi-l">{kpi.label}</span>
+                    <span className="hero-kpi-note mono">{kpi.note}</span>
+                  </div>
+                ) : null}
+              </div>
               <p className="lede lede-prose">{lede}</p>
               <p className="meta-line mono">Data as of {dataAsOf}</p>
             </div>
-            {kpi ? (
-              <div className="hero-summary" aria-label="Change since last snapshot">
-                <div>
-                  <span className="hero-summary-n mono">{kpi.value}</span>
-                  <span className="hero-summary-l">{kpi.label}</span>
-                  <span className="hero-summary-note mono">{kpi.note}</span>
-                </div>
-              </div>
-            ) : null}
           </div>
           {banner ? (
             <div className="coverage-banner" role="status">
@@ -343,7 +342,7 @@ export default function RegionApp({
             sites={sites}
             areaNoun={areaNoun}
             upcoming={isUpcoming || isBoth}
-            showStatus={isUpcoming || isBoth}
+            showStatus
           />
         </section>
 
@@ -356,15 +355,12 @@ export default function RegionApp({
           <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
-          <p className="lede-prose">
-            Operator names and published coordinates come from Tesla Find Us.{" "}
-            <a
-              className="link"
-              href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
-            >
-              Tell us
-            </a>{" "}
-            if something looks wrong.
+          <p className="foot-copy">
+            Sources: Tesla Find Us (operator names and published coordinates). Open US and Europe
+            lists refresh weekly on Tuesdays (Europe/Tallinn). Upcoming classify runs monthly.{" "}
+            <a className="link" href="https://evwire.com">
+              evwire.com
+            </a>
           </p>
         </footer>
       </main>

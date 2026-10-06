@@ -44,7 +44,7 @@ export default function MapExplorer({
   euUpcomingCount?: number;
   defaultHighlightOperator?: string | null;
 }) {
-  const [coveredOnly, setCoveredOnly] = useState(false);
+  const [showCoverage, setShowCoverage] = useState(false);
   const [showHeavy, setShowHeavy] = useState(false);
   const [operator, setOperator] = useState<string>("All operators");
   const highlightOperator =
@@ -279,7 +279,7 @@ export default function MapExplorer({
 
   // Keep filters coherent when phase changes (also if remount key is removed later).
   useEffect(() => {
-    setCoveredOnly(false);
+    setShowCoverage(false);
     setOperator("All operators");
     setStateFilter(allAreasLabel);
     setShowHeavy(false);
@@ -302,12 +302,11 @@ export default function MapExplorer({
     () =>
       sites.filter((s) => {
         if (s.siteClass === "Heavy-duty" && !showHeavy) return false;
-        if (coveredOnly && !(s.articles?.length)) return false;
         if (operator !== "All operators" && s.operator !== operator) return false;
         if (stateFilter !== allAreasLabel && s.state !== stateFilter) return false;
         return true;
       }),
-    [sites, coveredOnly, showHeavy, operator, stateFilter, allAreasLabel]
+    [sites, showHeavy, operator, stateFilter, allAreasLabel]
   );
 
   const plotted = visible.filter((s) => s.x != null && s.y != null);
@@ -368,16 +367,19 @@ export default function MapExplorer({
     const entries = Object.entries(stateCounts).sort((a, b) => b[1] - a[1]);
     // Offsets push labels into empty space (Pacific / Gulf / Atlantic).
     const offset: Record<string, { dx: number; dy: number }> = {
-      OK: { dx: -72, dy: -8 },
-      TX: { dx: -20, dy: 36 },
-      CA: { dx: -70, dy: 8 },
+      // Pacific / Gulf / Atlantic empties — keep labels off the left clip edge
+      OK: { dx: 0, dy: -28 },
+      TX: { dx: 10, dy: 42 },
+      CA: { dx: 58, dy: -22 },  // east of CA (inland) — west offset clipped the left edge
       FL: { dx: 48, dy: 10 },
-      NY: { dx: 40, dy: -6 },
-      GA: { dx: 36, dy: 18 },
+      NY: { dx: 38, dy: -10 },
+      GA: { dx: 42, dy: 14 },
     };
     const out: { abbr: string; name: string; n: number; x: number; y: number; lx: number; ly: number }[] = [];
     for (const [abbr, n] of entries) {
       if (n < 3) continue;
+      // Oklahoma is labeled on the in-map magnifier; skip duplicate callout
+      if (abbr === "OK") continue;
       const shape = shapes.find((s) => s.abbr === abbr);
       if (!shape || shape.cx == null || shape.cy == null) continue;
       const name =
@@ -420,8 +422,8 @@ export default function MapExplorer({
               <option value="upcoming">upcoming</option>
               <option value="both">open and upcoming</option>
             </select>
-          </label>{" "}
-          sites in the{" "}
+          </label>
+          {" sites in the "}
           <label className="inline-sel">
             <span className="sr-only">Region</span>
             <select
@@ -432,7 +434,7 @@ export default function MapExplorer({
               <option value="europe">Europe</option>
             </select>
           </label>
-          ,{" "}
+          {", "}
           <label className="inline-sel">
             <span className="sr-only">Operator</span>
             <select value={operator} onChange={(e) => setOperator(e.target.value)}>
@@ -443,7 +445,7 @@ export default function MapExplorer({
               ))}
             </select>
           </label>
-          ,{" "}
+          {", "}
           <label className="inline-sel">
             <span className="sr-only">State</span>
             <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
@@ -454,27 +456,31 @@ export default function MapExplorer({
               ))}
             </select>
           </label>
-          .
-          <label className="check check-inline">
-            <input
-              type="checkbox"
-              checked={coveredOnly}
-              onChange={(e) => setCoveredOnly(e.target.checked)}
-            />
-            <span>EVwire coverage only</span>
-          </label>
+          {"."}
+          <button
+            type="button"
+            className={"chip-toggle" + (showCoverage ? " on" : "")}
+            aria-pressed={showCoverage}
+            onClick={() => setShowCoverage((v) => !v)}
+          >
+            EVwire coverage
+          </button>
           {sites.some((s) => s.siteClass === "Heavy-duty") ? (
-            <label className="check check-inline">
-              <input type="checkbox" checked={showHeavy} onChange={(e) => setShowHeavy(e.target.checked)} />
-              <span>Heavy-duty MCS</span>
-            </label>
+            <button
+              type="button"
+              className={"chip-toggle" + (showHeavy ? " on" : "")}
+              aria-pressed={showHeavy}
+              onClick={() => setShowHeavy((v) => !v)}
+            >
+              Heavy-duty MCS
+            </button>
           ) : null}
         </p>
       </div>
 
       <figure className="map-figure map-figure-flush">
 
-        <div className="map-tools map-tools-min" aria-label="Map zoom controls">
+        <div className="map-tools map-tools-neat" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
           <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
@@ -540,11 +546,11 @@ export default function MapExplorer({
                   aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.`}
                 >
                   {isArea && <circle className="halo" r={r + 6} style={{ stroke: pinColor }} />}
-                  {covered && (
+                  {showCoverage && covered && (
                     <circle
                       className="covered-ring"
-                      r={r + (ring ? 4.5 : 3.2)}
-                      style={{ fill: "none", stroke: COVERED_STYLE.color, strokeWidth: 1.6 }}
+                      r={r + (ring ? 4 : 2.8)}
+                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.1, opacity: 0.75 }}
                     />
                   )}
                   {ring ? (
@@ -554,7 +560,15 @@ export default function MapExplorer({
                       <circle className="core upcoming-dot" r={Math.max(2.2, r - 2)} style={{ fill: pinColor, opacity: 0.9 }} />
                     </>
                   ) : (
-                    <circle className="core" r={r} style={{ fill: pinColor, stroke: "var(--ink)", strokeWidth: 1.1 }} />
+                    <circle
+                      className="core"
+                      r={r}
+                      style={
+                        isHighlight
+                          ? { fill: "var(--volt)", stroke: "var(--ink)", strokeWidth: 1 }
+                          : { fill: "var(--dot-muted)", stroke: "none", opacity: 0.6 }
+                      }
+                    />
                   )}
                   {isFrancis && (
                     <text
@@ -591,6 +605,58 @@ export default function MapExplorer({
                   </text>
                 </g>
               ))}
+
+              {okDetail ? (
+                <g className="ok-magnifier" transform={`translate(${viewW * 0.56}, ${viewH * 0.72})`}>
+                  <line
+                    className="ok-mag-leader"
+                    x1={((okDetail.minX + okDetail.maxX) / 2) - viewW * 0.56}
+                    y1={((okDetail.minY + okDetail.maxY) / 2) - viewH * 0.72}
+                    x2={0}
+                    y2={0}
+                  />
+                  <circle className="ok-mag-frame" r={72} />
+                  <clipPath id="ok-mag-clip">
+                    <circle r={70} />
+                  </clipPath>
+                  <g clipPath="url(#ok-mag-clip)">
+                    <circle r={70} className="ok-mag-bg" />
+                    <g
+                      transform={`scale(${(140 / Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY)).toFixed(4)}) translate(${(-(okDetail.minX + okDetail.maxX) / 2).toFixed(2)} ${(-(okDetail.minY + okDetail.maxY) / 2).toFixed(2)})`}
+                    >
+                      {visibleShapes
+                        .filter((st) => st.abbr === "OK")
+                        .map((st) => (
+                          <path key={`mag-${st.abbr}`} d={st.d} className="state has mag-state" />
+                        ))}
+                      {okDetail.points.map((s) => {
+                        const isHl =
+                          Boolean(highlightOperator) &&
+                          (s.operator ?? "Brand not stated") === highlightOperator;
+                        const rr = Math.max(2, pinRadius(s.stalls) * 0.45);
+                        return (
+                          <circle
+                            key={`magp-${s.slug}`}
+                            cx={s.x!}
+                            cy={s.y!}
+                            r={rr}
+                            style={{
+                              fill: isHl ? "var(--volt)" : "var(--dot-muted)",
+                              stroke: isHl ? "var(--ink)" : "none",
+                              strokeWidth: isHl ? 0.7 : 0,
+                              opacity: isHl ? 1 : 0.6,
+                            }}
+                          />
+                        );
+                      })}
+                    </g>
+                  </g>
+                  <text className="ok-mag-label" textAnchor="middle" y={88}>
+                    {okDetail.n} in Oklahoma
+                  </text>
+                </g>
+              ) : null}
+
             </g>
           </g>
 
@@ -603,17 +669,19 @@ export default function MapExplorer({
               {highlightOperator ?? "Highlighted operator"}
             </span>
             <span className="legend-chip">
-              <span className="legend-swatch solid legend-swatch-outlined" style={{ background: "var(--dot-muted)" }} aria-hidden="true" />
+              <span className="legend-swatch solid" style={{ background: "var(--dot-muted)", opacity: 0.6 }} aria-hidden="true" />
               Other operators
             </span>
             <span className="legend-chip">
               <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
               Upcoming
             </span>
+            {showCoverage ? (
             <span className="legend-chip covered">
               <span className="legend-swatch ring" style={{ borderColor: "var(--ink)" }} aria-hidden="true" />
               <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
             </span>
+            ) : null}
             <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
               <span className="legend-size-dot" style={{ width: 8, height: 8 }} aria-hidden="true" />
               4
@@ -633,43 +701,6 @@ export default function MapExplorer({
         </figcaption>
       </figure>
 
-      {okDetail ? (
-        <aside className="ok-detail" aria-label="Oklahoma detail">
-          <h3 className="label-caps">Oklahoma detail · {okDetail.n} sites</h3>
-          <svg
-            viewBox={`${okDetail.minX} ${okDetail.minY} ${okDetail.maxX - okDetail.minX} ${okDetail.maxY - okDetail.minY}`}
-            className="ok-detail-svg"
-            role="img"
-            aria-label={`${okDetail.n} open sites in Oklahoma`}
-          >
-            {visibleShapes
-              .filter((st) => st.abbr === "OK")
-              .map((st) => (
-                <path key={`ok-${st.abbr}`} d={st.d} className="state has inset-state" />
-              ))}
-            {okDetail.points.map((s) => {
-              const isHighlight =
-                Boolean(highlightOperator) &&
-                (s.operator ?? "Brand not stated") === highlightOperator;
-              const r = Math.max(2.2, pinRadius(s.stalls) * 0.5);
-              return (
-                <circle
-                  key={`okp-${s.slug}`}
-                  cx={s.x!}
-                  cy={s.y!}
-                  r={r}
-                  className="core"
-                  style={{
-                    fill: isHighlight ? "var(--volt)" : "var(--dot-muted)",
-                    stroke: "var(--ink)",
-                    strokeWidth: 0.8,
-                  }}
-                />
-              );
-            })}
-          </svg>
-        </aside>
-      ) : null}
 
       {mounted && selected && createPortal(
         <div className="scrim" onClick={close} role="presentation">

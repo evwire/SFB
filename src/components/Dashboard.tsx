@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { fmtNum } from "@/lib/style";
 import type { Site, Aggregate, PipelineClaim, DataSource, SitePhase, UpcomingCoverage } from "@/lib/types";
 
 type OpRow = {
   operator: string;
   sites: number;
   stalls: number;
-  unknown: number;
 };
 
 function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
@@ -18,10 +16,9 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
   return Object.values(
     operatorSites.reduce<Record<string, OpRow>>((acc, s) => {
       const k = s.operator ?? "Brand not stated";
-      acc[k] ??= { operator: k, sites: 0, stalls: 0, unknown: 0 };
+      acc[k] ??= { operator: k, sites: 0, stalls: 0 };
       acc[k].sites += 1;
-      if (s.stalls == null) acc[k].unknown += 1;
-      else acc[k].stalls += s.stalls;
+      acc[k].stalls += s.stalls ?? 0;
       return acc;
     }, {})
   ).sort((a, b) => b.sites - a.sites || b.stalls - a.stalls || a.operator.localeCompare(b.operator));
@@ -36,7 +33,6 @@ export function OperatorRank({
   sites: Site[];
   source?: DataSource;
   phase?: SitePhase;
-  limit?: number;
 }) {
   const [tailOpen, setTailOpen] = useState(false);
   const rows = useMemo(() => buildOperatorRows(sites, phase), [sites, phase]);
@@ -54,37 +50,25 @@ export function OperatorRank({
   return (
     <aside className="rank-aside rank-aside-fill" aria-label="Operators by site count">
       <h3 className="label-caps">Operators</h3>
-      <table className="rank-table">
-        <thead>
-          <tr>
-            <th scope="col">Operator</th>
-            <th scope="col" className="num">
-              Sites
-            </th>
-            <th scope="col" className="num">
-              Stalls
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {top.map((o) => (
-            <tr key={o.operator}>
-              <th scope="row">
-                <span className="rank-name">{o.operator}</span>
-                <span
-                  className="rank-bar"
-                  style={{ width: `${(o.sites / maxSites) * 100}%` }}
-                  aria-hidden="true"
-                />
-              </th>
-              <td className="num mono">{o.sites}</td>
-              <td className="num mono">{o.stalls > 0 ? o.stalls : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="hbar-list">
+        {top.map((o) => (
+          <li key={o.operator} className="hbar-row">
+            <div className="hbar-meta">
+              <span className="hbar-name">{o.operator}</span>
+              <span className="hbar-nums mono">
+                {o.sites}
+                <span className="hbar-sep">·</span>
+                {o.stalls > 0 ? o.stalls : "—"}
+              </span>
+            </div>
+            <div className="hbar-track">
+              <div className="hbar-fill" style={{ width: `${(o.sites / maxSites) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
       {restSingles.length > 0 || restMulti.length > 0 ? (
-        <div className="rank-tail">
+        <div className="rank-tail rank-tail-align">
           <button
             type="button"
             className="rank-tail-btn"
@@ -100,16 +84,15 @@ export function OperatorRank({
                 : `+${restSingles.length + restMulti.length} more operators`}
           </button>
           {tailOpen ? (
-            <ul className="rank-tail-list mono">
+            <ul className="rank-tail-list">
               {restMulti.map((o) => (
                 <li key={o.operator}>
-                  {o.operator} · {o.sites} sites · {o.stalls} stalls
+                  {o.operator} · {o.sites} · {o.stalls}
                 </li>
               ))}
               {restSingles.map((o) => (
                 <li key={o.operator}>
-                  {o.operator} · 1 site
-                  {o.stalls > 0 ? ` · ${o.stalls} stalls` : ""}
+                  {o.operator} · 1 · {o.stalls || "—"}
                 </li>
               ))}
             </ul>
@@ -125,12 +108,10 @@ export default function Dashboard({
   aggregates: _aggregates,
   pipeline,
   source = "tesla",
-  areaNoun = "states",
+  areaNoun: _areaNoun = "states",
   regionLabel: _regionLabel = "US",
   phase = "open",
   coverage: _coverage = null,
-  hideOperatorTable = false,
-  statesAsBars = true,
 }: {
   sites: Site[];
   aggregates: Aggregate[];
@@ -166,17 +147,19 @@ export default function Dashboard({
   return (
     <div className="dash dash-r2">
       <section className="dash-block dash-block-full">
-        <ul className="state-bars">
+        <ul className="hbar-list hbar-list-wide">
           {top.map((o) => (
-            <li key={o.state}>
-              <div className="bar-label">
-                <span>{o.state}</span>
-                <span className="mono">
-                  {o.sites} · {o.stalls} stalls
+            <li key={o.state} className="hbar-row">
+              <div className="hbar-meta">
+                <span className="hbar-name">{o.state}</span>
+                <span className="hbar-nums mono">
+                  {o.sites}
+                  <span className="hbar-sep">·</span>
+                  {o.stalls} stalls
                 </span>
               </div>
-              <div className="bar-track">
-                <div className="bar-fill" style={{ width: `${(o.sites / maxState) * 100}%` }} />
+              <div className="hbar-track">
+                <div className="hbar-fill" style={{ width: `${(o.sites / maxState) * 100}%` }} />
               </div>
             </li>
           ))}
@@ -198,15 +181,15 @@ export default function Dashboard({
                     }`}
             </button>
             {tailOpen ? (
-              <ul className="rank-tail-list mono">
+              <ul className="rank-tail-list">
                 {multiRest.map((o) => (
                   <li key={o.state}>
-                    {o.state} · {o.sites} sites · {o.stalls} stalls
+                    {o.state} · {o.sites} · {o.stalls} stalls
                   </li>
                 ))}
                 {oneSite.map((o) => (
                   <li key={o.state}>
-                    {o.state} · 1 site · {o.stalls} stalls
+                    {o.state} · 1 · {o.stalls} stalls
                   </li>
                 ))}
               </ul>
@@ -220,12 +203,6 @@ export default function Dashboard({
           <section className="dash-block" key={p.operator + p.asOf}>
             <h3>{p.operator}</h3>
             <p className="pl-claim">{p.claim}</p>
-            <p className="panel-foot">
-              {p.timeframe ? `${p.timeframe} · ` : ""}stated {p.asOf}.{" "}
-              <a className="link" href={p.sourceUrl} target="_blank" rel="noopener">
-                source
-              </a>
-            </p>
           </section>
         ))}
     </div>
