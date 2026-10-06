@@ -24,6 +24,19 @@ export type SizeRow = {
   operators?: string[];
 };
 
+export type SizeStatTile = {
+  value: string;
+  label: string;
+};
+
+export type SizeStory = {
+  /** Big Fraunces answer, e.g. "Most are small: 40 of 64 sites have just 4 stalls." */
+  headline: string;
+  /** Who goes bigger, plain English. */
+  subline: string;
+  tiles: SizeStatTile[];
+};
+
 export type SizeOverview = {
   totalSites: number;
   totalStalls: number;
@@ -33,6 +46,7 @@ export type SizeOverview = {
   sizeColumns: number[];
   rows: SizeRow[];
   takeaways: string[];
+  story: SizeStory;
   generated: string;
   pulledAt: string | null;
 };

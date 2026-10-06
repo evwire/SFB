@@ -1,8 +1,8 @@
 import "server-only";
 import type { Site } from "./types";
-import type { SizeCell, SizeOverview, SizeRow, SizeShare } from "./site-size-types";
+import type { SizeCell, SizeOverview, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
-export type { SizeCell, SizeOverview, SizeRow, SizeShare } from "./site-size-types";
+export type { SizeCell, SizeOverview, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
 /** Stall-size overview for open US sites. Computed from live site data — never hardcoded. */
 
@@ -97,6 +97,101 @@ function buildTakeaways(
   return out;
 }
 
+
+function placeLabel(s: Site): string {
+  if (s.city?.trim()) return s.city.trim();
+  const beforeDash = s.name.split(" - ")[0] ?? s.name;
+  const beforeComma = beforeDash.split(",")[0]?.trim();
+  return beforeComma || s.name;
+}
+
+function shortOperatorName(name: string): string {
+  return name.replace(/\s+Energy$/i, "").trim();
+}
+
+function sizeRangeLabel(stalls: number[]): string {
+  const uniq = [...new Set(stalls)].sort((a, b) => a - b);
+  if (uniq.length === 0) return "";
+  if (uniq.length === 1) return String(uniq[0]);
+  return `${uniq[0]}–${uniq[uniq.length - 1]}`;
+}
+
+/**
+ * Casual top-of-page story: dominant size + who builds bigger.
+ * Bigger builders: median site ≥ 8 stalls, and (2+ sites or any 12+ site); max 4 names.
+ */
+function buildStory(
+  sites: Site[],
+  sizeShares: SizeShare[],
+  median: number,
+  byOp: Map<string, OpBucket>
+): SizeStory {
+  const total = sites.length;
+  const dominant = [...sizeShares].sort((a, b) => b.sites - a.sites || a.stalls - b.stalls)[0];
+  const headline = dominant
+    ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
+    : `${total} open US sites with a stall count.`;
+
+  type Bigger = { operator: string; stalls: number[]; max: number; sites: number; median: number };
+  const bigger: Bigger[] = [];
+  for (const bucket of byOp.values()) {
+    const stallVals = bucket.sites
+      .map((s) => s.stalls)
+      .filter((n): n is number => n != null && n > 0);
+    if (stallVals.length === 0) continue;
+    const med = medianOf(stallVals);
+    const has12 = stallVals.some((n) => n >= 12);
+    if (med >= 8 && (bucket.sites.length >= 2 || has12)) {
+      bigger.push({
+        operator: bucket.operator,
+        stalls: stallVals,
+        max: Math.max(...stallVals),
+        sites: bucket.sites.length,
+        median: med,
+      });
+    }
+  }
+  bigger.sort(
+    (a, b) => b.max - a.max || b.sites - a.sites || a.operator.localeCompare(b.operator)
+  );
+  const named = bigger.slice(0, 4).map((b) => {
+    const label = shortOperatorName(b.operator);
+    return `${label} (${sizeRangeLabel(b.stalls)})`;
+  });
+  const subline =
+    named.length === 0
+      ? "Almost every open site is the same size."
+      : `Only a few builders go bigger: ${named.join(", ")}.`;
+
+  const pctSmall =
+    dominant && total > 0 ? Math.floor((dominant.sites / total) * 100) : 0;
+  const largest = [...sites]
+    .filter((s) => s.stalls != null)
+    .sort((a, b) => (b.stalls ?? 0) - (a.stalls ?? 0) || a.name.localeCompare(b.name))[0];
+  const biggestStalls = largest?.stalls ?? 0;
+  const biggestPlace = largest ? placeLabel(largest) : "—";
+
+  const tiles = [
+    {
+      value: dominant ? `${pctSmall}%` : "—",
+      label: dominant ? `are ${dominant.stalls}-stall sites` : "share not available",
+    },
+    {
+      value: String(median),
+      label: `Typical site: ${median} stall${median === 1 ? "" : "s"}`,
+    },
+    {
+      value: String(biggestStalls || "—"),
+      label:
+        biggestStalls > 0
+          ? `Biggest: ${biggestStalls} stalls (${biggestPlace})`
+          : "Biggest site not stated",
+    },
+  ];
+
+  return { headline, subline, tiles };
+}
+
 /**
  * Build the US open site-size overview from Site records.
  * Sites without a stall count are excluded (upcoming Tesla sites are all null).
@@ -183,6 +278,7 @@ export function buildSizeOverview(
   }
 
   const takeaways = buildTakeaways(withStalls, rows, sizeShares, median, average);
+  const story = buildStory(withStalls, sizeShares, median, byOp);
 
   return {
     totalSites,
@@ -193,6 +289,7 @@ export function buildSizeOverview(
     sizeColumns,
     rows,
     takeaways,
+    story,
     generated: meta.generated,
     pulledAt: meta.pulledAt,
   };

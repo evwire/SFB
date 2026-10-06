@@ -13,11 +13,6 @@ function bubbleRadius(count: number, maxCount: number): number {
   return minR + t * (maxR - minR);
 }
 
-
-function fmtPct(pct: number): string {
-  return `${pct}%`;
-}
-
 /** Plain-English size headline for an operator card, derived from their sites. */
 function operatorHeadline(row: SizeRow): string {
   const live = row.cells.filter((c) => c.count > 0);
@@ -35,17 +30,19 @@ function operatorHeadline(row: SizeRow): string {
   return `${sizes[0]}–${sizes[sizes.length - 1]} stalls`;
 }
 
-/** One coloured square per site, ordered by stall size then name. */
-function siteSquares(row: SizeRow): { key: string; stalls: number; name: string }[] {
-  const out: { key: string; stalls: number; name: string }[] = [];
-  for (const cell of row.cells) {
-    for (const name of cell.siteNames) {
-      out.push({ key: `${cell.stalls}:${name}`, stalls: cell.stalls, name });
-    }
+function cardSubline(row: SizeRow): string {
+  const modeCell = [...row.cells]
+    .filter((c) => c.count > 0)
+    .sort((a, b) => b.count - a.count)[0];
+  if (
+    modeCell &&
+    row.totalSites > 1 &&
+    modeCell.count / row.totalSites > 0.5 &&
+    modeCell.count < row.totalSites
+  ) {
+    return `${modeCell.count} of ${row.totalSites} sites`;
   }
-  return out.sort(
-    (a, b) => a.stalls - b.stalls || a.name.localeCompare(b.name)
-  );
+  return `${row.totalSites} site${row.totalSites === 1 ? "" : "s"}`;
 }
 
 function isFeatureCard(row: SizeRow): boolean {
@@ -111,107 +108,69 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
 
   const colCount = data.sizeColumns.length;
   const gridTemplate = `minmax(9.5rem, 12rem) repeat(${colCount}, minmax(3.2rem, 1fr)) minmax(5.5rem, 7rem)`;
+  const { story } = data;
 
   return (
     <div className="size-page">
-      <section className="size-headline glass">
-        <div className="size-headline-top">
-          <div>
-            <h3>How big are open US sites?</h3>
-            <p className="panel-sub mono">
-              {data.totalSites} open sites · {fmtNum(data.totalStalls)} stalls · median{" "}
-              {data.median} · average {data.average.toFixed(1)}
-            </p>
-          </div>
-          <div className="size-stat-pair">
-            <div className="size-mini-stat">
-              <div className="stat-value">{data.median}</div>
-              <div className="stat-label">median stalls</div>
+      <section className="size-answer glass">
+        <p className="size-answer-kicker eyebrow">Open US sites at a glance</p>
+        <h2 className="size-answer-headline">{story.headline}</h2>
+        <p className="size-answer-sub">{story.subline}</p>
+
+        <div className="size-stat-tiles">
+          {story.tiles.map((tile) => (
+            <div key={tile.label} className="size-stat-tile">
+              <div className="stat-value">{tile.value}</div>
+              <div className="stat-label">{tile.label}</div>
             </div>
-            <div className="size-mini-stat">
-              <div className="stat-value">{data.average.toFixed(1)}</div>
-              <div className="stat-label">average stalls</div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="size-share" aria-label="Share of sites by stall count">
-          <div className="size-share-bar" role="img" aria-label="Stacked share of site sizes">
-            {data.sizeShares.map((s) => (
-              <div
-                key={s.stalls}
-                className={`size-share-seg size-seg-${s.stalls}`}
-                style={{ flexGrow: s.sites, flexBasis: 0 }}
-                title={`${s.stalls} stalls: ${s.sites} sites (${fmtPct(s.pct)})`}
-              />
-            ))}
-          </div>
-          <ul className="size-share-chips">
-            {data.sizeShares.map((s) => (
-              <li key={s.stalls} className="chip size-chip">
-                <span className={`size-swatch size-seg-${s.stalls}`} aria-hidden="true" />
-                <span className="num-moment">{s.stalls}</span>
-                <span className="mono">
-                  stalls · {s.sites} ({fmtPct(s.pct)})
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div
+          className="size-mosaic"
+          role="img"
+          aria-label={`${data.totalSites} open sites coloured by stall count`}
+        >
+          {data.sizeShares.map((share) => (
+            <div key={share.stalls} className="size-mosaic-group">
+              <div className="size-mosaic-squares">
+                {Array.from({ length: share.sites }, (_, i) => (
+                  <span
+                    key={`${share.stalls}-${i}`}
+                    className={`size-mosaic-sq size-seg-${share.stalls}`}
+                  />
+                ))}
+              </div>
+              <p className="size-mosaic-legend mono">
+                {share.sites} site{share.sites === 1 ? "" : "s"} · {share.stalls} stalls
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="size-cards-wrap" aria-label="Main builders">
         <div className="size-cards-head">
           <h3>The main builders</h3>
-          <p className="panel-sub mono">
-            Companies with more than one open site, plus anyone with a 12-stall site or larger
-          </p>
         </div>
         <div className="size-cards-grid">
-          {featureRows.map((row) => {
-            const squares = siteSquares(row);
-            const modeCell = [...row.cells]
-              .filter((c) => c.count > 0)
-              .sort((a, b) => b.count - a.count)[0];
-            return (
-              <article
-                key={row.key}
-                className={"size-op-card glass" + (row.isFrancis ? " francis" : "")}
-              >
-                <div className="size-op-card-top">
-                  {row.isFrancis ? (
-                    <span className="size-francis-mark" aria-hidden="true">
-                      F
-                    </span>
-                  ) : null}
-                  <h4 className="size-op-card-name">{row.label}</h4>
-                </div>
-                <p className="size-op-card-headline">{operatorHeadline(row)}</p>
-                <p className="size-op-card-sub mono">
-                  {modeCell &&
-                  row.totalSites > 1 &&
-                  modeCell.count / row.totalSites > 0.5 &&
-                  modeCell.count < row.totalSites
-                    ? `${modeCell.count} of ${row.totalSites} sites`
-                    : `${row.totalSites} site${row.totalSites === 1 ? "" : "s"}`}
-                  {" · "}
-                  {fmtNum(row.totalStalls)} stalls total
-                </p>
-                <div
-                  className="size-op-card-strip"
-                  aria-label={`${row.totalSites} sites coloured by stall count`}
-                >
-                  {squares.map((sq) => (
-                    <span
-                      key={sq.key}
-                      className={`size-op-card-sq size-seg-${sq.stalls}`}
-                      title={`${sq.name} · ${sq.stalls} stalls`}
-                    />
-                  ))}
-                </div>
-              </article>
-            );
-          })}
+          {featureRows.map((row) => (
+            <article
+              key={row.key}
+              className={"size-op-card glass" + (row.isFrancis ? " francis" : "")}
+            >
+              <div className="size-op-card-top">
+                {row.isFrancis ? (
+                  <span className="size-francis-mark" aria-hidden="true">
+                    F
+                  </span>
+                ) : null}
+                <h4 className="size-op-card-name">{row.label}</h4>
+              </div>
+              <p className="size-op-card-headline">{operatorHeadline(row)}</p>
+              <p className="size-op-card-sub mono">{cardSubline(row)}</p>
+            </article>
+          ))}
           {rollupRow ? (
             <article className="size-op-card glass size-op-card-rollup">
               <div className="size-op-card-top">
@@ -220,83 +179,71 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               <p className="size-op-card-headline">
                 {rollupRow.totalSites} companies · one 4-stall site each
               </p>
-              <p className="size-op-card-sub mono">
-                {fmtNum(rollupRow.totalStalls)} stalls total
-              </p>
-              <div
-                className="size-op-card-strip"
-                aria-label={`${rollupRow.totalSites} single-site operators`}
-              >
-                {siteSquares(rollupRow).map((sq) => (
-                  <span
-                    key={sq.key}
-                    className={`size-op-card-sq size-seg-${sq.stalls}`}
-                    title={`${sq.name} · ${sq.stalls} stalls`}
-                  />
-                ))}
-              </div>
+              <p className="size-op-card-sub mono">{rollupRow.totalSites} sites</p>
             </article>
           ) : null}
         </div>
       </section>
 
-      <section className="size-matrix-wrap glass">
-        <div className="size-matrix-head">
-          <h3>Who builds which size</h3>
-          <p className="panel-sub mono">
-            Rows ranked by total stalls. Dot size is number of sites. Hover or tap a dot for site
-            names.
-          </p>
-        </div>
-
-        <div className="size-matrix-scroll">
-          <div
-            className="size-matrix"
-            style={{ gridTemplateColumns: gridTemplate }}
-            role="table"
-            aria-label="Operators by stall size"
-          >
-            <div className="size-matrix-corner" role="columnheader">
-              Operator
+      <details className="size-details glass">
+        <summary className="size-details-summary">See the full breakdown by company</summary>
+        <div className="size-details-body">
+          <section className="size-matrix-wrap">
+            <div className="size-matrix-head">
+              <h3>Who builds which size</h3>
             </div>
-            {data.sizeColumns.map((stalls) => (
-              <div key={stalls} className="size-matrix-colhead mono" role="columnheader">
-                {stalls}
+
+            <div className="size-matrix-scroll">
+              <div
+                className="size-matrix"
+                style={{ gridTemplateColumns: gridTemplate }}
+                role="table"
+                aria-label="Operators by stall size"
+              >
+                <div className="size-matrix-corner" role="columnheader">
+                  Operator
+                </div>
+                {data.sizeColumns.map((stalls) => (
+                  <div key={stalls} className="size-matrix-colhead mono" role="columnheader">
+                    {stalls}
+                  </div>
+                ))}
+                <div className="size-matrix-colhead mono" role="columnheader">
+                  Total stalls
+                </div>
+
+                {data.rows.map((row) => (
+                  <SizeMatrixRow
+                    key={row.key}
+                    row={row}
+                    maxCell={maxCell}
+                    maxRowStalls={maxRowStalls}
+                    active={active}
+                    setActive={setActive}
+                    uid={uid}
+                    rollupOpen={rollupOpen}
+                    setRollupOpen={setRollupOpen}
+                  />
+                ))}
               </div>
-            ))}
-            <div className="size-matrix-colhead mono" role="columnheader">
-              Total stalls
             </div>
+          </section>
 
-            {data.rows.map((row) => (
-              <SizeMatrixRow
-                key={row.key}
-                row={row}
-                maxCell={maxCell}
-                maxRowStalls={maxRowStalls}
-                active={active}
-                setActive={setActive}
-                uid={uid}
-                rollupOpen={rollupOpen}
-                setRollupOpen={setRollupOpen}
-              />
-            ))}
-          </div>
+          <section className="size-takeaways">
+            <h3>What the numbers say</h3>
+            <ul className="size-takeaway-list">
+              {data.takeaways.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </section>
         </div>
-      </section>
+      </details>
 
-      <section className="size-takeaways glass">
-        <h3>What the numbers say</h3>
-        <ul className="size-takeaway-list">
-          {data.takeaways.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-        <p className="size-caveat mono">
-          Open US customer-owned sites only. Upcoming sites aren&rsquo;t included because Tesla
-          doesn&rsquo;t list their stall counts until they open.
-        </p>
-      </section>
+      <p className="size-caveat mono">
+        Open US customer-owned sites only. Upcoming sites aren&rsquo;t included because Tesla
+        doesn&rsquo;t list their stall counts until they open.
+      </p>
     </div>
   );
 }
