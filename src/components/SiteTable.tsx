@@ -6,7 +6,7 @@ import type { Site } from "@/lib/types";
 
 type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened" | "new";
 
-const DEFAULT_VISIBLE = 64;
+const DEFAULT_VISIBLE = 12;
 
 function francisFirst(a: string, b: string): number {
   const af = /francis energy/i.test(a);
@@ -22,6 +22,27 @@ function findusKey(s: Site): string {
   return s.slug;
 }
 
+function sentenceCase(raw: string): string {
+  if (!raw) return raw;
+  if (raw === raw.toUpperCase() && /[A-Z]/.test(raw)) {
+    return raw
+      .toLowerCase()
+      .replace(/(^|[\s\-–/])([a-z])/g, (_, p, c) => p + c.toUpperCase());
+  }
+  if (raw[0] && raw[0] === raw[0].toLowerCase()) {
+    return raw[0].toUpperCase() + raw.slice(1);
+  }
+  return raw;
+}
+
+function displaySiteName(raw: string): string {
+  let s = raw;
+  s = s.replace(/\bUs-(\d+)/gi, "US-$1");
+  s = s.replace(/\bMt\.\s/gi, "Mount ");
+  s = s.replace(/\bCtr\.?\b/g, "Center");
+  return sentenceCase(s);
+}
+
 /** Split "Street – City" / "City - Street" style names. */
 function splitPlace(s: Site): { site: string; city: string | null; street: string | null } {
   const city = s.city?.trim() || null;
@@ -35,37 +56,25 @@ function splitPlace(s: Site): { site: string; city: string | null; street: strin
     const left = dash[1]!.trim();
     const right = dash[2]!.trim();
     if (city && left.toLowerCase() === city.toLowerCase()) {
-      return { site: sentenceCase(right), city, street: sentenceCase(right) };
+      return { site: displaySiteName(right), city, street: displaySiteName(right) };
     }
     if (city && right.toLowerCase() === city.toLowerCase()) {
-      return { site: sentenceCase(left), city, street: sentenceCase(left) };
+      return { site: displaySiteName(left), city, street: displaySiteName(left) };
     }
     // Prefer left as site label when no city match
-    return { site: sentenceCase(raw), city, street: sentenceCase(right) };
+    return { site: displaySiteName(raw), city, street: displaySiteName(right) };
   }
   if (city && raw.toLowerCase() === city.toLowerCase()) {
     const street = s.address?.split(",")[0]?.trim() || null;
     return {
-      site: street ? sentenceCase(street) : sentenceCase(raw),
+      site: street ? displaySiteName(street) : displaySiteName(raw),
       city,
-      street: street ? sentenceCase(street) : null,
+      street: street ? displaySiteName(street) : null,
     };
   }
-  return { site: sentenceCase(raw), city, street: null };
+  return { site: displaySiteName(raw), city, street: null };
 }
 
-function sentenceCase(raw: string): string {
-  if (!raw) return raw;
-  if (raw === raw.toUpperCase() && /[A-Z]/.test(raw)) {
-    return raw
-      .toLowerCase()
-      .replace(/(^|[\s\-–/])([a-z])/g, (_, p, c) => p + c.toUpperCase());
-  }
-  if (raw[0] && raw[0] === raw[0].toLowerCase()) {
-    return raw[0].toUpperCase() + raw.slice(1);
-  }
-  return raw;
-}
 
 export default function SiteTable({
   sites,
@@ -219,7 +228,13 @@ export default function SiteTable({
           </a>
           {highlightCovered && covered ? <span className="badge-covered">Covered</span> : null}
         </th>
-        <td>{place.city ?? <span className="dim">–</span>}</td>
+        <td>
+          {groupByOperator
+            ? place.city && s.state
+              ? `${place.city}, ${s.state}`
+              : place.city ?? s.state ?? <span className="dim">–</span>
+            : place.city ?? <span className="dim">–</span>}
+        </td>
         {!groupByOperator ? <td>{s.state}</td> : null}
         {!groupByOperator ? (
           <td>
@@ -246,6 +261,9 @@ export default function SiteTable({
   return (
     <div className={"table-wrap table-wrap-open table-tight" + (fullWidth ? " table-full" : "")}>
       <div className="table-tools">
+        <p className="table-new-key" aria-hidden="true">
+          <span className="new-dot" /> New since 25 Sep
+        </p>
         <label className="table-search">
           <span className="sr-only">Search sites</span>
           <input
@@ -290,8 +308,8 @@ export default function SiteTable({
         <div className="table-expand">
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
             {expanded
-              ? `Show first ${DEFAULT_VISIBLE}`
-              : `Show all ${rows.length} sites`}
+              ? `Show fewer`
+              : `See all ${rows.length} sites`}
           </button>
         </div>
       ) : (

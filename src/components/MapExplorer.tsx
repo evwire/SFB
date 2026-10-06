@@ -477,6 +477,25 @@ export default function MapExplorer({
             ))}
           </select>
         </label>
+        <span className="map-tb-sep" aria-hidden="true" />
+        <div className="map-toolbar-seg" role="group" aria-label="EVwire stories">
+          <button
+            type="button"
+            className={"map-tb-btn" + (!showCoverage ? " on" : "")}
+            aria-pressed={!showCoverage}
+            onClick={() => setShowCoverage(false)}
+          >
+            All sites
+          </button>
+          <button
+            type="button"
+            className={"map-tb-btn" + (showCoverage ? " on" : "")}
+            aria-pressed={showCoverage}
+            onClick={() => setShowCoverage(true)}
+          >
+            Stories
+          </button>
+        </div>
         {sites.some((s) => s.siteClass === "Heavy-duty") ? (
           <button
             type="button"
@@ -496,27 +515,17 @@ export default function MapExplorer({
             {region === "europe" ? "Europe" : "United States"}
             {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
           </span>
-          <button
-            type="button"
-            className={"map-stories-toggle" + (showCoverage ? " on" : "")}
-            aria-pressed={showCoverage}
-            onClick={() => setShowCoverage((v) => !v)}
-          >
-            {showCoverage ? "EVwire stories on" : "Show EVwire stories"}
-          </button>
           <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
-            <span className="legend-size-step">
-              <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
-              4
-            </span>
-            <span className="legend-size-step">
-              <span className="legend-size-dot" style={{ width: 17, height: 17 }} aria-hidden="true" />
-              6–8
-            </span>
-            <span className="legend-size-step">
-              <span className="legend-size-dot" style={{ width: 24, height: 24 }} aria-hidden="true" />
-              12+
-            </span>
+            {([4, 6, 8, 12, 20] as const).map((n) => (
+              <span key={n} className="legend-size-step">
+                <span
+                  className="legend-size-dot"
+                  style={{ width: 6 + n * 0.55, height: 6 + n * 0.55 }}
+                  aria-hidden="true"
+                />
+                {n}
+              </span>
+            ))}
           </span>
         </div>
         <div className="map-tools map-tools-corner map-tools-sw map-tools-quiet" aria-label="Map zoom controls">
@@ -526,7 +535,7 @@ export default function MapExplorer({
         </div>
         <svg
           ref={svgRef}
-          viewBox={`0 0 ${viewW} ${viewH}`}
+          viewBox={`-40 -24 ${viewW + 80} ${viewH + 56}`}
           className={"usmap" + (isInteracting ? " is-dragging" : "")}
           role="img"
           aria-label={`Map of ${region === "europe" ? "Europe" : "the United States"} showing ${plotted.length} ${
@@ -540,7 +549,6 @@ export default function MapExplorer({
           onLostPointerCapture={onLostPointerCapture}
         >
           <g transform={`translate(${mapView.x} ${mapView.y}) scale(${mapView.scale})`}>
-            <g transform={`translate(${viewW * 0.02} ${viewH * 0.015}) scale(0.93)`}>
               {visibleShapes.map((st) => {
                 const n = stateCounts[st.abbr] ?? 0;
                 const heat = n > 0 ? 0.04 + (n / maxStateCount) * 0.1 : 0;
@@ -613,7 +621,7 @@ export default function MapExplorer({
                           : showCoverage && covered
                             ? { fill: "var(--ink)", stroke: "#fff", strokeWidth: 1.25, opacity: 0.9 }
                             : {
-                                fill: "var(--dot-other-light)",
+                                fill: "var(--dot-other)",
                                 stroke: "var(--paper)",
                                 strokeWidth: 1,
                                 opacity: showCoverage ? 0.35 : 0.85,
@@ -697,7 +705,6 @@ export default function MapExplorer({
                 </g>
               ) : null}
 
-            </g>
           </g>
 
         </svg>
@@ -708,7 +715,7 @@ export default function MapExplorer({
             Francis Energy
           </span>
           <span className="legend-chip">
-            <span className="legend-swatch solid" style={{ background: "var(--dot-other-light)" }} aria-hidden="true" />
+            <span className="legend-swatch solid" style={{ background: "var(--dot-other)" }} aria-hidden="true" />
             Other operators
           </span>
           {newOpenIds.length > 0 ? (

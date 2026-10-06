@@ -156,7 +156,7 @@ function buildStory(
 
   const headline =
     four && eight
-      ? `Most sites are tiny. Nearly half the stalls sit at 8-stall sites.`
+      ? `Four-stall sites are most of the network. Eight-stall sites tie them on stalls.`
       : dominant
         ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
         : `${total} open US sites with a stall count.`;
@@ -188,17 +188,17 @@ function buildStory(
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
   const fourSitePctRound2 = four ? Math.round(four.pct) : 0;
-  const eightStallPctRound2 = Math.round(eightShare * 100);
+  const stallTiePct = Math.round(fourShare * 100);
   const singleLine =
     singlesMin.length > 0 && singleOps.length > 0
       ? `${singlesMin.length} of ${singleOps.length} single-site operators run a 4-stall site.`
       : null;
   const subline = [
     four && eight
-      ? `${fourSitePctRound2}% of sites are 4-stall; ${eightStallPctRound2}% of stalls are at 8-stall sites.`
+      ? `${fourSitePctRound2}% of sites are 4-stall, yet 4-stall and 8-stall each hold ${stallTiePct}% of stalls (${four.sites}×4 and ${eight.sites}×8 = 160).`
       : null,
     singleLine,
-    "Drawings use one shared scale. Blue posts mark Francis’s share.",
+    "Drawings share one scale. Francis share is labelled beside each row.",
   ]
     .filter(Boolean)
     .join(" ");

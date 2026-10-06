@@ -31,8 +31,8 @@ import type {
  */
 
 const usProjection = geoAlbersUsa()
-  .scale(1300)
-  .translate([VIEW_W / 2, VIEW_H / 2]);
+  .scale(1120)
+  .translate([VIEW_W / 2, VIEW_H / 2 + 8]);
 
 const euProjection = geoMercator()
   .center([-2, 54])

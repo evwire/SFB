@@ -5240,3 +5240,157 @@ html.dark {
   font-size: 13px !important;
 }
 .legend-chip, .map-frame-legend { font-size: 11px !important; }
+
+
+/* =====================================================================
+   ROUND 13 — long-tail story, honest size, map pad via geo, table diet
+   ===================================================================== */
+
+.lead-visuals {
+  display: grid;
+  grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr);
+  gap: 20px 28px;
+  align-items: start;
+  margin: 12px 0 8px;
+  max-width: 52rem;
+}
+@media (max-width: 800px) {
+  .lead-visuals { grid-template-columns: 1fr; }
+}
+
+.site-waffle-cell.is-other,
+.longtail-fill:not(.subject),
+.op-bar-fill:not(.subject) {
+  background: var(--dot-other) !important;
+}
+.site-waffle-swatch.is-other { background: var(--dot-other) !important; }
+
+.longtail-chart { min-width: 0; }
+.longtail-chart-lead {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+.longtail-list { list-style: none; margin: 0; padding: 0; }
+.longtail-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(5rem, 10rem);
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+.longtail-label { font-size: 12px; font-weight: 650; color: var(--ink); }
+.longtail-row.is-francis .longtail-label { color: var(--subject); }
+.longtail-track {
+  position: relative;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.longtail-fill {
+  height: 8px;
+  background: var(--dot-other);
+  flex: 0 0 auto;
+  min-width: 4px;
+}
+.longtail-fill.subject { background: var(--subject); }
+.longtail-end {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Iso: site count loud + site bar + Francis band */
+.size-iso-row-line {
+  grid-template-columns: 4.25rem minmax(0, 1fr) 13.5rem !important;
+  padding: 12px 0 !important;
+}
+.size-iso-row-mid { display: flex; flex-direction: column; gap: 6px; min-width: 0; align-items: flex-start; }
+.size-iso-sitebar {
+  height: 5px;
+  width: min(100%, 22rem);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.size-iso-sitebar-fill { height: 100%; background: var(--ink); }
+.size-iso-loud {
+  font-size: 28px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.size-iso-sites-word { font-size: 14px; font-weight: 650; color: var(--muted); }
+.size-iso-francis-band {
+  margin: 4px 0 0;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--subject);
+  border-bottom: 2px solid color-mix(in srgb, var(--subject) 45%, transparent);
+}
+.size-iso-builders { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.size-iso-share { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.size-iso-sites { margin: 0; }
+
+.map-frame-legend {
+  border: 0 !important;
+  background: color-mix(in srgb, var(--paper) 88%, transparent) !important;
+  padding: 4px 6px !important;
+  box-shadow: none !important;
+}
+.map-tools-quiet {
+  bottom: 12px !important;
+  right: 12px !important;
+  opacity: 0.5;
+}
+.state-callout-text { font-size: 11px !important; font-weight: 650; }
+
+.table-expand { display: block !important; margin: 10px 0; }
+.table-new-key {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 0 8px;
+  font-size: 11px; font-weight: 650; color: var(--muted);
+}
+.table-tools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.sites-tight th.num, .sites-tight td.num, .sites-tight .num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.lead-delta-plain { font-size: 13px; color: var(--muted); font-weight: 650; max-width: 60ch; }
+.lead-asof, .foot-copy, .theme-toggle {
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+.theme-toggle { opacity: 0.4 !important; font-size: 11px !important; }
+.lead-h1-balance { max-width: 28ch; }
+
+.site-waffle-caption { gap: 8px !important; }
+.site-waffle-caption .site-waffle-gap { width: 12px; display: inline-block; }
+.longtail-track { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; height: auto; }
+.longtail-fill { height: 10px; width: auto; }
+.map-figure, .map-national { overflow: visible !important; }
+.map-national .usmap { overflow: visible; }
+.map-split-on .map-national { overflow: visible; }
+
+.site-waffle-caption { display: flex !important; flex-wrap: wrap; gap: 10px 18px !important; align-items: center; }
+.site-waffle-item { display: inline-flex; align-items: center; gap: 6px; }
+
+.map-figure,
+.map-figure-flush,
+.map-national,
+.map-split-on .map-national,
+.map-figure.map-national {
+  overflow: visible !important;
+}
+.map-national .usmap {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none !important;
+}
+.map-split.map-split-on {
+  align-items: stretch !important;
+}

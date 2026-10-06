@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import MapExplorer from "@/components/MapExplorer";
 import SiteWaffle from "@/components/SiteWaffle";
-import { OperatorRank } from "@/components/Dashboard";
+import LongTailChart from "@/components/LongTailChart";
 import SiteTable from "@/components/SiteTable";
 import ShellChrome from "@/components/ShellChrome";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
@@ -176,6 +176,21 @@ export default function RegionApp({
   const banner = isUpcoming || isBoth ? coverage?.honesty_banner ?? null : null;
   const deltaInline =
     region === "us" && phase === "open" ? openUsDeltaLabel(openHistory) : null;
+  const newOpenLabels = useMemo(() => {
+    if (!newOpenIds.length) return [] as string[];
+    const set = new Set(newOpenIds);
+    const hits = openData.sites.filter((s) => {
+      const key = (s.slug || "").replace(/\D/g, "") || s.slug;
+      return set.has(s.slug) || set.has(key) || (s.sourceUrl && [...set].some((id) => s.sourceUrl!.includes(id)));
+    });
+    // Prefer city, state for short names
+    const labels = hits.map((s) => {
+      if (s.city && s.state) return `${s.city}, ${s.state}`;
+      return s.name.replace(/, [A-Z]{2}$/, (m) => m); // keep
+    });
+    // Deduplicate while preserving order
+    return [...new Set(labels)];
+  }, [newOpenIds, openData.sites]);
 
   const defaultHighlight = useMemo(() => {
     const hasFrancis = sites.some((s) => /francis energy/i.test(s.operator ?? ""));
@@ -212,9 +227,15 @@ export default function RegionApp({
           <div className="g12-span-full lead-compact">
             <p className="meta-line mono lead-meta lead-asof">Data as of {dataAsOf}</p>
             <h1 className="lead-h1 lead-h1-balance">{h1}</h1>
-            {deltaInline ? (
+            {deltaInline || newOpenLabels.length > 0 ? (
               <p className="lead-delta-line">
-                <span className="lead-delta-plain tnum">{deltaInline}</span>
+                {newOpenLabels.length > 0 ? (
+                  <span className="lead-delta-plain">
+                    {newOpenLabels.length} new since 25 Sep: {newOpenLabels.join("; ")}
+                  </span>
+                ) : (
+                  <span className="lead-delta-plain tnum">{deltaInline}</span>
+                )}
               </p>
             ) : null}
             <p className="lead-standfirst">
@@ -223,11 +244,20 @@ export default function RegionApp({
               {region === "us" && phase === "open" ? " (EVgo is not included)" : ""}.
             </p>
             {region === "us" && phase === "open" && francis ? (
-              <SiteWaffle
-                francis={francis.sites}
-                other={Math.max(0, openCount - francis.sites)}
-                label={`${francis.sites} Francis sites, ${openCount - francis.sites} by other operators`}
-              />
+              <div className="lead-visuals">
+                <SiteWaffle
+                  francis={francis.sites}
+                  otherSites={Math.max(0, openCount - francis.sites)}
+                  otherOperators={
+                    new Set(
+                      openData.sites
+                        .filter((s) => s.siteClass === "SfB" && !/francis energy/i.test(s.operator ?? ""))
+                        .map((s) => s.operator ?? "n/s")
+                    ).size
+                  }
+                />
+                <LongTailChart sites={openData.sites.filter((s) => s.siteClass === "SfB")} />
+              </div>
             ) : null}
             {banner ? (
               <p className="coverage-banner" role="status">
@@ -263,13 +293,13 @@ export default function RegionApp({
           </div>
         </section>
 
-        {!isUpcoming ? (
+        {!isUpcoming && !(region === "us" && phase === "open") ? (
           <section id="operators" className="g12 module">
             <div className="g12-span-full module-head">
               <h2 className="section-title">Operators</h2>
             </div>
             <div className="g12-span-full">
-              <OperatorRank sites={sites} source={source} phase={phase} />
+              <LongTailChart sites={sites.filter((s) => s.siteClass === "SfB")} />
             </div>
           </section>
         ) : null}
