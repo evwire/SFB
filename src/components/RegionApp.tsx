@@ -7,11 +7,12 @@ import Feed from "@/components/Feed";
 import SiteTable from "@/components/SiteTable";
 import SciComparePanel from "@/components/SciComparePanel";
 import ThemeToggle from "@/components/ThemeToggle";
-import HeroPosts from "@/components/HeroPosts";
+import OpenHistoryChart from "@/components/OpenHistoryChart";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
 import { EUROPE_COUNTRIES, EU_VIEW_W, EU_VIEW_H } from "@/lib/europe-countries.generated";
 import { fmtNum, fmtTallinnStamp } from "@/lib/style";
 import type { FeedItem, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
+import type { OpenHistoryPoint } from "@/lib/open-history-types";
 
 type SnapshotDelta = {
   openUsBaseline: number;
@@ -32,6 +33,7 @@ type Props = {
   europeUpcoming: SiteData;
   sciCompare: SciCompare;
   snapshotDelta: SnapshotDelta;
+  openHistory: OpenHistoryPoint[];
   feed: { items: FeedItem[]; source: string; asOf: string };
   coverageNote?: { source: string; asOf: string; tagCount: number; tagUrl: string };
 };
@@ -138,7 +140,8 @@ export default function RegionApp({
   usUpcoming,
   europeUpcoming,
   sciCompare,
-  snapshotDelta,
+  snapshotDelta: _snapshotDelta,
+  openHistory,
   feed,
 }: Props) {
   const [region, setRegion] = useState<Region>("us");
@@ -189,39 +192,44 @@ export default function RegionApp({
   const underConstruction = upcomingData.sites.filter((s) => s.status === "Construction").length;
   const inDevelopment = upcomingData.sites.filter((s) => s.status === "Planned").length;
 
-  const { h1, lede } = thesis(region, phase, openData.sites, openCount, upcomingCount);
+  const { h1 } = thesis(region, phase, openData.sites, openCount, upcomingCount);
   const banner = isUpcoming || isBoth ? coverage?.honesty_banner ?? null : null;
 
-  const kpi =
-    region === "us" && phase === "open" && snapshotDelta.openUsDelta !== 0
-      ? {
-          value: `${snapshotDelta.openUsDelta > 0 ? "+" : ""}${snapshotDelta.openUsDelta}`,
-          label: "Open sites since last snapshot",
-          note: `${snapshotDelta.openUsBaseline} → ${snapshotDelta.openUsFresh}`,
-        }
-      : region === "us" && phase === "upcoming" && snapshotDelta.upcomingUsDelta !== 0
-        ? {
-            value: `${snapshotDelta.upcomingUsDelta > 0 ? "+" : ""}${snapshotDelta.upcomingUsDelta}`,
-            label: `upcoming since last snapshot`,
-            note: `${snapshotDelta.upcomingUsBaseline} → ${snapshotDelta.upcomingUsFresh}`,
-          }
-        : null;
-
-  // Default highlight: Francis Energy when present in view
   const defaultHighlight = useMemo(() => {
     const hasFrancis = sites.some((s) => /francis energy/i.test(s.operator ?? ""));
     return hasFrancis ? "Francis Energy" : null;
   }, [sites]);
 
+  const francis = useMemo(() => {
+    const sfb = sites.filter((s) => s.siteClass === "SfB");
+    const rows = new Map<string, { sites: number; stalls: number }>();
+    for (const s of sfb) {
+      const k = s.operator ?? "Brand not stated";
+      const r = rows.get(k) ?? { sites: 0, stalls: 0 };
+      r.sites += 1;
+      r.stalls += s.stalls ?? 0;
+      rows.set(k, r);
+    }
+    return rows.get("Francis Energy") ?? null;
+  }, [sites]);
+
+  const totalStalls = sites
+    .filter((s) => s.siteClass === "SfB")
+    .reduce((a, s) => a + (s.stalls ?? 0), 0);
+  const francisSitePct =
+    francis && openCount > 0 ? Math.round((francis.sites / openCount) * 1000) / 10 : null;
+  const francisStallPct =
+    francis && totalStalls > 0 ? Math.round((francis.stalls / totalStalls) * 1000) / 10 : null;
+
   return (
     <>
-      <header className="chrome chrome-dark">
-        <div className="chrome-inner">
-          <a className="brand" href="https://evwire.com" aria-label="EVwire">
-            <img className="brand-logo brand-logo-on-dark" src="/evwire-wordmark.png" alt="EVwire" />
+      <header className="chrome chrome-paper">
+        <div className="g12 chrome-row">
+          <a className="brand g12-span-3" href="https://evwire.com" aria-label="EVwire">
+            <img className="brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
-          <div className="topbar-actions">
-            <nav className="topnav topnav-on-dark">
+          <div className="topbar-actions g12-span-9">
+            <nav className="topnav">
               <a href="#map" aria-current="page">
                 Map
               </a>
@@ -236,96 +244,80 @@ export default function RegionApp({
         </div>
       </header>
 
-      <main className="pub">
-        <section className="hero-bleed">
-          <div className="hero-bleed-inner">
-            <p className="hero-kicker">
-              Tesla Supercharger for Business · {region === "europe" ? "Europe" : "US"} · updated
-              weekly
+      <main className="pub-paper pub-front">
+        <section id="map" className="g12 map-section map-front">
+          <div className="g12-span-full lead-compact">
+            <h1 className="lead-h1">{h1}</h1>
+            <p className="meta-line mono lead-meta">
+              Data as of {dataAsOf}
+              {region === "us" && phase === "open" ? (
+                <span className="lead-evgo"> · EVgo sites not on this map</span>
+              ) : null}
             </p>
-            <div className="hero-bleed-grid">
-              <div className="hero-bleed-copy">
-                <h1 className="thesis-h1-xl">{h1}</h1>
-                {region === "us" && phase === "open" ? (
-                  <p className="hero-evgo">EVgo sites are not on this map or in these counts.</p>
-                ) : null}
-                <p className="lede lede-on-dark">{lede}</p>
-                <p className="meta-line mono meta-on-dark">Data as of {dataAsOf}</p>
-              </div>
-              <div className="hero-bleed-aside">
-                <HeroPosts stalls={8} label="Signature: one isometric post = one stall" />
-                {kpi ? (
-                  <div className="hero-kpi hero-kpi-on-dark" aria-label="Change since last snapshot">
-                    <span className="hero-kpi-n">{kpi.value}</span>
-                    <span className="hero-kpi-l">{kpi.label}</span>
-                    <span className="hero-kpi-note mono">{kpi.note}</span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            {banner ? (
+              <p className="coverage-banner" role="status">
+                <strong>Incomplete coverage.</strong> {banner}
+              </p>
+            ) : null}
           </div>
-          {banner ? (
-            <div className="coverage-banner coverage-banner-on-dark" role="status">
-              <strong>Incomplete coverage.</strong> {banner}
+          <div className="g12-span-full">
+            <MapExplorer
+              key={`${region}-${phase}`}
+              sites={sites}
+              shapes={shapes}
+              viewW={viewW}
+              viewH={viewH}
+              region={region}
+              areaNoun={areaNoun}
+              upcomingStyle={isUpcoming}
+              phase={phase}
+              onPhaseChange={setPhase}
+              onRegionChange={setRegion}
+              openCount={openCount}
+              upcomingCount={upcomingCount}
+              usOpenCount={us.sites.filter((s) => s.siteClass === "SfB").length}
+              usUpcomingCount={usUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
+              euOpenCount={europe.sites.filter((s) => s.siteClass === "SfB").length}
+              euUpcomingCount={europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
+              defaultHighlightOperator={defaultHighlight}
+              showCoverage={showCoverage}
+              onShowCoverageChange={setShowCoverage}
+              splitOklahoma={region === "us"}
+            />
+          </div>
+          {region === "us" && phase === "open" && openHistory.length > 0 ? (
+            <div className="g12-span-full map-history">
+              <OpenHistoryChart points={openHistory} compact />
             </div>
           ) : null}
         </section>
 
-        <section id="map" className="map-bleed">
-          <MapExplorer
-            key={`${region}-${phase}`}
-            sites={sites}
-            shapes={shapes}
-            viewW={viewW}
-            viewH={viewH}
-            region={region}
-            areaNoun={areaNoun}
-            upcomingStyle={isUpcoming}
-            phase={phase}
-            onPhaseChange={setPhase}
-            onRegionChange={setRegion}
-            openCount={openCount}
-            upcomingCount={upcomingCount}
-            usOpenCount={us.sites.filter((s) => s.siteClass === "SfB").length}
-            usUpcomingCount={usUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
-            euOpenCount={europe.sites.filter((s) => s.siteClass === "SfB").length}
-            euUpcomingCount={europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
-            defaultHighlightOperator={defaultHighlight}
-            showCoverage={showCoverage}
-            onShowCoverageChange={setShowCoverage}
-          />
-        </section>
-
-        <div className="pub-body">
-          {!isUpcoming ? (
-            <section id="operators" className="mod mod-wide">
-              <header className="mod-head">
-                <span className="mod-num" aria-hidden="true">
-                  01
-                </span>
-                <div>
-                  <h2 className="section-title">Who runs the posts</h2>
-                  <p className="section-note">Share of sites versus share of stalls — each glyph is a site.</p>
-                </div>
-              </header>
+        {!isUpcoming ? (
+          <section id="operators" className="g12 module">
+            <div className="g12-span-text module-head">
+              <h2 className="section-title">
+                {francisSitePct != null && francisStallPct != null
+                  ? `Francis is ${francisSitePct}% of sites but ${francisStallPct}% of stalls`
+                  : "Who runs the posts"}
+              </h2>
+              <p className="section-note">Site share versus stall share — small sites pull site % above stall %.</p>
+            </div>
+            <div className="g12-span-full">
               <OperatorRank sites={sites} source={source} phase={phase} />
-            </section>
-          ) : null}
+            </div>
+          </section>
+        ) : null}
 
-          <section id="dashboard" className="mod">
-            <header className="mod-head">
-              <span className="mod-num" aria-hidden="true">
-                02
-              </span>
-              <div>
-                <h2 className="section-title">
-                  {region === "us" && phase === "open"
-                    ? "California sites average more than twice Oklahoma’s stalls per site"
-                    : "Where the sites are"}
-                </h2>
-                <p className="section-note">Stalls per site by state — density, not headcount.</p>
-              </div>
-            </header>
+        <section id="dashboard" className="g12 module">
+          <div className="g12-span-text module-head">
+            <h2 className="section-title">
+              {region === "us" && phase === "open"
+                ? "California sites average more than twice Oklahoma’s stalls per site"
+                : "Where the sites are"}
+            </h2>
+            <p className="section-note">Stalls per site by state. Dot size is site count.</p>
+          </div>
+          <div className="g12-span-full">
             <Dashboard
               sites={sites}
               aggregates={aggregates}
@@ -339,17 +331,14 @@ export default function RegionApp({
               hideOperatorTable
               statesAsBars
             />
-          </section>
+          </div>
+        </section>
 
-          <section id="compare" className="mod mod-narrow">
-            <header className="mod-head">
-              <span className="mod-num" aria-hidden="true">
-                03
-              </span>
-              <div>
-                <h2 className="section-title">Data check</h2>
-              </div>
-            </header>
+        <section id="compare" className="g12 module">
+          <div className="g12-span-text module-head">
+            <h2 className="section-title">Data check</h2>
+          </div>
+          <div className="g12-span-full">
             <SciComparePanel
               compare={sciCompare}
               region={region}
@@ -360,52 +349,53 @@ export default function RegionApp({
               livePulled={openPulled}
               hideTitle
             />
-          </section>
+          </div>
+        </section>
 
-          {!isTesla && !isUpcoming && programme ? (
-            <section id="how" className="mod">
+        {!isTesla && !isUpcoming && programme ? (
+          <section id="how" className="g12 module">
+            <div className="g12-span-text">
               <h2 className="section-title">How the programme works</h2>
               <ul className="how-list">
                 {programme.how_it_works.map((h) => (
                   <li key={h}>{h}</li>
                 ))}
               </ul>
-            </section>
-          ) : null}
+            </div>
+          </section>
+        ) : null}
 
-          <section id="sites" className="mod">
-            <header className="mod-head">
-              <span className="mod-num" aria-hidden="true">
-                04
-              </span>
-              <div className="section-head-inline">
-                <h2 className="section-title">Every site</h2>
-                <p className="section-note">{sites.length} records</p>
-              </div>
-            </header>
+        <section id="sites" className="g12 module">
+          <div className="g12-span-text module-head">
+            <div className="section-head-inline">
+              <h2 className="section-title">Every site</h2>
+              <p className="section-note">{sites.length} records</p>
+            </div>
+          </div>
+          <div className="g12-span-full">
             <SiteTable
               sites={sites}
               areaNoun={areaNoun}
               upcoming={isUpcoming || isBoth}
               showStatus={phase !== "open"}
-              groupByOperator
+              groupByOperator={false}
               highlightCovered={showCoverage}
+              fullWidth
             />
-          </section>
+          </div>
+        </section>
 
-          <section id="news" className="mod">
-            <header className="mod-head">
-              <span className="mod-num" aria-hidden="true">
-                05
-              </span>
-              <div>
-                <h2 className="section-title">Latest coverage</h2>
-              </div>
-            </header>
+        <section id="news" className="g12 module">
+          <div className="g12-span-text module-head">
+            <h2 className="section-title">Latest coverage</h2>
+          </div>
+          <div className="g12-span-full">
             <Feed items={feed.items} sites={sites} />
-          </section>
+          </div>
+        </section>
 
-          <footer className="foot foot-pub">
+        <footer className="g12 foot foot-paper">
+          <div className="g12-span-full">
             <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
               <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
             </a>
@@ -416,8 +406,8 @@ export default function RegionApp({
                 evwire.com
               </a>
             </p>
-          </footer>
-        </div>
+          </div>
+        </footer>
       </main>
     </>
   );

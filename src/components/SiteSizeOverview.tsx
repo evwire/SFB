@@ -37,6 +37,22 @@ const ISO_SCALE = 0.62;
 const SUBJECT = "var(--subject)";
 const MUTED_DRAW = "#3a3630";
 
+function SizePunchline({ rows }: { rows: SizeRow[] }) {
+  const punch = rows.find((r) => r.key === "__single_site_4__");
+  if (!punch || punch.totalSites <= 0) return null;
+  const n = punch.totalSites;
+  return (
+    <div className="size-punchline" role="note">
+      <span className="size-punchline-n tnum">{n}</span>
+      <span className="size-punchline-text">single-site, 4 stalls only</span>
+      <span className="size-punchline-anno">
+        Of every single-site operator, {n} built the minimum configuration — one row that defines the long
+        tail.
+      </span>
+    </div>
+  );
+}
+
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   const uid = useId();
   const [active, setActive] = useState<string | null>(null);
@@ -86,7 +102,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
               <div key={layer.stalls} className="slope-row">
                 <span className="slope-label">
                   {layer.stalls}-stall
-                  <span className="hbar-sep">{layer.pct}%</span>
+                  <span className="hbar-sep"> {layer.pct}% sites</span>
                 </span>
                 <div className="slope-track">
                   <div className="slope-line" aria-hidden="true" />
@@ -118,11 +134,12 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
                     />
                   </svg>
                 </div>
-                <span className="slope-end">{layer.stallPct}%</span>
+                <span className="slope-end">{layer.stallPct}% stalls</span>
               </div>
             );
           })}
         </div>
+        <SizePunchline rows={data.rows} />
 
       </section>
 
@@ -134,6 +151,12 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
             <p className="section-note">Named operators first; single-site builders aggregated below.</p>
           </div>
         </header>
+        <div className="size-bubble-key" aria-hidden="true">
+          <span><i className="key-dot" style={{ width: 12, height: 12 }} /> 1 site</span>
+          <span><i className="key-dot" style={{ width: 20, height: 20 }} /> ~4</span>
+          <span><i className="key-dot" style={{ width: 28, height: 28 }} /> 8+</span>
+          <span>Bubble area ∝ site count in that size class</span>
+        </div>
         <div className="size-matrix-scroll">
           <div
             className="size-matrix"

@@ -1,7 +1,6 @@
 import { fmtDate } from "@/lib/style";
 import type { FeedItem, Site } from "@/lib/types";
 
-/** Match coverage headlines to open sites by city / name tokens. */
 function siteForItem(it: FeedItem, sites: Site[]): Site | null {
   const title = it.title.toLowerCase();
   let best: Site | null = null;
@@ -20,7 +19,13 @@ function siteForItem(it: FeedItem, sites: Site[]): Site | null {
   return bestScore >= 3 ? best : null;
 }
 
-/** Single-column wire list: date gutter left, headline right; site deep-link when matched. */
+function placeFor(it: FeedItem, matched: Site | null): string {
+  if (matched?.city) return `${matched.city}, ${matched.state}`;
+  if (matched) return matched.state;
+  return "—";
+}
+
+/** Wire list: date | location | headline — even row rhythm, fixed location column. */
 export default function Feed({
   items,
   sites = [],
@@ -31,20 +36,25 @@ export default function Feed({
   asOf?: string;
 }) {
   return (
-    <ul className="feed feed-textlist feed-wire">
+    <ul className="feed feed-wire feed-cols">
       {items.map((it) => {
         const matched = sites.length ? siteForItem(it, sites) : null;
+        const place = placeFor(it, matched);
         return (
-          <li key={it.url} className="feed-item-text">
-            <a href={it.url} target="_blank" rel="noopener">
-              <span className="feed-date mono">{fmtDate(it.published)}</span>
-              <span className="feed-title">{it.title}</span>
+          <li key={it.url} className="feed-row">
+            <span className="feed-date mono">{fmtDate(it.published)}</span>
+            <span className="feed-place">
+              {matched ? (
+                <a className="link" href={`#site-${matched.slug}`}>
+                  {place}
+                </a>
+              ) : (
+                place
+              )}
+            </span>
+            <a className="feed-title" href={it.url} target="_blank" rel="noopener">
+              {it.title}
             </a>
-            {matched ? (
-              <a className="feed-site-link link" href={`#site-${matched.slug}`}>
-                {matched.city ? `${matched.city}, ${matched.state}` : matched.name}
-              </a>
-            ) : null}
           </li>
         );
       })}

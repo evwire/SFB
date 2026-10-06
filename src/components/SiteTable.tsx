@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, Fragment } from "react";
+import { useMemo, useState } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "location" | "operator" | "stalls" | "status";
+type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened";
 
 const DEFAULT_VISIBLE = 20;
 
@@ -16,35 +16,43 @@ function francisFirst(a: string, b: string): number {
   return a.localeCompare(b);
 }
 
-function nameIncludesState(s: Site): boolean {
-  if (!s.state) return false;
-  return s.name.includes(`, ${s.state}`) || s.name.endsWith(` ${s.state}`);
+function siteLabel(s: Site): string {
+  // Prefer short name without trailing ", ST" when State column exists
+  const raw = s.name;
+  if (s.state && (raw.endsWith(`, ${s.state}`) || raw.includes(`, ${s.state} -`))) {
+    return raw.replace(new RegExp(`, ${s.state}(?=\\s*-|$)`), "").trim();
+  }
+  return raw;
 }
 
 export default function SiteTable({
   sites,
   upcoming = false,
-  showStatus = true,
-  groupByOperator = false,
+  showStatus = false,
   highlightCovered = false,
+  fullWidth = true,
 }: {
   sites: Site[];
   areaNoun?: string;
   upcoming?: boolean;
   showStatus?: boolean;
   groupByOperator?: boolean;
-  /** When EVwire coverage is on, badge covered rows. */
   highlightCovered?: boolean;
+  fullWidth?: boolean;
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>(groupByOperator ? "operator" : "operator");
+  const hasOpened = useMemo(
+    () => sites.some((s) => Boolean(s.openedOn)),
+    [sites]
+  );
+  const [sortKey, setSortKey] = useState<SortKey>("operator");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [expanded, setExpanded] = useState(false);
   const [q, setQ] = useState("");
 
-  const showStateCol = useMemo(() => {
-    // Drop State when every visible name already carries the state abbr.
-    return !sites.every(nameIncludesState);
-  }, [sites]);
+  const maxStalls = useMemo(
+    () => Math.max(1, ...sites.map((s) => s.stalls ?? 0)),
+    [sites]
+  );
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -56,7 +64,7 @@ export default function SiteTable({
   }, [sites, q]);
 
   const rows = useMemo(() => {
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const dir = sortDir === "asc" ? 1 : -1;
       const cmpStr = (x: string, y: string) => x.localeCompare(y) * dir;
       const cmpNum = (x: number | null, y: number | null) => {
@@ -74,32 +82,21 @@ export default function SiteTable({
           return cmpNum(a.stalls, b.stalls);
         case "status":
           return cmpStr(a.status, b.status);
-        case "location":
-        default: {
-          const s = (a.state ?? "").localeCompare(b.state ?? "");
-          if (s !== 0) return s * dir;
-          return (a.city ?? "").localeCompare(b.city ?? "") * dir;
-        }
+        case "state":
+          return cmpStr(a.state ?? "", b.state ?? "");
+        case "city":
+          return cmpStr(a.city ?? "", b.city ?? "");
+        case "opened":
+          return cmpStr(a.openedOn ?? "", b.openedOn ?? "");
+        case "site":
+        default:
+          return cmpStr(a.name, b.name);
       }
     });
-    return sorted;
   }, [filtered, sortKey, sortDir]);
 
   const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
   const hidden = Math.max(0, rows.length - DEFAULT_VISIBLE);
-
-  // Group visible rows by operator for sub-headers
-  const groups = useMemo(() => {
-    if (!groupByOperator) return [{ op: null as string | null, sites: visible }];
-    const out: { op: string; sites: Site[] }[] = [];
-    for (const s of visible) {
-      const op = s.operator ?? "Brand not stated";
-      const last = out[out.length - 1];
-      if (last && last.op === op) last.sites.push(s);
-      else out.push({ op, sites: [s] });
-    }
-    return out;
-  }, [visible, groupByOperator]);
 
   function onSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -130,10 +127,8 @@ export default function SiteTable({
     );
   }
 
-  const colSpan = 2 + (showStateCol ? 1 : 0) + (showStatus ? 1 : 0);
-
   return (
-    <div className="table-wrap table-wrap-open">
+    <div className={"table-wrap table-wrap-open" + (fullWidth ? " table-full" : "")}>
       <div className="table-tools">
         <label className="table-search">
           <span className="sr-only">Search sites</span>
@@ -145,54 +140,60 @@ export default function SiteTable({
           />
         </label>
       </div>
-      <table className="sites">
+      <table className="sites sites-full">
         <caption className="sr-only">Every Tesla customer-owned Supercharger in this region.</caption>
         <thead>
           <tr>
-            {th("location", "Site")}
+            {th("site", "Site")}
+            {th("city", "City")}
+            {th("state", "State")}
+            {th("operator", "Operator")}
             {th("stalls", "Stalls", "right")}
-            {showStateCol ? th("location", "State") : null}
+            {hasOpened ? th("opened", "Opened") : null}
             {showStatus ? th("status", "Status") : null}
           </tr>
         </thead>
         <tbody>
-          {groups.map((g) => (
-            <Fragment key={g.op ?? "all"}>
-              {g.op ? (
-                <tr className="op-group-row">
-                  <th scope="colgroup" colSpan={colSpan}>
-                    {g.op}
-                  </th>
-                </tr>
-              ) : null}
-              {g.sites.map((s) => {
-                const st = STATUS_STYLE[s.status];
-                const covered = Boolean(s.articles?.length);
-                return (
-                  <tr key={s.slug} id={`site-${s.slug}`}>
-                    <th scope="row">
-                      <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
-                        {s.name}
-                      </a>
-                      {highlightCovered && covered ? (
-                        <span className="badge-covered">EVwire</span>
-                      ) : null}
-                    </th>
-                    <td className="num">{s.stalls ?? <span className="dim">n/s</span>}</td>
-                    {showStateCol ? <td>{s.state}</td> : null}
-                    {showStatus ? (
-                      <td>
-                        <span aria-hidden="true" style={{ color: st.color }}>
-                          {st.glyph}
-                        </span>{" "}
-                        {st.label}
-                      </td>
-                    ) : null}
-                  </tr>
-                );
-              })}
-            </Fragment>
-          ))}
+          {visible.map((s) => {
+            const st = STATUS_STYLE[s.status];
+            const covered = Boolean(s.articles?.length);
+            const bar = s.stalls != null ? (s.stalls / maxStalls) * 100 : 0;
+            return (
+              <tr key={s.slug} id={`site-${s.slug}`}>
+                <th scope="row">
+                  <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
+                    {siteLabel(s)}
+                  </a>
+                  {highlightCovered && covered ? (
+                    <span className="badge-covered">EVwire</span>
+                  ) : null}
+                </th>
+                <td>{s.city ?? <span className="dim">—</span>}</td>
+                <td>{s.state}</td>
+                <td>
+                  {s.operator ?? (
+                    <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>
+                  )}
+                </td>
+                <td className="num stalls-cell">
+                  <span className="tnum">{s.stalls ?? "—"}</span>
+                  {s.stalls != null ? (
+                    <span className="stall-micro" aria-hidden="true">
+                      <i style={{ width: `${bar}%` }} />
+                    </span>
+                  ) : null}
+                </td>
+                {hasOpened ? (
+                  <td className="tnum">{s.openedOn ?? <span className="dim">—</span>}</td>
+                ) : null}
+                {showStatus ? (
+                  <td>
+                    <span aria-hidden="true">{st.glyph}</span> {st.label}
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       {hidden > 0 || expanded ? (

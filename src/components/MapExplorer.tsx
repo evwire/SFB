@@ -27,6 +27,7 @@ export default function MapExplorer({
   defaultHighlightOperator = null,
   showCoverage: showCoverageProp,
   onShowCoverageChange,
+  splitOklahoma = false,
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -47,6 +48,8 @@ export default function MapExplorer({
   defaultHighlightOperator?: string | null;
   showCoverage?: boolean;
   onShowCoverageChange?: (v: boolean) => void;
+  /** Side-by-side Oklahoma zoom panel (US only). */
+  splitOklahoma?: boolean;
 }) {
   const [showCoverageLocal, setShowCoverageLocal] = useState(false);
   const showCoverage = showCoverageProp ?? showCoverageLocal;
@@ -490,7 +493,22 @@ export default function MapExplorer({
         ) : null}
       </div>
 
-      <figure className="map-figure map-figure-flush">
+      <div className={"map-split" + (splitOklahoma ? " map-split-on" : "")}>
+      <figure className="map-figure map-figure-flush map-national">
+        <div className="map-figure-head">
+          <span className="map-figure-title">
+            {region === "europe" ? "Europe" : "United States"}
+            {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
+          </span>
+          <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
+            <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
+            4
+            <span className="legend-size-dot" style={{ width: 16, height: 16 }} aria-hidden="true" />
+            8
+            <span className="legend-size-dot" style={{ width: 22, height: 22 }} aria-hidden="true" />
+            12+ stalls
+          </span>
+        </div>
 
         <div className="map-tools map-tools-neat" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
@@ -584,17 +602,7 @@ export default function MapExplorer({
                       }
                     />
                   )}
-                  {isFrancis && (
-                    <text
-                      className="pin-letter"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      dy="0.05em"
-                      aria-hidden="true"
-                    >
-                      F
-                    </text>
-                  )}
+                  {/* F letter only in Oklahoma zoom panel */}
                   {s.siteClass === "Heavy-duty" && <circle className="hd" r={r + 3.5} />}
                 </g>
               );
@@ -620,7 +628,7 @@ export default function MapExplorer({
                 </g>
               ))}
 
-              {okDetail && region === "us" ? (
+              {okDetail && region === "us" && !splitOklahoma ? (
                 <g className="ok-inset" transform={`translate(${viewW * 0.07}, ${viewH * 0.55})`}>
                   <line
                     className="ok-inset-leader"
@@ -697,14 +705,6 @@ export default function MapExplorer({
               <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
             </span>
             ) : null}
-            <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
-              <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
-              4
-              <span className="legend-size-dot" style={{ width: 16, height: 16 }} aria-hidden="true" />
-              8
-              <span className="legend-size-dot" style={{ width: 22, height: 22 }} aria-hidden="true" />
-              12+ stalls
-            </span>
           </div>
           {phase !== "open" ? (
           <span className="map-gap-note">EVgo sites are not on this map.</span>
@@ -717,7 +717,81 @@ export default function MapExplorer({
           )}
         </figcaption>
       </figure>
+      {splitOklahoma && okDetail && region === "us" ? (
+        <aside className="ok-zoom-panel" aria-label="Oklahoma detail">
+          <h3 className="ok-zoom-title">
+            Oklahoma · {okDetail.n} sites
+            <span className="ok-zoom-sub">
+              {" "}
+              · {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length} Francis
+            </span>
+          </h3>
+          <svg viewBox="0 0 320 300" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites">
+            <rect x="0" y="0" width="320" height="300" className="ok-zoom-bg" />
+            <g
+              transform={`translate(160 140) scale(${(260 / Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY)).toFixed(4)}) translate(${(-(okDetail.minX + okDetail.maxX) / 2).toFixed(2)} ${(-(okDetail.minY + okDetail.maxY) / 2).toFixed(2)})`}
+            >
+              {visibleShapes
+                .filter((st) => st.abbr === "OK")
+                .map((st) => (
+                  <path key={`okz-${st.abbr}`} d={st.d} className="state has" />
+                ))}
+              {okDetail.points.map((s, i) => {
+                const isHl =
+                  Boolean(highlightOperator) &&
+                  (s.operator ?? "Brand not stated") === highlightOperator;
+                const rr = Math.max(3, pinRadius(s.stalls) * 0.7);
+                return (
+                  <g key={`okzp-${s.slug}`}>
+                    <circle
+                      cx={s.x!}
+                      cy={s.y!}
+                      r={rr}
+                      style={{
+                        fill: isHl ? "var(--subject)" : "var(--dot-muted)",
+                        stroke: "none",
+                        opacity: isHl ? 1 : 0.55,
+                      }}
+                    />
+                    {isHl ? (
+                      <text
+                        x={s.x!}
+                        y={s.y!}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="ok-zoom-f"
+                      >
+                        F
+                      </text>
+                    ) : null}
+                    <title>{`${i + 1}. ${s.name}${s.stalls != null ? ` · ${s.stalls} stalls` : ""}`}</title>
+                  </g>
+                );
+              })}
+            </g>
+          </svg>
+          <ol className="ok-zoom-list">
+            {okDetail.points
+              .filter((s) => /francis energy/i.test(s.operator ?? ""))
+              .slice(0, 12)
+              .map((s, i) => (
+                <li key={s.slug}>
+                  <span className="tnum">{i + 1}</span> {s.city ?? s.name}
+                  {s.stalls != null ? <span className="dim"> · {s.stalls}</span> : null}
+                </li>
+              ))}
+            {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length > 12 ? (
+              <li className="dim">
+                +{okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length - 12} more Francis
+              </li>
+            ) : null}
+          </ol>
+        </aside>
+      ) : null}
 
+
+
+      </div>
 
       {mounted && selected && createPortal(
         <div className="scrim" onClick={close} role="presentation">

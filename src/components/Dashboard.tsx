@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import PostGlyph from "@/components/PostGlyph";
+import { useMemo } from "react";
 import type { Site, Aggregate, PipelineClaim, DataSource, SitePhase, UpcomingCoverage } from "@/lib/types";
 
 type OpRow = {
@@ -26,14 +25,12 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
   ).sort((a, b) => b.sites - a.sites || b.stalls - a.stalls || a.operator.localeCompare(b.operator));
 }
 
-const TOP_N = 6;
-
-function pct(n: number, d: number): string {
-  if (d <= 0) return "0%";
-  return `${Math.round((n / d) * 1000) / 10}%`;
+function pct(n: number, d: number): number {
+  if (d <= 0) return 0;
+  return Math.round((n / d) * 1000) / 10;
 }
 
-/** Operators: share of sites vs share of stalls (two bars, end labels). */
+/** Named operators: site share vs stall share as paired end-labelled bars; one grey long-tail. */
 export function OperatorRank({
   sites,
   phase = "open",
@@ -42,103 +39,81 @@ export function OperatorRank({
   source?: DataSource;
   phase?: SitePhase;
 }) {
-  const [tailOpen, setTailOpen] = useState(false);
   const rows = useMemo(() => buildOperatorRows(sites, phase), [sites, phase]);
   const totalSites = rows.reduce((a, r) => a + r.sites, 0) || 1;
   const totalStalls = rows.reduce((a, r) => a + r.stalls, 0) || 1;
-  const multi = rows.filter((r) => r.sites >= 2);
+  const named = rows.filter((r) => r.sites >= 2);
   const singles = rows.filter((r) => r.sites === 1);
-  const top = (multi.length >= TOP_N ? multi : rows).slice(0, TOP_N);
-  const topKeys = new Set(top.map((r) => r.operator));
-  const restSingles = singles.filter((r) => !topKeys.has(r.operator));
-  const restMulti = multi.filter((r) => !topKeys.has(r.operator));
-  const singleStalls = restSingles.flatMap((r) => (r.stalls > 0 ? [r.stalls] : []));
-  const stallLo = singleStalls.length ? Math.min(...singleStalls) : 0;
-  const stallHi = singleStalls.length ? Math.max(...singleStalls) : 0;
+  const singleSites = singles.reduce((a, r) => a + r.sites, 0);
+  const singleStalls = singles.reduce((a, r) => a + r.stalls, 0);
+  const francis = rows.find((r) => r.isFrancis);
+  const insight =
+    francis != null
+      ? `${francis.operator} is ${pct(francis.sites, totalSites)}% of sites but ${pct(francis.stalls, totalStalls)}% of stalls — it builds small.`
+      : null;
 
   return (
-    <aside className="rank-aside rank-aside-fill" aria-label="Operators by share of sites and stalls">
-      <h3 className="label-caps">Operators</h3>
-      <p className="section-note" style={{ margin: "0 0 12px", fontSize: 13 }}>
-        Share of sites vs share of stalls
-      </p>
-      <ul className="hbar-list">
-        {top.map((o) => {
-          const sitePct = (o.sites / totalSites) * 100;
-          const stallPct = (o.stalls / totalStalls) * 100;
+    <aside className="op-chart" aria-label="Operators by site and stall share">
+      {insight ? <p className="insight-callout">{insight}</p> : null}
+      <ul className="slope-list">
+        {named.map((o) => {
+          const sitePct = pct(o.sites, totalSites);
+          const stallPct = pct(o.stalls, totalStalls);
           return (
-            <li key={o.operator} className="hbar-row">
-              <div className="hbar-meta">
-                <span className="hbar-name">{o.operator}</span>
-                <span className="hbar-nums">
-                  {o.sites}
-                  <span className="hbar-sep">sites</span>
-                </span>
-              </div>
-              <div className="post-count-row" aria-hidden="true">
-                <PostGlyph
-                  count={Math.min(o.sites, 8)}
-                  color={o.isFrancis ? "var(--subject)" : "var(--ink)"}
-                  max={8}
-                />
-              </div>
-              <div className="hbar-pair">
-                <div className="hbar-end">
+            <li key={o.operator} className={"slope-op" + (o.isFrancis ? " is-subject" : "")}>
+              <div className="slope-op-name">{o.operator}</div>
+              <div className="paired-bars" aria-label={`${sitePct}% sites, ${stallPct}% stalls`}>
+                <div className="paired-row">
+                  <span className="paired-label">Sites</span>
                   <div
-                    className={"hbar-fill" + (o.isFrancis ? " hbar-fill-subject" : "")}
-                    style={{ width: `${Math.max(sitePct, 1.5)}%` }}
+                    className={"paired-fill" + (o.isFrancis ? " subject" : "")}
+                    style={{ width: `${Math.max(sitePct, 1)}%` }}
                   />
-                  <span className="hbar-end-label">{pct(o.sites, totalSites)} sites</span>
+                  <span className="paired-end tnum">{sitePct}%</span>
                 </div>
-                <div className="hbar-end">
+                <div className="paired-row">
+                  <span className="paired-label">Stalls</span>
                   <div
-                    className={"hbar-fill hbar-fill-muted" + (o.isFrancis ? " hbar-fill-subject" : "")}
-                    style={{ width: `${Math.max(stallPct, 1.5)}%`, opacity: o.isFrancis ? 1 : undefined }}
+                    className={"paired-fill muted" + (o.isFrancis ? " subject" : "")}
+                    style={{ width: `${Math.max(stallPct, 1)}%` }}
                   />
-                  <span className="hbar-end-label">{pct(o.stalls, totalStalls)} stalls</span>
+                  <span className="paired-end tnum">{stallPct}%</span>
                 </div>
               </div>
             </li>
           );
         })}
+        {singles.length > 0 ? (
+          <li className="slope-op long-tail">
+            <div className="slope-op-name">
+              {singles.length} single-site operators
+            </div>
+            <div className="paired-bars">
+              <div className="paired-row">
+                <span className="paired-label">Sites</span>
+                <div
+                  className="paired-fill tail"
+                  style={{ width: `${Math.max(pct(singleSites, totalSites), 1)}%` }}
+                />
+                <span className="paired-end tnum">{pct(singleSites, totalSites)}%</span>
+              </div>
+              <div className="paired-row">
+                <span className="paired-label">Stalls</span>
+                <div
+                  className="paired-fill tail muted"
+                  style={{ width: `${Math.max(pct(singleStalls, totalStalls), 1)}%` }}
+                />
+                <span className="paired-end tnum">{pct(singleStalls, totalStalls)}%</span>
+              </div>
+            </div>
+          </li>
+        ) : null}
       </ul>
-      {restSingles.length > 0 || restMulti.length > 0 ? (
-        <div className="rank-tail rank-tail-align">
-          <button
-            type="button"
-            className="rank-tail-btn"
-            aria-expanded={tailOpen}
-            onClick={() => setTailOpen((v) => !v)}
-          >
-            {tailOpen
-              ? "Hide the rest"
-              : restSingles.length > 0 && restMulti.length === 0
-                ? `+${restSingles.length} operators with one site each${
-                    stallLo > 0 ? ` (${stallLo}–${stallHi} stalls)` : ""
-                  }`
-                : `+${restSingles.length + restMulti.length} more operators`}
-          </button>
-          {tailOpen ? (
-            <ul className="rank-tail-list">
-              {restMulti.map((o) => (
-                <li key={o.operator}>
-                  {o.operator} · {o.sites} · {o.stalls}
-                </li>
-              ))}
-              {restSingles.map((o) => (
-                <li key={o.operator}>
-                  {o.operator} · 1 · {o.stalls || "—"}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
     </aside>
   );
 }
 
-/** States: stalls per site — a new fact, not another site-count chart. */
+/** Dot plot: stalls per site by state. Dot size = site count. */
 export default function Dashboard({
   sites,
   aggregates: _aggregates,
@@ -161,7 +136,6 @@ export default function Dashboard({
 }) {
   const isTesla = source === "tesla";
   const sfb = sites.filter((s) => s.siteClass === "SfB");
-  const [tailOpen, setTailOpen] = useState(false);
 
   const byState = Object.values(
     sfb.reduce<Record<string, { state: string; sites: number; stalls: number; avg: number }>>(
@@ -178,56 +152,75 @@ export default function Dashboard({
     .sort((a, b) => b.avg - a.avg || b.sites - a.sites || a.state.localeCompare(b.state));
 
   const maxAvg = Math.max(...byState.map((o) => o.avg), 1);
-  const top = byState.slice(0, 8);
-  const rest = byState.slice(8);
+  const maxSites = Math.max(...byState.map((o) => o.sites), 1);
+  const ca = byState.find((s) => s.state === "CA");
+  const ok = byState.find((s) => s.state === "OK");
+  const ratio =
+    ca && ok && ok.avg > 0 ? Math.round((ca.avg / ok.avg) * 10) / 10 : null;
+
+  const singles = byState.filter((s) => s.sites === 1);
+  const multi = byState.filter((s) => s.sites > 1);
 
   return (
-    <div className="dash dash-r2">
-      <section className="dash-block dash-block-full">
-        <ul className="hbar-list hbar-list-wide">
-          {top.map((o) => (
-            <li key={o.state} className="hbar-row">
-              <div className="hbar-meta">
-                <span className="hbar-name">{o.state}</span>
-                <span className="hbar-nums">
-                  {o.avg.toFixed(1)}
-                  <span className="hbar-sep">stalls/site</span>
-                </span>
-              </div>
-              <div className="hbar-end">
-                <div
-                  className="hbar-fill"
-                  style={{ width: `${Math.max((o.avg / maxAvg) * 100, 2)}%` }}
-                />
-                <span className="hbar-end-label">
-                  {o.sites} site{o.sites === 1 ? "" : "s"} · {o.stalls} stalls
-                </span>
-              </div>
-            </li>
-          ))}
+    <div className="dash-dotplot">
+      {ratio != null && ca && ok ? (
+        <p className="insight-callout">
+          California averages {ca.avg.toFixed(1)} stalls/site; Oklahoma {ok.avg.toFixed(1)} —{" "}
+          {ratio}× denser.
+        </p>
+      ) : null}
+      <div className="dotplot" role="img" aria-label="Stalls per site by state">
+        <div className="dotplot-axis" aria-hidden="true">
+          <span>0</span>
+          <span>{(maxAvg / 2).toFixed(1)}</span>
+          <span>{maxAvg.toFixed(1)}</span>
+        </div>
+        <ul className="dotplot-list">
+          {multi.map((o) => {
+            const left = (o.avg / maxAvg) * 100;
+            const size = 10 + Math.sqrt(o.sites / maxSites) * 22;
+            const hi = o.state === "CA" || o.state === "OK";
+            return (
+              <li key={o.state} className={"dotplot-row" + (hi ? " is-hi" : "")}>
+                <span className="dotplot-state">{o.state}</span>
+                <div className="dotplot-track">
+                  <span
+                    className={"dotplot-dot" + (o.state === "CA" || o.state === "OK" ? " subject" : "")}
+                    style={{ left: `${left}%`, width: size, height: size }}
+                    title={`${o.state}: ${o.avg.toFixed(1)} stalls/site · ${o.sites} sites`}
+                  />
+                </div>
+                <span className="dotplot-val tnum">{o.avg.toFixed(1)}</span>
+                <span className="dotplot-n tnum">{o.sites}</span>
+              </li>
+            );
+          })}
         </ul>
-        {rest.length > 0 ? (
-          <div className="rank-tail">
-            <button
-              type="button"
-              className="rank-tail-btn"
-              aria-expanded={tailOpen}
-              onClick={() => setTailOpen((v) => !v)}
-            >
-              {tailOpen ? "Hide the rest" : `+${rest.length} more states`}
-            </button>
-            {tailOpen ? (
-              <ul className="rank-tail-list">
-                {rest.map((o) => (
-                  <li key={o.state}>
-                    {o.state} · {o.avg.toFixed(1)} stalls/site · {o.sites} · {o.stalls}
+        {singles.length > 0 ? (
+          <div className="dotplot-singles">
+            <p className="dotplot-singles-label">Single-site states (n=1)</p>
+            <ul className="dotplot-list muted-band">
+              {singles.map((o) => {
+                const left = (o.avg / maxAvg) * 100;
+                return (
+                  <li key={o.state} className="dotplot-row muted">
+                    <span className="dotplot-state">{o.state}</span>
+                    <div className="dotplot-track">
+                      <span
+                        className="dotplot-dot muted"
+                        style={{ left: `${left}%`, width: 10, height: 10 }}
+                      />
+                    </div>
+                    <span className="dotplot-val tnum">{o.avg.toFixed(1)}</span>
+                    <span className="dotplot-n tnum">1</span>
                   </li>
-                ))}
-              </ul>
-            ) : null}
+                );
+              })}
+            </ul>
           </div>
         ) : null}
-      </section>
+        <p className="dotplot-key">Dot size = number of sites. Values are stalls per site.</p>
+      </div>
 
       {!isTesla &&
         pipeline.map((p) => (
