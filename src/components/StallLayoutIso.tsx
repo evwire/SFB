@@ -22,7 +22,7 @@ const C30 = Math.cos(Math.PI / 6);
 const S30 = 0.5;
 
 /** Geometry → CSS px. Keeps the full chart ~one screen on desktop. */
-export const ISO_DISPLAY_SCALE = 0.48;
+export const ISO_DISPLAY_SCALE = 0.96;
 
 function layoutFor(n: number): { rows: number; perRow: number[] } {
   const count = Math.max(0, Math.floor(n));
