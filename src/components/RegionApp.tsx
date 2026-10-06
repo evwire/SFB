@@ -126,6 +126,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             <nav className="topnav">
               <a href="#map">Map</a>
               <a href="#dashboard">Rollout</a>
+              <a href="/size">Site size</a>
               <a href="#compare">vs SCI</a>
               <a href="#sites">All sites</a>
               <a href="#news">News</a>
