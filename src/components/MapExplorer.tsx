@@ -540,7 +540,7 @@ export default function MapExplorer({
           onLostPointerCapture={onLostPointerCapture}
         >
           <g transform={`translate(${mapView.x} ${mapView.y}) scale(${mapView.scale})`}>
-            <g>
+            <g transform={`translate(${viewW * 0.02} ${viewH * 0.015}) scale(0.93)`}>
               {visibleShapes.map((st) => {
                 const n = stateCounts[st.abbr] ?? 0;
                 const heat = n > 0 ? 0.04 + (n / maxStateCount) * 0.1 : 0;
@@ -555,8 +555,6 @@ export default function MapExplorer({
                   </path>
                 );
               })}
-            </g>
-            <g>
               {plotted.map((s) => {
               const style = STATUS_STYLE[s.status];
               const covered = Boolean(s.articles?.length);
@@ -615,10 +613,10 @@ export default function MapExplorer({
                           : showCoverage && covered
                             ? { fill: "var(--ink)", stroke: "#fff", strokeWidth: 1.25, opacity: 0.9 }
                             : {
-                                fill: "var(--dot-other)",
-                                stroke: "#fff",
-                                strokeWidth: 1.1,
-                                opacity: showCoverage ? 0.4 : 0.95,
+                                fill: "var(--dot-other-light)",
+                                stroke: "var(--paper)",
+                                strokeWidth: 1,
+                                opacity: showCoverage ? 0.35 : 0.85,
                               }
                       }
                     />
@@ -704,37 +702,37 @@ export default function MapExplorer({
 
         </svg>
 
-        {newOpenIds.length > 0 ? (
-          <p className="map-new-callout">
-            <span className="map-new-mark ink" aria-hidden="true" />
-            {newOpenIds.length} new open sites since 25 Sep
-          </p>
-        ) : null}
-        <figcaption className="map-caption">
-          <div className="map-legend" aria-label="Map legend">
+        <div className="map-frame-legend" aria-label="Map legend">
+          <span className="legend-chip">
+            <span className="legend-swatch solid" style={{ background: "var(--subject)" }} aria-hidden="true" />
+            Francis Energy
+          </span>
+          <span className="legend-chip">
+            <span className="legend-swatch solid" style={{ background: "var(--dot-other-light)" }} aria-hidden="true" />
+            Other operators
+          </span>
+          {newOpenIds.length > 0 ? (
             <span className="legend-chip">
-              <span className="legend-swatch solid" style={{ background: "var(--subject)" }} aria-hidden="true" />
-              {highlightOperator ?? "Highlighted operator"}
+              <span className="legend-swatch ring new-swatch-ink" aria-hidden="true" />
+              New since 25 Sep ({newOpenIds.length})
             </span>
+          ) : null}
+          {phase !== "open" || upcomingStyle ? (
             <span className="legend-chip">
-              <span className="legend-swatch solid" style={{ background: "var(--dot-other)", opacity: 0.6 }} aria-hidden="true" />
-              Other operators
+              <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
+              Upcoming
             </span>
-            {phase !== "open" || upcomingStyle ? (
-              <span className="legend-chip">
-                <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
-                Upcoming
-              </span>
-            ) : null}
-            {showCoverage ? (
+          ) : null}
+          {showCoverage ? (
             <span className="legend-chip covered">
               <span className="legend-swatch ring" style={{ borderColor: "var(--ink)" }} aria-hidden="true" />
-              <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
+              {COVERED_STYLE.label}
             </span>
-            ) : null}
-          </div>
+          ) : null}
+        </div>
+        <figcaption className="map-caption map-caption-quiet">
           {phase !== "open" ? (
-          <span className="map-gap-note">EVgo sites are not on this map.</span>
+            <span className="map-gap-note">EVgo sites are not on this map.</span>
           ) : null}
           {unplotted.length > 0 && (
             <span className="mono warn">
@@ -803,12 +801,17 @@ export default function MapExplorer({
             );
             const kept: Lbl[] = [];
             for (const L of labeled) {
-              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 36);
-              const prefer = isNewSite(L.s);
-              if (prefer && !hit) {
+              const city = (L.s.city ?? L.s.name).replace(/, OK$/i, "");
+              const short = city.length <= 9;
+              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 48);
+              if (kept.length >= 6) {
+                L.label = false;
+                continue;
+              }
+              if (isNewSite(L.s) && !hit) {
                 L.label = true;
                 kept.push(L);
-              } else if (!prefer && !hit && kept.length < 7) {
+              } else if (!hit && short && kept.length < 6) {
                 L.label = true;
                 kept.push(L);
               } else {
@@ -863,7 +866,10 @@ export default function MapExplorer({
                             className="ok-zoom-leader"
                           />
                           <text x={p.x} y={p.ly + 1} textAnchor="middle" className="ok-zoom-city">
-                            {(p.s.city ?? p.s.name).replace(/, OK$/i, "").slice(0, 10)}
+                            {(() => {
+                              const c = (p.s.city ?? p.s.name).replace(/, OK$/i, "");
+                              return c.length > 10 ? c.split(/\s+/)[0]! : c;
+                            })()}
                           </text>
                         </g>
                       ) : null}

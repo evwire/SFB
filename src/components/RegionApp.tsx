@@ -96,15 +96,10 @@ function thesis(
   const topOp = [...byOp.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))[0];
 
   if (region === "us" && topOp && /francis energy/i.test(topOp[0])) {
-    const otherOps = [...byOp.entries()].filter(([k]) => !/francis energy/i.test(k));
-    const otherSites = otherOps.reduce((a, [, v]) => a + v.n, 0);
+    const francisSites = topOp[1].n;
+    const pct = openCount > 0 ? Math.round((francisSites / openCount) * 100) : 0;
     return {
-      h1: (
-        <>
-          Francis has {topOp[1].n} sites. The other {otherOps.length} operators have {otherSites}{" "}
-          between them.
-        </>
-      ),
+      h1: <>One operator owns {pct}% of sites. The rest is a long tail of one-offs.</>,
     };
   }
 
@@ -216,7 +211,7 @@ export default function RegionApp({
         <section id="map" className="g12 map-section map-front">
           <div className="g12-span-full lead-compact">
             <p className="meta-line mono lead-meta lead-asof">Data as of {dataAsOf}</p>
-            <h1 className="lead-h1">{h1}</h1>
+            <h1 className="lead-h1 lead-h1-balance">{h1}</h1>
             {deltaInline ? (
               <p className="lead-delta-line">
                 <span className="lead-delta-plain tnum">{deltaInline}</span>

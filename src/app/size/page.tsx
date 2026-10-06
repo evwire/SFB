@@ -31,8 +31,8 @@ export default async function SizePage() {
       <main className="pub-paper size-page-paper pub-front pub-lean">
         <div className="g12 size-front">
           <div className="g12-span-full lead-compact">
-            <h1 className="lead-h1">{overview.story.headline}</h1>
-            <p className="meta-line mono lead-meta lead-asof">Data as of {pulled}</p>
+            <p className="meta-line lead-meta lead-asof">Data as of {pulled}</p>
+            <h1 className="lead-h1 lead-h1-balance">{overview.story.headline}</h1>
             <p className="lead-standfirst">{overview.story.subline}</p>
           </div>
           <div className="g12-span-full">

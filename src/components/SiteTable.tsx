@@ -6,7 +6,7 @@ import type { Site } from "@/lib/types";
 
 type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened" | "new";
 
-const DEFAULT_VISIBLE = 15;
+const DEFAULT_VISIBLE = 64;
 
 function francisFirst(a: string, b: string): number {
   const af = /francis energy/i.test(a);
@@ -220,7 +220,7 @@ export default function SiteTable({
           {highlightCovered && covered ? <span className="badge-covered">Covered</span> : null}
         </th>
         <td>{place.city ?? <span className="dim">–</span>}</td>
-        <td>{s.state}</td>
+        {!groupByOperator ? <td>{s.state}</td> : null}
         {!groupByOperator ? (
           <td>
             {s.operator ?? (
@@ -229,7 +229,7 @@ export default function SiteTable({
           </td>
         ) : null}
         <td className="num tnum">{s.stalls ?? "–"}</td>
-        <td className="new-cell">{neu ? <span className="new-mark" title="New since 25 Sep">N</span> : null}</td>
+        <td className="new-cell">{neu ? <span className="new-dot" title="New since 25 Sep"><span className="sr-only">New</span></span> : null}</td>
         {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">–</span>}</td> : null}
         {showStatus ? (
           <td>
@@ -241,7 +241,7 @@ export default function SiteTable({
   }
 
   const colSpan =
-    5 + (groupByOperator ? 0 : 1) + (hasOpened ? 1 : 0) + (showStatus ? 1 : 0);
+    4 + (groupByOperator ? 0 : 2) + (hasOpened ? 1 : 0) + (showStatus ? 1 : 0);
 
   return (
     <div className={"table-wrap table-wrap-open table-tight" + (fullWidth ? " table-full" : "")}>
@@ -262,7 +262,7 @@ export default function SiteTable({
           <tr>
             {th("site", "Site")}
             {th("city", "City")}
-            {th("state", "State")}
+            {!groupByOperator ? th("state", "State") : null}
             {!groupByOperator ? th("operator", "Operator") : null}
             {th("stalls", "Stalls", "right")}
             {th("new", "New")}

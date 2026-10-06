@@ -30,16 +30,8 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
  * One dense slope/dumbbell: site share vs stall share, scaled to the max
  * share (not 0–100), one colour per operator (Francis = subject blue).
  */
-type Pair = {
-  key: string;
-  label: string;
-  sites: number;
-  stalls: number;
-  sitePct: number;
-  stallPct: number;
-  isFrancis: boolean;
-};
 
+/** Named operators as horizontal site bars; long-tail as annotation (not a rival). */
 export function OperatorRank({
   sites,
   phase = "open",
@@ -49,100 +41,50 @@ export function OperatorRank({
   phase?: SitePhase;
 }) {
   const rows = useMemo(() => buildOperatorRows(sites, phase), [sites, phase]);
-  const totalSites = rows.reduce((a, r) => a + r.sites, 0) || 1;
-  const totalStalls = rows.reduce((a, r) => a + r.stalls, 0) || 1;
   const named = rows.filter((r) => r.sites >= 2);
   const singles = rows.filter((r) => r.sites === 1);
   const singleSites = singles.reduce((a, r) => a + r.sites, 0);
   const singleStalls = singles.reduce((a, r) => a + r.stalls, 0);
-
-  const pairs: Pair[] = named.map((o) => ({
-    key: o.operator,
-    label: o.operator,
-    sites: o.sites,
-    stalls: o.stalls,
-    sitePct: (o.sites / totalSites) * 100,
-    stallPct: (o.stalls / totalStalls) * 100,
-    isFrancis: o.isFrancis,
-  }));
-  const longTail: Pair | null =
-    singles.length > 0
-      ? {
-          key: "__singles__",
-          label: `${singles.length} single-site operators`,
-          sites: singleSites,
-          stalls: singleStalls,
-          sitePct: (singleSites / totalSites) * 100,
-          stallPct: (singleStalls / totalStalls) * 100,
-          isFrancis: false,
-        }
-      : null;
-
-  const all = longTail ? [...pairs, longTail] : pairs;
-  const maxPct = Math.max(...all.flatMap((p) => [p.sitePct, p.stallPct]), 1);
-
-  function row(p: Pair) {
-    const left = (p.sitePct / maxPct) * 100;
-    const right = (p.stallPct / maxPct) * 100;
-    const lo = Math.min(left, right);
-    const hi = Math.max(left, right);
-    return (
-      <li key={p.key} className={"op-db-row" + (p.isFrancis ? " is-subject" : "")}>
-        <span className={"op-db-name" + (p.isFrancis ? " is-francis" : "")}>{p.label}</span>
-        <div
-          className="op-db-track"
-          data-site-pct={p.sitePct.toFixed(2)}
-          data-stall-pct={p.stallPct.toFixed(2)}
-          data-site-width={left.toFixed(2)}
-          data-stall-width={right.toFixed(2)}
-        >
-          <span className="op-db-axis" aria-hidden="true" />
-          <span
-            className="op-db-connector"
-            style={{ left: `${lo}%`, width: `${Math.max(hi - lo, 0.4)}%` }}
-            aria-hidden="true"
-          />
-          <span
-            className={"op-db-dot site" + (p.isFrancis ? " subject" : "")}
-            style={{ left: `${left}%` }}
-          />
-          <span
-            className={"op-db-dot stall" + (p.isFrancis ? " subject" : "")}
-            style={{ left: `${right}%` }}
-          />
-        </div>
-        <span className="op-db-end tnum">
-          {fmtNum(p.sites)} sites · {fmtNum(p.stalls)} stalls
-        </span>
-      </li>
-    );
-  }
+  const maxSites = Math.max(...named.map((r) => r.sites), 1);
 
   return (
-    <aside className="op-chart op-dumbbell" aria-label="Operators by site and stall share">
-      <div className="op-db-key" aria-hidden="true">
-        <span>
-          <i className="op-db-dot site" /> Sites
-        </span>
-        <span>
-          <i className="op-db-dot stall" /> Stalls
-        </span>
-        <span className="op-db-scale tnum">0 — {maxPct.toFixed(0)}% of network</span>
-      </div>
-      <div className="op-db-axis-row" aria-hidden="true">
-        <span className="op-db-axis-spacer" />
-        <div className="op-db-axis-ticks">
+    <aside className="op-chart op-bars" aria-label="Operators by site count">
+      <div className="op-bars-axis" aria-hidden="true">
+        <span className="op-bars-axis-spacer" />
+        <div className="op-bars-ticks tnum">
           <span>0</span>
-          <span className="tnum">{maxPct.toFixed(0)}%</span>
+          <span>{maxSites}</span>
         </div>
-        <span className="op-db-axis-end" />
+        <span className="op-bars-axis-end" />
       </div>
-      <ul className="op-db-list">{pairs.map(row)}</ul>
-      {longTail ? (
-        <div className="op-db-longtail">
-          <p className="op-db-longtail-label">{longTail.label}</p>
-          <ul className="op-db-list">{row(longTail)}</ul>
-        </div>
+      <ul className="op-bar-list">
+        {named.map((o) => {
+          const pct = (o.sites / maxSites) * 100;
+          return (
+            <li key={o.operator} className={"op-bar-row" + (o.isFrancis ? " is-subject" : "")}>
+              <span className={"op-bar-name" + (o.isFrancis ? " is-francis" : "")}>{o.operator}</span>
+              <div
+                className="op-bar-track"
+                data-value={o.sites}
+                data-max={maxSites}
+                data-width-pct={pct.toFixed(2)}
+              >
+                <div
+                  className={"op-bar-fill" + (o.isFrancis ? " subject" : "")}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="op-bar-end tnum">
+                {fmtNum(o.sites)} sites · {fmtNum(o.stalls)} stalls
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {singles.length > 0 ? (
+        <p className="op-longtail-note tnum">
+          Plus {singles.length} single-site operators ({fmtNum(singleSites)} sites · {fmtNum(singleStalls)} stalls) — not plotted as a rival.
+        </p>
       ) : null}
     </aside>
   );
