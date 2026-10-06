@@ -6,15 +6,13 @@ export type SizeShare = {
   pct: number;
 };
 
-/** One pyramid band: stall size at top → many small sites at the base. */
-export type SizePyramidLayer = {
+/** One row in the 3/4 isometric site-size chart. */
+export type SizeIsoLayer = {
   stalls: number;
   sites: number;
   pct: number;
-  /** Band width 0–100 relative to the widest layer (with a readable floor). */
-  widthPct: number;
-  leftLabel: string;
-  rightLabel: string;
+  sitesLabel: string;
+  buildersLabel: string;
 };
 
 export type SizeCell = {
@@ -54,7 +52,7 @@ export type SizeOverview = {
   median: number;
   average: number;
   sizeShares: SizeShare[];
-  pyramidLayers: SizePyramidLayer[];
+  isoLayers: SizeIsoLayer[];
   sizeColumns: number[];
   rows: SizeRow[];
   takeaways: string[];

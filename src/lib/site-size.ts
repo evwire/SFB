@@ -1,8 +1,8 @@
 import "server-only";
 import type { Site } from "./types";
-import type { SizeCell, SizeOverview, SizePyramidLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
+import type { SizeCell, SizeOverview, SizeIsoLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
-export type { SizeCell, SizeOverview, SizePyramidLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
+export type { SizeCell, SizeOverview, SizeIsoLayer, SizeRow, SizeShare, SizeStory } from "./site-size-types";
 
 /** Stall-size overview for open US sites. Computed from live site data — never hardcoded. */
 
@@ -193,12 +193,9 @@ function buildStory(
 }
 
 
-function buildPyramidLayers(sites: Site[], sizeShares: SizeShare[]): SizePyramidLayer[] {
-  const maxSites = Math.max(1, ...sizeShares.map((s) => s.sites));
-  const minFrac = 0.14;
-
+function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] {
   return [...sizeShares]
-    .sort((a, b) => b.stalls - a.stalls)
+    .sort((a, b) => a.stalls - b.stalls)
     .map((share) => {
       const inLayer = sites.filter((s) => s.stalls === share.stalls);
       const opCounts = new Map<string, number>();
@@ -209,28 +206,39 @@ function buildPyramidLayers(sites: Site[], sizeShares: SizeShare[]): SizePyramid
       const ranked = [...opCounts.entries()].sort(
         (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
       );
-      const siteBit =
-        share.sites === 1 ? "1 site" : `${share.sites} sites`;
-      let rightLabel = siteBit;
-      if (ranked.length === 1) {
-        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}`;
-      } else if (ranked.length === 2) {
-        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}, ${shortOperatorName(ranked[1]![0])}`;
-      } else if (ranked.length > 2) {
-        const more = ranked.length - 2;
-        rightLabel = `${siteBit} · ${shortOperatorName(ranked[0]![0])}, ${shortOperatorName(ranked[1]![0])} + ${more} more`;
-      }
 
-      const raw = share.sites / maxSites;
-      const widthPct = Math.round(Math.max(raw, share.sites > 0 ? minFrac : 0) * 1000) / 10;
+      const sitesLabel = share.sites === 1 ? "1 site" : `${share.sites} sites`;
+
+      let buildersLabel = "";
+      if (ranked.length === 0) {
+        buildersLabel = "builders not stated";
+      } else if (share.sites === 1 && inLayer[0]) {
+        const name = shortOperatorName(ranked[0]![0]);
+        const place = placeLabel(inLayer[0]);
+        buildersLabel =
+          place && place.toLowerCase() !== name.toLowerCase()
+            ? `${name}, ${place}`
+            : name;
+      } else {
+        const top = ranked[0]!;
+        const pluralityShare = top[1] / share.sites;
+        // One operator with plurality and ≥40% of sites in this size → "mostly …"
+        if (pluralityShare >= 0.4 && (ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0))) {
+          buildersLabel = `mostly ${top[0]}`;
+        } else {
+          const named = ranked.slice(0, 3).map(([op]) => shortOperatorName(op));
+          const rest = ranked.length - named.length;
+          buildersLabel =
+            rest > 0 ? `${named.join(", ")} + others` : named.join(", ");
+        }
+      }
 
       return {
         stalls: share.stalls,
         sites: share.sites,
         pct: share.pct,
-        widthPct,
-        leftLabel: `${share.stalls} stalls`,
-        rightLabel,
+        sitesLabel,
+        buildersLabel,
       };
     });
 }
@@ -322,7 +330,7 @@ export function buildSizeOverview(
 
   const takeaways = buildTakeaways(withStalls, rows, sizeShares, median, average);
   const story = buildStory(withStalls, sizeShares, median, byOp);
-  const pyramidLayers = buildPyramidLayers(withStalls, sizeShares);
+  const isoLayers = buildIsoLayers(withStalls, sizeShares);
 
   return {
     totalSites,
@@ -330,7 +338,7 @@ export function buildSizeOverview(
     median,
     average,
     sizeShares,
-    pyramidLayers,
+    isoLayers,
     sizeColumns,
     rows,
     takeaways,

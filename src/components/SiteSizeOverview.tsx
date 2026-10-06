@@ -3,6 +3,7 @@
 import React, { useId, useMemo, useState } from "react";
 import type { SizeCell, SizeOverview, SizeRow } from "@/lib/site-size-types";
 import { fmtNum } from "@/lib/style";
+import StallLayoutIso, { stallSizeColor } from "@/components/StallLayoutIso";
 
 function bubbleRadius(count: number, maxCount: number): number {
   if (count <= 0) return 0;
@@ -127,23 +128,41 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         </div>
 
         <div
-          className="size-pyramid"
+          className="size-iso"
           role="list"
-          aria-label="Site sizes as a pyramid: larger stall counts on top, many small sites at the base"
+          aria-label="Open US sites by stall layout"
         >
-          {data.pyramidLayers.map((layer) => (
-            <div key={layer.stalls} className="size-pyramid-row" role="listitem">
-              <span className="size-pyramid-left">{layer.leftLabel}</span>
-              <div className="size-pyramid-band-wrap">
+          <div className="size-iso-heads" aria-hidden="true">
+            <span>Stalls per site</span>
+            <span>Layout (same scale)</span>
+            <span>Open US sites · builders</span>
+          </div>
+          <div className="size-iso-rows">
+            {data.isoLayers.map((layer) => {
+              const color = stallSizeColor(layer.stalls);
+              return (
                 <div
-                  className={`size-pyramid-band size-seg-${layer.stalls}`}
-                  style={{ width: `${layer.widthPct}%` }}
-                  title={`${layer.sites} site${layer.sites === 1 ? "" : "s"} (${layer.pct}%)`}
-                />
-              </div>
-              <span className="size-pyramid-right">{layer.rightLabel}</span>
-            </div>
-          ))}
+                  key={layer.stalls}
+                  className="size-iso-row"
+                  role="listitem"
+                  style={{ color }}
+                >
+                  <div className="size-iso-num">
+                    <span className="size-iso-n">{layer.stalls}</span>
+                    <span className="size-iso-n-unit">stalls</span>
+                  </div>
+                  <div className="size-iso-draw">
+                    <StallLayoutIso stalls={layer.stalls} color={color} />
+                  </div>
+                  <div className="size-iso-sites">
+                    <span className="size-iso-count">{layer.sitesLabel}</span>
+                    <span className="size-iso-who">{layer.buildersLabel}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="size-iso-foot mono">block = charger post · same scale</p>
         </div>
       </section>
 

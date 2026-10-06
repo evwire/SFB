@@ -771,62 +771,114 @@ html.dark .theme-toggle {
   line-height: 1.3;
 }
 
-/* Pyramid: biggest stall count on top, many small sites as the base */
-.size-pyramid {
+/* 3/4 isometric site-size chart (same scale per stall) */
+.size-iso {
   margin-top: 22px;
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
-.size-pyramid-row {
+.size-iso-heads {
   display: grid;
-  grid-template-columns: 5.75rem minmax(0, 1fr) minmax(9rem, 1.1fr);
-  gap: 10px 14px;
-  align-items: center;
+  grid-template-columns: 5.5rem minmax(0, 1.35fr) minmax(10rem, 1fr);
+  gap: 12px 18px;
+  padding: 0 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
-.size-pyramid-left {
-  font-size: 13.5px;
+.size-iso-heads span:first-child { text-align: right; }
+.size-iso-rows { display: grid; gap: 0; }
+.size-iso-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1.35fr) minmax(10rem, 1fr);
+  gap: 12px 18px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.size-iso-row:last-child { border-bottom: 0; }
+.size-iso-num {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  line-height: 1;
+}
+.size-iso-n {
+  font-family: var(--display);
+  font-style: italic;
   font-weight: 600;
-  color: var(--fg);
-  white-space: nowrap;
+  font-size: clamp(36px, 4.2vw, 52px);
+  letter-spacing: -0.03em;
+  color: currentColor;
+}
+.size-iso-n-unit {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.size-iso-draw {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.size-iso-draw svg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+}
+.size-iso-sites {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.size-iso-count {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: currentColor;
+}
+.size-iso-who {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.size-iso-foot {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--faint);
   text-align: right;
 }
-.size-pyramid-band-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 28px;
+/* Dark: lift plate tints so layouts stay readable on Night */
+html.dark .size-iso-plate {
+  filter: brightness(1.18) saturate(1.05);
 }
-.size-pyramid-band {
-  height: 28px;
-  border-radius: 8px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.32),
-    0 4px 14px rgba(11, 17, 22, 0.1);
-  /* Soft taper so stacked bands read as a pyramid */
-  clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%);
+@media (max-width: 820px) {
+  .size-iso-heads,
+  .size-iso-row {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+  }
+  .size-iso-heads span:last-child,
+  .size-iso-sites {
+    grid-column: 1 / -1;
+  }
+  .size-iso-heads span:nth-child(2) { display: none; }
+  .size-iso-draw svg { max-width: 100%; }
+  .size-iso-foot { text-align: left; }
 }
-.size-pyramid-right {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-  line-height: 1.3;
-}
-@media (max-width: 720px) {
-  .size-pyramid-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 4px 0;
-  }
-  .size-pyramid-left {
-    text-align: left;
-  }
-  .size-pyramid-band-wrap {
-    order: 2;
-  }
-  .size-pyramid-right {
-    order: 3;
-    font-size: 12.5px;
-  }
+@media (max-width: 520px) {
+  .size-iso-n { font-size: 32px; }
+  .size-iso-count { font-size: 24px; }
 }
 
 /* Shared size colours */
