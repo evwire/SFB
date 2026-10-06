@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import MapExplorer from "@/components/MapExplorer";
+import SiteWaffle from "@/components/SiteWaffle";
 import { OperatorRank } from "@/components/Dashboard";
 import SiteTable from "@/components/SiteTable";
 import ShellChrome from "@/components/ShellChrome";
@@ -218,7 +219,7 @@ export default function RegionApp({
             <h1 className="lead-h1">{h1}</h1>
             {deltaInline ? (
               <p className="lead-delta-line">
-                <span className="lead-delta-chip">{deltaInline}</span>
+                <span className="lead-delta-plain tnum">{deltaInline}</span>
               </p>
             ) : null}
             <p className="lead-standfirst">
@@ -226,6 +227,13 @@ export default function RegionApp({
               its Find Us map. Operators are the businesses that bought them
               {region === "us" && phase === "open" ? " (EVgo is not included)" : ""}.
             </p>
+            {region === "us" && phase === "open" && francis ? (
+              <SiteWaffle
+                francis={francis.sites}
+                other={Math.max(0, openCount - francis.sites)}
+                label={`${francis.sites} Francis sites, ${openCount - francis.sites} by other operators`}
+              />
+            ) : null}
             {banner ? (
               <p className="coverage-banner" role="status">
                 <strong>Incomplete coverage.</strong> {banner}

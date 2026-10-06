@@ -430,86 +430,61 @@ export default function MapExplorer({
 
   return (
     <div className="map-wrap">
-      <div className="controls map-filter-bar filter-bar" role="toolbar" aria-label="Map filters">
-        <div className="filter-group">
-          <span className="filter-group-label">Status</span>
-          <div className="seg" role="group" aria-label="Status">
-            {(["open", "upcoming", "both"] as SitePhase[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                className={"seg-btn" + (phase === p ? " on" : "")}
-                aria-pressed={phase === p}
-                onClick={() => onPhaseChange?.(p)}
-              >
-                {p === "both" ? "Both" : p === "open" ? "Open" : "Upcoming"}
-              </button>
-            ))}
-          </div>
+      <div className="map-toolbar" role="toolbar" aria-label="Map filters">
+        <div className="map-toolbar-seg" role="group" aria-label="Status">
+          {(["open", "upcoming", "both"] as SitePhase[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={"map-tb-btn" + (phase === p ? " on" : "")}
+              aria-pressed={phase === p}
+              onClick={() => onPhaseChange?.(p)}
+            >
+              {p === "both" ? "Both" : p === "open" ? "Open" : "Upcoming"}
+            </button>
+          ))}
         </div>
-        <div className="filter-group">
-          <span className="filter-group-label">Region</span>
-          <div className="seg" role="group" aria-label="Region">
-            {(["us", "europe"] as Region[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={"seg-btn" + (region === r ? " on" : "")}
-                aria-pressed={region === r}
-                onClick={() => onRegionChange?.(r)}
-              >
-                {r === "us" ? "US" : "Europe"}
-              </button>
-            ))}
-          </div>
+        <span className="map-tb-sep" aria-hidden="true" />
+        <div className="map-toolbar-seg" role="group" aria-label="Region">
+          {(["us", "europe"] as Region[]).map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={"map-tb-btn" + (region === r ? " on" : "")}
+              aria-pressed={region === r}
+              onClick={() => onRegionChange?.(r)}
+            >
+              {r === "us" ? "US" : "Europe"}
+            </button>
+          ))}
         </div>
-        <div className="filter-group">
-          <label className="filter-group-label" htmlFor="map-op">Operator</label>
-          <select
-            id="map-op"
-            className="filter-select"
-            value={operator}
-            onChange={(e) => setOperator(e.target.value)}
-          >
+        <span className="map-tb-sep" aria-hidden="true" />
+        <label className="map-tb-select">
+          <span className="sr-only">Operator</span>
+          <select value={operator} onChange={(e) => setOperator(e.target.value)}>
             {operators.map((o) => (
               <option key={o} value={o}>{o}</option>
             ))}
           </select>
-        </div>
-        <div className="filter-group">
-          <label className="filter-group-label" htmlFor="map-state">State</label>
-          <select
-            id="map-state"
-            className="filter-select"
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-          >
+        </label>
+        <label className="map-tb-select">
+          <span className="sr-only">State</span>
+          <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
             {stateOptions.map((st) => (
               <option key={st} value={st}>
                 {st === allAreasLabel ? "All states" : st}
               </option>
             ))}
           </select>
-        </div>
-        <div className="filter-group">
-          <span className="filter-group-label">Stories</span>
-          <button
-            type="button"
-            className={"seg-btn filter-toggle" + (showCoverage ? " on" : "")}
-            aria-pressed={showCoverage}
-            onClick={() => setShowCoverage((v) => !v)}
-          >
-            {showCoverage ? "On" : "Off"}
-          </button>
-        </div>
+        </label>
         {sites.some((s) => s.siteClass === "Heavy-duty") ? (
           <button
             type="button"
-            className={"chip-toggle" + (showHeavy ? " on" : "")}
+            className={"map-tb-btn" + (showHeavy ? " on" : "")}
             aria-pressed={showHeavy}
             onClick={() => setShowHeavy((v) => !v)}
           >
-            Heavy-duty MCS
+            Heavy-duty
           </button>
         ) : null}
       </div>
@@ -521,6 +496,14 @@ export default function MapExplorer({
             {region === "europe" ? "Europe" : "United States"}
             {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
           </span>
+          <button
+            type="button"
+            className={"map-stories-toggle" + (showCoverage ? " on" : "")}
+            aria-pressed={showCoverage}
+            onClick={() => setShowCoverage((v) => !v)}
+          >
+            {showCoverage ? "EVwire stories on" : "Show EVwire stories"}
+          </button>
           <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
             <span className="legend-size-step">
               <span className="legend-size-dot" style={{ width: 11, height: 11 }} aria-hidden="true" />
@@ -536,7 +519,7 @@ export default function MapExplorer({
             </span>
           </span>
         </div>
-        <div className="map-tools map-tools-corner map-tools-sw" aria-label="Map zoom controls">
+        <div className="map-tools map-tools-corner map-tools-sw map-tools-quiet" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
           <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
@@ -612,8 +595,8 @@ export default function MapExplorer({
                   {isNewSite(s) && (
                     <circle
                       className="new-ring"
-                      r={r + 3.6}
-                      style={{ fill: "none", stroke: "var(--new)", strokeWidth: 2 }}
+                      r={r + 3.2}
+                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.5, strokeDasharray: "3 2" }}
                     />
                   )}
                   {ring ? (
@@ -723,7 +706,7 @@ export default function MapExplorer({
 
         {newOpenIds.length > 0 ? (
           <p className="map-new-callout">
-            <span className="map-new-mark" aria-hidden="true" />
+            <span className="map-new-mark ink" aria-hidden="true" />
             {newOpenIds.length} new open sites since 25 Sep
           </p>
         ) : null}
@@ -820,8 +803,12 @@ export default function MapExplorer({
             );
             const kept: Lbl[] = [];
             for (const L of labeled) {
-              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 22);
-              if (!hit || isNewSite(L.s)) {
+              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 36);
+              const prefer = isNewSite(L.s);
+              if (prefer && !hit) {
+                L.label = true;
+                kept.push(L);
+              } else if (!prefer && !hit && kept.length < 7) {
                 L.label = true;
                 kept.push(L);
               } else {
@@ -847,7 +834,7 @@ export default function MapExplorer({
                   {labeled.map((p) => (
                     <g key={`okzp-${p.s.slug}`}>
                       {isNewSite(p.s) ? (
-                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" style={{ stroke: "var(--new)" }} />
+                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" style={{ stroke: "var(--ink)", strokeDasharray: "3 2" }} />
                       ) : null}
                       <circle
                         cx={p.x}
@@ -867,9 +854,18 @@ export default function MapExplorer({
                         </text>
                       ) : null}
                       {p.label ? (
-                        <text x={p.x} y={p.ly} textAnchor="middle" className="ok-zoom-city">
-                          {(p.s.city ?? p.s.name).replace(/, OK$/, "").slice(0, 12)}
-                        </text>
+                        <g className="ok-zoom-label">
+                          <line
+                            x1={p.x}
+                            y1={p.y + p.r + 1}
+                            x2={p.x}
+                            y2={p.ly - 2}
+                            className="ok-zoom-leader"
+                          />
+                          <text x={p.x} y={p.ly + 1} textAnchor="middle" className="ok-zoom-city">
+                            {(p.s.city ?? p.s.name).replace(/, OK$/i, "").slice(0, 10)}
+                          </text>
+                        </g>
                       ) : null}
                       <title>{`${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}${isNewSite(p.s) ? " · New" : ""}`}</title>
                     </g>

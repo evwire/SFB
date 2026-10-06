@@ -28,13 +28,11 @@ const S30 = 0.5;
 /** Geometry → CSS px. Keeps the full chart ~one screen on desktop. */
 export const ISO_DISPLAY_SCALE = 0.96;
 
+/** Single row always — width ∝ stall count at shared scale (8 reads longer than 4). */
 function layoutFor(n: number): { rows: number; perRow: number[] } {
   const count = Math.max(0, Math.floor(n));
   if (count <= 0) return { rows: 0, perRow: [] };
-  if (count <= 6) return { rows: 1, perRow: [count] };
-  const a = Math.ceil(count / 2);
-  const b = count - a;
-  return { rows: 2, perRow: [a, b] };
+  return { rows: 1, perRow: [count] };
 }
 
 function P(ox: number, oy: number, x: number, y: number, z = 0): [number, number] {

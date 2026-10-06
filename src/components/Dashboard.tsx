@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { Site, Aggregate, PipelineClaim, DataSource, SitePhase, UpcomingCoverage } from "@/lib/types";
+import { fmtNum } from "@/lib/style";
 
 type OpRow = {
   operator: string;
@@ -29,6 +30,16 @@ function buildOperatorRows(sites: Site[], phase: SitePhase): OpRow[] {
  * One dense slope/dumbbell: site share vs stall share, scaled to the max
  * share (not 0–100), one colour per operator (Francis = subject blue).
  */
+type Pair = {
+  key: string;
+  label: string;
+  sites: number;
+  stalls: number;
+  sitePct: number;
+  stallPct: number;
+  isFrancis: boolean;
+};
+
 export function OperatorRank({
   sites,
   phase = "open",
@@ -45,107 +56,99 @@ export function OperatorRank({
   const singleSites = singles.reduce((a, r) => a + r.sites, 0);
   const singleStalls = singles.reduce((a, r) => a + r.stalls, 0);
 
-  type Pair = { key: string; label: string; sitePct: number; stallPct: number; isFrancis: boolean };
-  const pairs: Pair[] = [
-    ...named.map((o) => ({
-      key: o.operator,
-      label: o.operator,
-      sitePct: (o.sites / totalSites) * 100,
-      stallPct: (o.stalls / totalStalls) * 100,
-      isFrancis: o.isFrancis,
-    })),
-  ];
-  if (singles.length > 0) {
-    pairs.push({
-      key: "__singles__",
-      label: `${singles.length} single-site operators`,
-      sitePct: (singleSites / totalSites) * 100,
-      stallPct: (singleStalls / totalStalls) * 100,
-      isFrancis: false,
-    });
+  const pairs: Pair[] = named.map((o) => ({
+    key: o.operator,
+    label: o.operator,
+    sites: o.sites,
+    stalls: o.stalls,
+    sitePct: (o.sites / totalSites) * 100,
+    stallPct: (o.stalls / totalStalls) * 100,
+    isFrancis: o.isFrancis,
+  }));
+  const longTail: Pair | null =
+    singles.length > 0
+      ? {
+          key: "__singles__",
+          label: `${singles.length} single-site operators`,
+          sites: singleSites,
+          stalls: singleStalls,
+          sitePct: (singleSites / totalSites) * 100,
+          stallPct: (singleStalls / totalStalls) * 100,
+          isFrancis: false,
+        }
+      : null;
+
+  const all = longTail ? [...pairs, longTail] : pairs;
+  const maxPct = Math.max(...all.flatMap((p) => [p.sitePct, p.stallPct]), 1);
+
+  function row(p: Pair) {
+    const left = (p.sitePct / maxPct) * 100;
+    const right = (p.stallPct / maxPct) * 100;
+    const lo = Math.min(left, right);
+    const hi = Math.max(left, right);
+    return (
+      <li key={p.key} className={"op-db-row" + (p.isFrancis ? " is-subject" : "")}>
+        <span className={"op-db-name" + (p.isFrancis ? " is-francis" : "")}>{p.label}</span>
+        <div
+          className="op-db-track"
+          data-site-pct={p.sitePct.toFixed(2)}
+          data-stall-pct={p.stallPct.toFixed(2)}
+          data-site-width={left.toFixed(2)}
+          data-stall-width={right.toFixed(2)}
+        >
+          <span className="op-db-axis" aria-hidden="true" />
+          <span
+            className="op-db-connector"
+            style={{ left: `${lo}%`, width: `${Math.max(hi - lo, 0.4)}%` }}
+            aria-hidden="true"
+          />
+          <span
+            className={"op-db-dot site" + (p.isFrancis ? " subject" : "")}
+            style={{ left: `${left}%` }}
+          />
+          <span
+            className={"op-db-dot stall" + (p.isFrancis ? " subject" : "")}
+            style={{ left: `${right}%` }}
+          />
+        </div>
+        <span className="op-db-end tnum">
+          {fmtNum(p.sites)} sites · {fmtNum(p.stalls)} stalls
+        </span>
+      </li>
+    );
   }
 
-  const maxPct = Math.max(...pairs.flatMap((p) => [p.sitePct, p.stallPct]), 1);
-
   return (
-    <aside className="op-chart op-pairs" aria-label="Operators by site and stall share">
-      <div className="op-pair-key" aria-hidden="true">
+    <aside className="op-chart op-dumbbell" aria-label="Operators by site and stall share">
+      <div className="op-db-key" aria-hidden="true">
         <span>
-          <i className="op-dot site" /> Sites
+          <i className="op-db-dot site" /> Sites
         </span>
         <span>
-          <i className="op-dot stall" /> Stalls
+          <i className="op-db-dot stall" /> Stalls
         </span>
+        <span className="op-db-scale tnum">0 — {maxPct.toFixed(0)}% of network</span>
       </div>
-      <ul className="op-pair-list">
-        {pairs
-          .filter((p) => p.key !== "__singles__")
-          .map((p) => {
-            const left = (p.sitePct / maxPct) * 100;
-            const right = (p.stallPct / maxPct) * 100;
-            return (
-              <li key={p.key} className={"op-pair-row" + (p.isFrancis ? " is-subject" : "")}>
-                <span className="op-pair-name">{p.label}</span>
-                <div
-                  className="op-pair-track"
-                  data-site-pct={p.sitePct.toFixed(2)}
-                  data-stall-pct={p.stallPct.toFixed(2)}
-                  data-site-width={left.toFixed(2)}
-                  data-stall-width={right.toFixed(2)}
-                >
-                  <span className="op-pair-rule" aria-hidden="true" />
-                  <span
-                    className={"op-dot site" + (p.isFrancis ? " subject" : "")}
-                    style={{ left: `${left}%` }}
-                    title={`${p.sitePct.toFixed(1)}% of sites`}
-                  />
-                  <span
-                    className={"op-dot stall" + (p.isFrancis ? " subject" : "")}
-                    style={{ left: `${right}%` }}
-                    title={`${p.stallPct.toFixed(1)}% of stalls`}
-                  />
-                </div>
-                <span className="op-pair-end tnum">
-                  {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
-                </span>
-              </li>
-            );
-          })}
-      </ul>
-      {pairs.some((p) => p.key === "__singles__")
-        ? (() => {
-            const p = pairs.find((x) => x.key === "__singles__")!;
-            const left = (p.sitePct / maxPct) * 100;
-            const right = (p.stallPct / maxPct) * 100;
-            return (
-              <div className="op-longtail" aria-label={p.label}>
-                <div className="op-longtail-bracket" aria-hidden="true" />
-                <div className="op-longtail-body">
-                  <span className="op-pair-name">{p.label}</span>
-                  <div
-                    className="op-pair-track"
-                    data-site-pct={p.sitePct.toFixed(2)}
-                    data-stall-pct={p.stallPct.toFixed(2)}
-                    data-site-width={left.toFixed(2)}
-                    data-stall-width={right.toFixed(2)}
-                  >
-                    <span className="op-pair-rule" aria-hidden="true" />
-                    <span className="op-dot site" style={{ left: `${left}%` }} />
-                    <span className="op-dot stall" style={{ left: `${right}%` }} />
-                  </div>
-                  <span className="op-pair-end tnum">
-                    {p.sitePct.toFixed(1)}% / {p.stallPct.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })()
-        : null}
+      <div className="op-db-axis-row" aria-hidden="true">
+        <span className="op-db-axis-spacer" />
+        <div className="op-db-axis-ticks">
+          <span>0</span>
+          <span className="tnum">{maxPct.toFixed(0)}%</span>
+        </div>
+        <span className="op-db-axis-end" />
+      </div>
+      <ul className="op-db-list">{pairs.map(row)}</ul>
+      {longTail ? (
+        <div className="op-db-longtail">
+          <p className="op-db-longtail-label">{longTail.label}</p>
+          <ul className="op-db-list">{row(longTail)}</ul>
+        </div>
+      ) : null}
     </aside>
   );
 }
 
-/** Dot plot: stalls per site by state. Dot size = site count. N=1 as one line. */
+
 export default function Dashboard({
   sites,
   aggregates: _aggregates,

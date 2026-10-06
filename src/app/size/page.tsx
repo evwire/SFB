@@ -44,6 +44,12 @@ export default async function SizePage() {
             <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
               <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
             </a>
+            <p className="foot-copy">
+              Sources: Tesla Find Us.{" "}
+              <a href="/sources">Data notes</a>
+              {" · "}
+              <a href="https://evwire.com">evwire.com</a>
+            </p>
           </div>
         </footer>
       </main>

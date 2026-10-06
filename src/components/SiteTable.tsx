@@ -229,7 +229,7 @@ export default function SiteTable({
           </td>
         ) : null}
         <td className="num tnum">{s.stalls ?? "–"}</td>
-        <td className="new-cell">{neu ? <span className="badge-new">New</span> : <span className="dim">–</span>}</td>
+        <td className="new-cell">{neu ? <span className="new-mark" title="New since 25 Sep">N</span> : null}</td>
         {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">–</span>}</td> : null}
         {showStatus ? (
           <td>
@@ -291,7 +291,7 @@ export default function SiteTable({
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
             {expanded
               ? `Show first ${DEFAULT_VISIBLE}`
-              : `Show all ${rows.length} (now ${shown})`}
+              : `Show all ${rows.length} sites`}
           </button>
         </div>
       ) : (

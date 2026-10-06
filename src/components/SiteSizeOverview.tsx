@@ -33,8 +33,8 @@ function CellTip({ row, cell, open }: { row: SizeRow; cell: SizeCell; open: bool
 }
 
 /** Doubled shared scale — every row uses this same scale. */
-const ISO_SCALE = 1.55;
-const INK = "#12141c";
+const ISO_SCALE = 1.35;
+const INK = "#6b7280";
 const SUBJECT = "var(--subject)";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
@@ -172,42 +172,46 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         <header className="mod-head flush-head">
           <h2 className="section-title">Layouts</h2>
           <p className="section-note">
-            Same scale in every row. Posts are stalls. Francis sites are named on the right.
+            Same scale in every row. Posts are stalls. Blue posts = Francis’s share of that size.
           </p>
         </header>
         <ul className="size-iso-rows-list" role="list">
           {data.isoLayers.map((layer) => {
             const m = isoDisplaySize(layer.stalls, ISO_SCALE);
             // Majority builder colour: whole drawing Francis blue only when Francis owns ≥ half the sites of this size
-            // Whole drawing Francis blue when Francis leads that size class — never fraction posts by site share
-            const francisLead = layer.francisIsLeader;
+            const subjectCount =
+              layer.sites > 0 && layer.francisSites > 0
+                ? Math.max(1, Math.round((layer.francisSites / layer.sites) * layer.stalls))
+                : 0;
             return (
               <li key={layer.stalls} className="size-iso-row-line" role="listitem">
                 <div className="size-iso-row-num">
                   <span className="size-iso-n tnum">{layer.stalls}</span>
                   <span className="size-iso-unit">stalls</span>
                 </div>
-                <div
-                  className="size-iso-row-art"
-                  style={{ width: m.widthPx }}
-                >
+                <div className="size-iso-row-art" style={{ width: m.widthPx }}>
                   <StallLayoutIso
                     stalls={layer.stalls}
-                    color={francisLead ? SUBJECT : INK}
+                    color={INK}
+                    subjectColor={SUBJECT}
+                    subjectCount={subjectCount}
                     scale={ISO_SCALE}
                   />
                 </div>
                 <div className="size-iso-row-meta">
                   <p className="size-iso-sites tnum">
                     {layer.sites} site{layer.sites === 1 ? "" : "s"}
-                    {layer.francisSites > 0
-                      ? ` — ${layer.francisSites} Francis`
-                      : layer.buildersLabel
-                        ? ` — ${layer.buildersLabel}`
-                        : ""}
+                    {layer.francisSites > 0 ? (
+                      <>
+                        {" "}
+                        · <span className="francis-inline">{layer.francisSites} Francis</span>
+                      </>
+                    ) : layer.buildersLabel ? (
+                      <> — {layer.buildersLabel}</>
+                    ) : null}
                   </p>
                   <p className="size-iso-share tnum">
-                    {layer.pct}% of sites, {layer.stallPct}% of stalls
+                    {layer.pct}% of sites · {layer.stallPct}% of stalls
                   </p>
                 </div>
               </li>

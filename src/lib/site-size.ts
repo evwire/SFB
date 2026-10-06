@@ -155,8 +155,8 @@ function buildStory(
       : null;
 
   const headline =
-    singlesMin.length > 0 && singleOps.length > 0
-      ? `${singlesMin.length} of ${singleOps.length} single-site operators run a 4-stall site.`
+    four && eight
+      ? `4-stall sites are ${four.pct}% of sites but ${Math.round(fourShare * 1000) / 10}% of stalls; 8-stall flips that (${eight.pct}% → ${Math.round(eightShare * 1000) / 10}%).`
       : dominant
         ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
         : `${total} open US sites with a stall count.`;
@@ -187,11 +187,15 @@ function buildStory(
     const label = shortOperatorName(b.operator);
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
-  const subline = slopeInsight
-    ? `${slopeInsight} Drawings below use one shared scale.`
+  const singleLine =
+    singlesMin.length > 0 && singleOps.length > 0
+      ? `${singlesMin.length} of ${singleOps.length} single-site operators run a 4-stall site.`
+      : null;
+  const subline = singleLine
+    ? `${singleLine} Drawings use one shared scale; blue posts mark Francis’s share of each size.`
     : named.length === 0
-      ? "Almost every open site is the same size."
-      : `Only a few builders go bigger: ${named.join(", ")}.`;
+      ? "Almost every open site is the same size. Drawings use one shared scale."
+      : `Only a few builders go bigger: ${named.join(", ")}. Blue posts mark Francis’s share.`;
 
   const pctSmall =
     dominant && total > 0 ? Math.floor((dominant.sites / total) * 100) : 0;
