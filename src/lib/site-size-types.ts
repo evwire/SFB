@@ -11,6 +11,8 @@ export type SizeIsoLayer = {
   stalls: number;
   sites: number;
   pct: number;
+  /** Share of all open stalls in this size band. */
+  stallPct: number;
   sitesLabel: string;
   buildersLabel: string;
 };
@@ -39,9 +41,7 @@ export type SizeStatTile = {
 };
 
 export type SizeStory = {
-  /** Big Fraunces answer, e.g. "Most are small: 40 of 64 sites have just 4 stalls." */
   headline: string;
-  /** Who goes bigger, plain English. */
   subline: string;
   tiles: SizeStatTile[];
 };

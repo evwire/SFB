@@ -2,10 +2,8 @@
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { STATUS_STYLE, STATUS_ORDER, COVERED_STYLE, pinRadius, fmtDate, humaniseUnstated, humanisePublicCopy } from "@/lib/style";
-import type { Site, SiteStatus, Region, SitePhase } from "@/lib/types";
-
-type Filter = "All" | SiteStatus;
+import { STATUS_STYLE, COVERED_STYLE, pinRadius, fmtDate, humaniseUnstated, humanisePublicCopy } from "@/lib/style";
+import type { Site, Region, SitePhase } from "@/lib/types";
 
 export type MapShape = { abbr: string; name: string; d: string; cx: number | null; cy: number | null };
 
@@ -19,8 +17,13 @@ export default function MapExplorer({
   upcomingStyle = false,
   phase = "open",
   onPhaseChange,
+  onRegionChange,
   openCount = 0,
   upcomingCount = 0,
+  usOpenCount = 0,
+  usUpcomingCount = 0,
+  euOpenCount = 0,
+  euUpcomingCount = 0,
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -31,10 +34,15 @@ export default function MapExplorer({
   upcomingStyle?: boolean;
   phase?: SitePhase;
   onPhaseChange?: (phase: SitePhase) => void;
+  onRegionChange?: (region: Region) => void;
   openCount?: number;
   upcomingCount?: number;
+  usOpenCount?: number;
+  usUpcomingCount?: number;
+  euOpenCount?: number;
+  euUpcomingCount?: number;
 }) {
-  const [filter, setFilter] = useState<Filter>("All");
+  const [coveredOnly, setCoveredOnly] = useState(false);
   const [showHeavy, setShowHeavy] = useState(false);
   const [operator, setOperator] = useState<string>("All operators");
   const allAreasLabel = `All ${areaNoun}`;
@@ -267,7 +275,7 @@ export default function MapExplorer({
 
   // Keep filters coherent when phase changes (also if remount key is removed later).
   useEffect(() => {
-    setFilter("All");
+    setCoveredOnly(false);
     setOperator("All operators");
     setStateFilter(allAreasLabel);
     setShowHeavy(false);
@@ -290,20 +298,39 @@ export default function MapExplorer({
     () =>
       sites.filter((s) => {
         if (s.siteClass === "Heavy-duty" && !showHeavy) return false;
-        if (filter !== "All" && s.status !== filter) return false;
+        if (coveredOnly && !(s.articles?.length)) return false;
         if (operator !== "All operators" && s.operator !== operator) return false;
         if (stateFilter !== allAreasLabel && s.state !== stateFilter) return false;
         return true;
       }),
-    [sites, filter, showHeavy, operator, stateFilter, allAreasLabel]
+    [sites, coveredOnly, showHeavy, operator, stateFilter, allAreasLabel]
   );
 
   const plotted = visible.filter((s) => s.x != null && s.y != null);
   const unplotted = visible.filter((s) => s.x == null || s.y == null);
-  const statesWithSites = useMemo(
-    () => new Set(sites.filter((s) => s.siteClass === "SfB").map((s) => s.state)),
-    [sites]
-  );
+  const stateCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const s of sites) {
+      if (s.siteClass !== "SfB") continue;
+      m[s.state] = (m[s.state] ?? 0) + 1;
+    }
+    return m;
+  }, [sites]);
+  const maxStateCount = Math.max(1, ...Object.values(stateCounts), 0);
+
+  const okCluster = useMemo(() => {
+    if (region !== "us") return null;
+    const pts = plotted.filter((s) => s.state === "OK" || s.state === "TX");
+    if (pts.length < 8) return null;
+    const xs = pts.map((s) => s.x!);
+    const ys = pts.map((s) => s.y!);
+    const pad = 18;
+    const minX = Math.min(...xs) - pad;
+    const maxX = Math.max(...xs) + pad;
+    const minY = Math.min(...ys) - pad;
+    const maxY = Math.max(...ys) + pad;
+    return { minX, minY, w: maxX - minX, h: maxY - minY, n: pts.length };
+  }, [plotted, region]);
 
   // Escape closes the panel and the scroll lock is set on the documentElement,
   // because body-level locks reset the scroll position (STACK.md, Events build).
@@ -320,90 +347,92 @@ export default function MapExplorer({
     };
   }, [selected, close]);
 
+  void usOpenCount; void usUpcomingCount; void euOpenCount; void euUpcomingCount; void openCount; void upcomingCount; void zoomPercent;
+
   return (
     <div className="map-wrap">
-      <div className="controls">
-        {onPhaseChange && (
-          <div className="filter-row phase-map-row" role="group" aria-label="Open, upcoming, or both">
-            <button
-              type="button"
-              className={"fbtn phase-fbtn" + (phase === "open" ? " on" : "")}
-              onClick={() => onPhaseChange("open")}
-              aria-pressed={phase === "open"}
-            >
-              Open <span className="mono fbtn-count">{openCount}</span>
-            </button>
-            <button
-              type="button"
-              className={"fbtn phase-fbtn" + (phase === "upcoming" ? " on" : "")}
-              onClick={() => onPhaseChange("upcoming")}
-              aria-pressed={phase === "upcoming"}
-            >
-              Upcoming <span className="mono fbtn-count">{upcomingCount}</span>
-            </button>
-            <button
-              type="button"
-              className={"fbtn phase-fbtn" + (phase === "both" ? " on" : "")}
-              onClick={() => onPhaseChange("both")}
-              aria-pressed={phase === "both"}
-            >
-              Both <span className="mono fbtn-count">{openCount + upcomingCount}</span>
-            </button>
-          </div>
-        )}
-        <div className="filter-row" role="group" aria-label="Filter sites by status">
+      <div className="controls map-filter-bar">
+        <div className="filter-row" role="group" aria-label="Region and status">
           <button
-            className={"fbtn" + (filter === "All" ? " on" : "")}
-            onClick={() => setFilter("All")}
-            aria-pressed={filter === "All"}
+            type="button"
+            className={"fbtn" + (region === "us" ? " on" : "")}
+            onClick={() => onRegionChange?.("us")}
+            aria-pressed={region === "us"}
           >
-            <span aria-hidden="true">◆</span> All ({sites.filter((s) => showHeavy || s.siteClass === "SfB").length})
+            US
           </button>
-          {STATUS_ORDER.filter((st) => sites.some((s) => s.status === st)).map((st) => {
-            const n = sites.filter((s) => s.status === st && (showHeavy || s.siteClass === "SfB")).length;
-            if (n === 0) return null;
-            const style = STATUS_STYLE[st];
-            return (
-              <button
-                key={st}
-                className={"fbtn" + (filter === st ? " on" : "")}
-                onClick={() => setFilter(st)}
-                aria-pressed={filter === st}
-              >
-                <span aria-hidden="true" style={{ color: style.color }}>{style.glyph}</span> {style.label} ({n})
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="filter-row secondary">
+          <button
+            type="button"
+            className={"fbtn" + (region === "europe" ? " on" : "")}
+            onClick={() => onRegionChange?.("europe")}
+            aria-pressed={region === "europe"}
+          >
+            Europe
+          </button>
+          <span className="filter-sep" aria-hidden="true" />
+          <button
+            type="button"
+            className={"fbtn" + (phase === "open" ? " on" : "")}
+            onClick={() => onPhaseChange?.("open")}
+            aria-pressed={phase === "open"}
+          >
+            Open
+          </button>
+          <button
+            type="button"
+            className={"fbtn" + (phase === "upcoming" ? " on" : "")}
+            onClick={() => onPhaseChange?.("upcoming")}
+            aria-pressed={phase === "upcoming"}
+          >
+            Upcoming
+          </button>
+          <button
+            type="button"
+            className={"fbtn" + (phase === "both" ? " on" : "")}
+            onClick={() => onPhaseChange?.("both")}
+            aria-pressed={phase === "both"}
+          >
+            Both
+          </button>
+          <span className="filter-sep" aria-hidden="true" />
+          <button
+            type="button"
+            className={"fbtn" + (coveredOnly ? " on" : "")}
+            onClick={() => setCoveredOnly((v) => !v)}
+            aria-pressed={coveredOnly}
+          >
+            <span aria-hidden="true">{COVERED_STYLE.glyph}</span> EVwire coverage
+          </button>
           <label className="sel">
             <span className="sr-only">Filter by operator</span>
             <select value={operator} onChange={(e) => setOperator(e.target.value)}>
-              {operators.map((o) => <option key={o}>{o}</option>)}
+              {operators.map((o) => (
+                <option key={o}>{o}</option>
+              ))}
             </select>
           </label>
           <label className="sel">
             <span className="sr-only">Filter by {areaNoun.slice(0, -1)}</span>
             <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
-              {stateOptions.map((st) => <option key={st}>{st}</option>)}
+              {stateOptions.map((st) => (
+                <option key={st}>{st}</option>
+              ))}
             </select>
           </label>
-          {sites.some((s) => s.siteClass === "Heavy-duty") && (
+          {sites.some((s) => s.siteClass === "Heavy-duty") ? (
             <label className="toggle">
               <input type="checkbox" checked={showHeavy} onChange={(e) => setShowHeavy(e.target.checked)} />
-              <span>Include heavy-duty Tesla MCS sites</span>
+              <span>Heavy-duty MCS</span>
             </label>
-          )}
+          ) : null}
         </div>
       </div>
 
-      <figure className="map-figure glass">
-        <div className="map-tools" aria-label="Map zoom controls">
+      <figure className="map-figure">
+        <div className="map-tools map-tools-min" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
-          <span className="zoom-level mono" aria-live="polite">{zoomPercent}%</span>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
-          <button type="button" className="reset-btn" onClick={resetView}>Reset view</button>
+          <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
         </div>
         <svg
           ref={svgRef}
@@ -422,21 +451,26 @@ export default function MapExplorer({
         >
           <g transform={`translate(${mapView.x} ${mapView.y}) scale(${mapView.scale})`}>
             <g>
-              {shapes.map((st) => (
-                <path
-                  key={st.abbr}
-                  d={st.d}
-                  className={"state" + (statesWithSites.has(st.abbr) ? " has" : "")}
-                >
-                  <title>{st.name}</title>
-                </path>
-              ))}
+              {shapes.map((st) => {
+                const n = stateCounts[st.abbr] ?? 0;
+                const heat = n > 0 ? 0.06 + (n / maxStateCount) * 0.22 : 0;
+                return (
+                  <path
+                    key={st.abbr}
+                    d={st.d}
+                    className={"state" + (n > 0 ? " has" : "")}
+                    style={n > 0 ? { fill: `color-mix(in srgb, var(--ink) ${Math.round(heat * 100)}%, var(--paper))` } : undefined}
+                  >
+                    <title>{n > 0 ? `${st.name}: ${n} site${n === 1 ? "" : "s"}` : st.name}</title>
+                  </path>
+                );
+              })}
             </g>
             <g>
               {plotted.map((s) => {
               const style = STATUS_STYLE[s.status];
               const covered = Boolean(s.articles?.length);
-              const pinColor = covered ? COVERED_STYLE.color : style.color;
+              const pinColor = style.color;
               const r = pinRadius(s.stalls);
               const isArea = s.coordPrecision === "Area-Only";
               const on = selected?.slug === s.slug;
@@ -457,13 +491,19 @@ export default function MapExplorer({
                   role="button"
                   aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.`}
                 >
-                  {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
+                  {isArea && <circle className="halo" r={r + 6} style={{ stroke: pinColor }} />}
+                  {covered && (
+                    <circle
+                      className="covered-ring"
+                      r={r + (ring ? 4.5 : 3.2)}
+                      style={{ fill: "none", stroke: COVERED_STYLE.color, strokeWidth: 1.6 }}
+                    />
+                  )}
                   {ring ? (
                     <>
-                      {/* Solid invisible hit target: fill:none ring otherwise misses clicks */}
                       <circle className="hit" r={r + 2} />
-                      <circle className="core upcoming-ring" r={r + 2} style={{ fill: "none", stroke: pinColor, strokeWidth: 2.2 }} />
-                      <circle className="core upcoming-dot" r={Math.max(2.5, r - 2)} style={{ fill: pinColor, opacity: 0.85 }} />
+                      <circle className="core upcoming-ring" r={r + 2} style={{ fill: "none", stroke: pinColor, strokeWidth: 2 }} />
+                      <circle className="core upcoming-dot" r={Math.max(2.2, r - 2)} style={{ fill: pinColor, opacity: 0.9 }} />
                     </>
                   ) : (
                     <circle className="core" r={r} style={{ fill: pinColor }} />
@@ -485,20 +525,51 @@ export default function MapExplorer({
               })}
             </g>
           </g>
+        
+          {okCluster ? (
+            <g className="ok-inset" transform={`translate(${viewW - 210}, ${viewH - 175})`}>
+              <rect x={0} y={0} width={200} height={160} rx={6} className="ok-inset-frame" />
+              <text x={10} y={16} className="ok-inset-label">OK / TX · {okCluster.n} sites</text>
+              <svg x={8} y={24} width={184} height={128} viewBox={`${okCluster.minX} ${okCluster.minY} ${okCluster.w} ${okCluster.h}`}>
+                {shapes
+                  .filter((st) => st.abbr === "OK" || st.abbr === "TX")
+                  .map((st) => (
+                    <path key={`in-${st.abbr}`} d={st.d} className="state has inset-state" />
+                  ))}
+                {plotted
+                  .filter((s) => s.state === "OK" || s.state === "TX")
+                  .map((s) => {
+                    const style = STATUS_STYLE[s.status];
+                    const r = Math.max(2.5, pinRadius(s.stalls) * 0.55);
+                    return (
+                      <circle
+                        key={`in-${s.slug}`}
+                        cx={s.x!}
+                        cy={s.y!}
+                        r={r}
+                        className="core"
+                        style={{ fill: style.color }}
+                      />
+                    );
+                  })}
+              </svg>
+            </g>
+          ) : null}
+
         </svg>
 
         <figcaption className="map-caption">
           <div className="map-legend" aria-label="Map legend">
             <span className="legend-chip">
-              <span className="legend-swatch solid" style={{ background: "var(--signal)" }} aria-hidden="true" />
+              <span className="legend-swatch solid" style={{ background: "var(--volt)" }} aria-hidden="true" />
               Open
             </span>
             <span className="legend-chip">
-              <span className="legend-swatch ring" style={{ borderColor: "var(--blue)" }} aria-hidden="true" />
+              <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
               Upcoming
             </span>
             <span className="legend-chip covered">
-              <span className="legend-swatch solid" style={{ background: COVERED_STYLE.color }} aria-hidden="true" />
+              <span className="legend-swatch ring" style={{ borderColor: COVERED_STYLE.color }} aria-hidden="true" />
               <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
             </span>
             <span className="legend-chip francis">
@@ -506,13 +577,7 @@ export default function MapExplorer({
               Francis Energy
             </span>
           </div>
-          <span className="mono">
-            Pins use Tesla’s published coordinates when available. Soft ring = town-level only.
-            Amber pins are sites EVwire has written about.
-          </span>
-          <span className="mono map-gap-note">
-            EVgo sites aren’t on this map yet — we’re still building that layer.
-          </span>
+          <span className="mono map-gap-note">EVgo sites are not on this map.</span>
           {unplotted.length > 0 && (
             <span className="mono warn">
               {unplotted.length} site{unplotted.length > 1 ? "s" : ""} cannot be plotted because the

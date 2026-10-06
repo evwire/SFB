@@ -4,25 +4,27 @@ import { useMemo, useState } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-type SortKey = "location" | "operator" | "stalls" | "power" | "status" | "area";
+type SortKey = "location" | "operator" | "stalls" | "status" | "area";
 
 const DEFAULT_VISIBLE = 15;
 
 /**
- * Server-hydrated list under the map. Show a short window by default; expand for the full roster.
+ * Site roster under the map. Compact columns; expand for the full list.
  */
 export default function SiteTable({
   sites,
   areaNoun = "states",
   upcoming = false,
+  showStatus = false,
 }: {
   sites: Site[];
   areaNoun?: string;
   upcoming?: boolean;
+  /** When false (open view), status is omitted — every row is open. */
+  showStatus?: boolean;
 }) {
-  const areaSingular = areaNoun.replace(/ies$/, "y").replace(/s$/, "");
-  const [sortKey, setSortKey] = useState<SortKey>("location");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sortKey, setSortKey] = useState<SortKey>("stalls");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState(false);
 
   const rows = useMemo(() => {
@@ -40,8 +42,6 @@ export default function SiteTable({
           return cmpStr(a.operator ?? "", b.operator ?? "");
         case "stalls":
           return cmpNum(a.stalls, b.stalls);
-        case "power":
-          return cmpNum(a.powerKw, b.powerKw);
         case "status":
           return cmpStr(a.status, b.status);
         case "area":
@@ -64,14 +64,14 @@ export default function SiteTable({
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
       setSortKey(key);
-      setSortDir(key === "stalls" || key === "power" ? "desc" : "asc");
+      setSortDir(key === "stalls" ? "desc" : "asc");
     }
   }
 
-  function th(key: SortKey, label: string) {
+  function th(key: SortKey, label: string, align: "left" | "right" = "left") {
     const on = sortKey === key;
     return (
-      <th scope="col">
+      <th scope="col" className={align === "right" ? "num" : undefined}>
         <button
           type="button"
           className={"th-sort" + (on ? " on" : "")}
@@ -79,7 +79,11 @@ export default function SiteTable({
           aria-sort={on ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
         >
           {label}
-          {on ? <span className="th-dir" aria-hidden="true">{sortDir === "asc" ? " ↑" : " ↓"}</span> : null}
+          {on ? (
+            <span className="th-dir" aria-hidden="true">
+              {sortDir === "asc" ? " ↑" : " ↓"}
+            </span>
+          ) : null}
         </button>
       </th>
     );
@@ -89,67 +93,63 @@ export default function SiteTable({
     <div className="table-wrap">
       <table className="sites">
         <caption className="sr-only">
-          Every Tesla customer-owned Supercharger in this region, with operator, stall count,
-          power, status and source.
+          Every Tesla customer-owned Supercharger in this region.
         </caption>
         <thead>
           <tr>
-            {th("location", "Location")}
+            {th("location", "Site")}
             {th("operator", "Operator")}
-            {th("stalls", "Stalls")}
-            {th("power", "Power")}
-            {th("status", "Status")}
-            {th("area", areaSingular[0]!.toUpperCase() + areaSingular.slice(1))}
+            {th("stalls", "Stalls", "right")}
+            {showStatus ? th("status", "Status") : null}
           </tr>
         </thead>
         <tbody>
           {visible.map((s) => {
             const st = STATUS_STYLE[s.status];
+            const place = s.city ? `${s.city}, ${s.state}` : s.state;
             return (
               <tr key={s.slug}>
                 <th scope="row">
                   <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">
                     {s.name}
                   </a>
-                  <span className="cell-sub">
-                    {s.city ? `${s.city}, ${s.state}` : `${s.state}, exact town not stated`}
-                    {s.siteClass === "Heavy-duty" && " · heavy-duty MCS"}
-                  </span>
+                  {place && !s.name.includes(s.city ?? "\0") ? (
+                    <span className="cell-sub">{place}</span>
+                  ) : s.city ? null : (
+                    <span className="cell-sub">{s.state}</span>
+                  )}
                 </th>
                 <td>
                   {s.operator ?? (
                     <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>
                   )}
                 </td>
-                <td className="mono">{s.stalls ?? <span className="dim">n/s</span>}</td>
-                <td className="mono">
-                  {s.powerKw != null ? `${s.powerKw} kW` : <span className="dim">n/s</span>}
-                </td>
-                <td>
-                  <span aria-hidden="true" style={{ color: st.color }}>
-                    {st.glyph}
-                  </span>{" "}
-                  {st.label}
-                </td>
-                <td className="mono">{s.state}</td>
+                <td className="mono num">{s.stalls ?? <span className="dim">n/s</span>}</td>
+                {showStatus ? (
+                  <td>
+                    <span aria-hidden="true" style={{ color: st.color }}>
+                      {st.glyph}
+                    </span>{" "}
+                    {st.label}
+                  </td>
+                ) : null}
               </tr>
             );
           })}
         </tbody>
       </table>
-      {hidden > 0 ? (
+      {hidden > 0 || expanded ? (
         <div className="table-expand">
           <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? "Show fewer sites" : `Show all ${rows.length} sites (${hidden} more)`}
+            {expanded
+              ? `Show ${DEFAULT_VISIBLE} of ${rows.length}`
+              : `Show all ${rows.length} sites`}
           </button>
         </div>
       ) : null}
       <p className="table-foot">
-        <span className="mono">n/s</span> means Tesla did not publish that figure. Links open the
-        Tesla Find Us page.{" "}
-        {upcoming
-          ? "Operator isn’t shown on upcoming sites until they open."
-          : "Operator names come from Tesla."}
+        Peak power is on each Tesla Find Us page. <span className="mono">n/s</span> means Tesla did
+        not publish that figure.
       </p>
     </div>
   );

@@ -57,9 +57,9 @@ function buildTakeaways(
     const four = francis.cells.find((c) => c.stalls === 4)?.count ?? 0;
     const eight = francis.cells.find((c) => c.stalls === 8)?.count ?? 0;
     if (four >= eight && four > 0) {
-      out.push(`Francis Energy builds mostly 4-stall sites: ${four} of ${francis.totalSites}.`);
+      out.push(`Francis Energy: ${four} of ${francis.totalSites} open sites are 4-stall.`);
     } else if (eight > 0) {
-      out.push(`Francis Energy builds mostly 8-stall sites: ${eight} of ${francis.totalSites}.`);
+      out.push(`Francis Energy: ${eight} of ${francis.totalSites} open sites are 8-stall.`);
     }
   }
 
@@ -222,9 +222,11 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
       } else {
         const top = ranked[0]!;
         const pluralityShare = top[1] / share.sites;
-        // One operator with plurality and ≥40% of sites in this size → "mostly …"
-        if (pluralityShare >= 0.4 && (ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0))) {
-          buildersLabel = `mostly ${top[0]}`;
+        const clearLead = ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0);
+        if (pluralityShare >= 0.5 && clearLead) {
+          buildersLabel = `mostly ${shortOperatorName(top[0])}`;
+        } else if (pluralityShare >= 0.35 && clearLead) {
+          buildersLabel = `led by ${shortOperatorName(top[0])}`;
         } else {
           const named = ranked.slice(0, 3).map(([op]) => shortOperatorName(op));
           const rest = ranked.length - named.length;
@@ -233,10 +235,15 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
         }
       }
 
+      const layerStalls = share.stalls * share.sites;
+      const allStalls = sites.reduce((a, s) => a + (s.stalls ?? 0), 0);
+      const stallPct = allStalls > 0 ? Math.round((layerStalls / allStalls) * 1000) / 10 : 0;
+
       return {
         stalls: share.stalls,
         sites: share.sites,
         pct: share.pct,
+        stallPct,
         sitesLabel,
         buildersLabel,
       };

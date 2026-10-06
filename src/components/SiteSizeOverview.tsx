@@ -41,7 +41,6 @@ function CellTip({
   );
 }
 
-/** Neutral plate for isometric drawings; Signal Green reserved for counts that mean “open/live”. */
 const ISO_DRAW_COLOR = "var(--muted)";
 
 export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
@@ -63,7 +62,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   }, [data.isoLayers]);
   const rowMinH = useMemo(() => {
     const heights = data.isoLayers.map((l) => isoDisplaySize(l.stalls).heightPx);
-    return Math.max(88, ...heights, 0);
+    return Math.max(72, ...heights, 0);
   }, [data.isoLayers]);
 
   const colCount = data.sizeColumns.length;
@@ -72,15 +71,14 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
   return (
     <div className="size-page">
       <section className="size-answer">
-        <p className="size-iso-caption mono">
-          Each block is one charger post.
-        </p>
+        <p className="size-iso-caption mono">Each block is one charger post.</p>
         <div className="size-iso-wrap">
           <div className="size-iso" role="list" aria-label="Open US sites by stall layout">
             <div className="size-iso-heads" aria-hidden="true">
               <span>Stalls</span>
               <span>Layout</span>
               <span>Open sites · builders</span>
+              <span>Share</span>
             </div>
             <div
               className="size-iso-rows"
@@ -104,6 +102,10 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
                     <span className="size-iso-count">{layer.sitesLabel}</span>
                     <span className="size-iso-who">{layer.buildersLabel}</span>
                   </div>
+                  <div className="size-iso-share mono">
+                    <span>{layer.pct}% of sites</span>
+                    <span>{layer.stallPct}% of stalls</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -111,7 +113,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         </div>
       </section>
 
-      <details className="size-details">
+      <details className="size-details" open>
         <summary className="size-details-summary">Full breakdown by company</summary>
         <div className="size-details-body">
           <section className="size-matrix-wrap">
@@ -191,10 +193,7 @@ function SizeMatrixRow({
 
   return (
     <>
-      <div
-        className={"size-row-label" + (row.isRollup ? " rollup" : "")}
-        role="rowheader"
-      >
+      <div className={"size-row-label" + (row.isRollup ? " rollup" : "")} role="rowheader">
         <span className="size-row-name">{row.label}</span>
         <span className="mono size-row-meta">
           {row.totalSites} site{row.totalSites === 1 ? "" : "s"}

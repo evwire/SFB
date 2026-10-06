@@ -6,7 +6,7 @@ import type { SiteStatus, EvidenceGrade } from "./types";
  */
 
 /** Sites EVwire has written about. Amber is BRAND extended accent; always pair with the word. */
-export const COVERED_STYLE = { color: "var(--amber)", hex: "#D97706", glyph: "◆", label: "Covered by EVwire" } as const;
+export const COVERED_STYLE = { color: "var(--covered)", hex: "#2F5BFF", glyph: "◆", label: "Covered by EVwire" } as const;
 
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
   Operational: { color: "var(--volt)", glyph: "●", label: "Open" },
@@ -67,11 +67,12 @@ export function humaniseUnstated(key: string): string {
 
 /** Pin radius grows with stall count but stays legible when the count is unknown. */
 export function pinRadius(stalls: number | null): number {
-  if (stalls == null) return 5;
-  if (stalls <= 2) return 5;
-  if (stalls <= 4) return 6.5;
-  if (stalls <= 8) return 8;
-  return 10;
+  if (stalls == null) return 4.5;
+  if (stalls <= 4) return 5.5;
+  if (stalls <= 6) return 7;
+  if (stalls <= 8) return 8.5;
+  if (stalls <= 12) return 10;
+  return 12;
 }
 
 export function fmtDate(iso: string | null): string {

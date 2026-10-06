@@ -1,37 +1,39 @@
 import type { Region, SciCompare } from "@/lib/types";
 
 /**
- * Side-by-side Tesla Find Us Tesla’s list vs SCI [Operator] bracket heuristic.
- * Numbers come from data/sci-compare.json (refreshed SCI + Tesla files). Not Tesla’s list for SCI.
+ * Tesla Find Us (live) vs Supercharge.info brackets (snapshot).
+ * Live Tesla counts are passed in so the panel cannot contradict the header.
  */
 export default function SciComparePanel({
   compare,
   region,
+  liveOpen,
+  liveUpcoming,
+  liveUpcomingUc,
+  liveUpcomingInDev,
+  livePulled,
 }: {
   compare: SciCompare;
   region: Region;
+  liveOpen: number;
+  liveUpcoming: number;
+  liveUpcomingUc?: number;
+  liveUpcomingInDev?: number;
+  livePulled: string;
 }) {
   const row = compare.regions[region];
   const regionLabel = region === "europe" ? "Europe" : "United States";
+  const teslaDrift =
+    liveOpen !== row.tesla_open || liveUpcoming !== row.tesla_upcoming
+      ? `Tesla column is live (${livePulled}). Snapshot had Tesla at ${row.tesla_open} open / ${row.tesla_upcoming} upcoming on ${compare.snapshot_label}.`
+      : `Tesla and SCI figures share snapshot ${compare.snapshot_label}.`;
 
   return (
-    <section id="compare" className="sci-compare glass">
+    <section id="compare" className="sci-compare">
       <div className="sci-compare-head">
         <div>
           <h2>Tesla Find Us vs Supercharge.info</h2>
-          <p className="section-note">
-            {regionLabel} · snapshot {compare.snapshot_label}
-          </p>
-        </div>
-        <div className="sci-legend">
-          <span className="chip">
-            <span className="swatch" style={{ background: "var(--signal)" }} />
-            {compare.labels.tesla}
-          </span>
-          <span className="chip">
-            <span className="swatch" style={{ background: "var(--blue)" }} />
-            {compare.labels.sci}
-          </span>
+          <p className="section-note">{regionLabel}</p>
         </div>
       </div>
 
@@ -42,11 +44,11 @@ export default function SciComparePanel({
           </div>
           <div role="columnheader" className="sci-cell">
             Tesla Find Us
-            <span className="sci-sub">Tesla’s list</span>
+            <span className="sci-sub">live</span>
           </div>
           <div role="columnheader" className="sci-cell">
             SCI brackets
-            <span className="sci-sub">name-bracket heuristic</span>
+            <span className="sci-sub">{compare.snapshot_label}</span>
           </div>
         </div>
         <div className="sci-col" role="row">
@@ -54,7 +56,7 @@ export default function SciComparePanel({
             Open
           </div>
           <div role="cell" className="sci-cell sci-num tesla">
-            {row.tesla_open}
+            {liveOpen}
             <span className="sci-sub">customer-owned</span>
           </div>
           <div role="cell" className="sci-cell sci-num sci">
@@ -67,9 +69,10 @@ export default function SciComparePanel({
             Upcoming
           </div>
           <div role="cell" className="sci-cell sci-num tesla">
-            {row.tesla_upcoming}
+            {liveUpcoming}
             <span className="sci-sub">
-              {row.tesla_upcoming_uc} UC · {row.tesla_upcoming_in_dev} In Dev
+              {(liveUpcomingUc ?? row.tesla_upcoming_uc)} UC ·{" "}
+              {(liveUpcomingInDev ?? row.tesla_upcoming_in_dev)} In Dev
             </span>
           </div>
           <div role="cell" className="sci-cell sci-num sci">
@@ -83,12 +86,8 @@ export default function SciComparePanel({
         </div>
       </div>
 
-      <p className="sci-note">
-        <strong>Do not confuse the two.</strong> Tesla counts are sites Tesla itself lists as
-        customer-owned. SCI counts come from community name brackets on Supercharge.info — not an
-        official ownership label. {compare.why_they_differ}
-      </p>
-      <p className="sci-note mono sci-overlap">{row.overlap_note}</p>
+      <p className="sci-note mono">{teslaDrift}</p>
+      <p className="sci-note">{compare.why_they_differ}</p>
     </section>
   );
 }

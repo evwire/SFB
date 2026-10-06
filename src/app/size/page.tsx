@@ -17,27 +17,31 @@ export const metadata: Metadata = {
 
 export default async function SizePage() {
   const { us } = await getRegionalSiteData();
-  const overview = buildSizeOverview(us.sites.filter((s) => s.siteClass === "SfB"), {
-    generated: us.generated,
-    pulledAt: us.generated,
-  });
+  const overview = buildSizeOverview(
+    us.sites.filter((s) => s.siteClass === "SfB"),
+    {
+      generated: us.generated,
+      pulledAt: us.generated,
+    }
+  );
   const pulled = fmtTallinnStamp(us.generated);
   const singles = overview.rows.find((r) => r.isRollup)?.totalSites ?? 0;
 
   return (
     <>
       <header className="topbar">
-        <div className="shell topbar-inner">
+        <div className="shell shell-wide topbar-inner">
           <a className="brand" href="https://evwire.com" aria-label="EVwire">
             <img className="brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
           <div className="topbar-actions">
             <nav className="topnav">
               <Link href="/">Map</Link>
-              <Link href="/#dashboard">Rollout</Link>
+              <Link href="/#dashboard">Operators</Link>
               <Link href="/size" aria-current="page">
                 Site size
               </Link>
+              <Link href="/#compare">vs SCI</Link>
               <Link href="/#sites">All sites</Link>
               <Link href="/#news">News</Link>
             </nav>
@@ -46,15 +50,14 @@ export default async function SizePage() {
         </div>
       </header>
 
-      <main className="shell">
+      <main className="shell shell-wide">
         <section className="hero hero-compact" style={{ marginTop: 32 }}>
           <p className="eyebrow">Tesla Supercharger for Business · United States · site size</p>
           <h1 className="size-h1">{overview.story.headline}</h1>
           <p className="lede">{overview.story.subline}</p>
           {singles > 0 ? (
             <p className="lede size-singles-note">
-              {singles} companies run one 4-stall site each — the long tail beside the named
-              builders below.
+              {singles} companies run one 4-stall site each.
             </p>
           ) : null}
           <p className="meta-line mono">
@@ -70,15 +73,15 @@ export default async function SizePage() {
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
           <p>
-            Stall counts are from Tesla Find Us for open US customer-owned Superchargers. Upcoming
-            sites have no stall count until they open. Spotted a mismatch?{" "}
+            Stall counts from Tesla Find Us for open US customer-owned Superchargers. Upcoming sites
+            have no stall count until they open. Operator names and coordinates come from Tesla.{" "}
             <a
               className="link"
               href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20site%20size"
             >
               Tell us
-            </a>
-            .
+            </a>{" "}
+            if something looks wrong.
           </p>
           <p className="mono foot-meta">US open list updated {pulled}.</p>
         </footer>
