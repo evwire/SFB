@@ -5394,3 +5394,159 @@ html.dark {
 .map-split.map-split-on {
   align-items: stretch !important;
 }
+
+
+/* =====================================================================
+   R13b craft-bug pass
+   ===================================================================== */
+
+/* No hyphen orphans in headlines */
+.lead-h1, .lead-h1-balance, .section-title {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.lead-h1-balance { max-width: 36ch; text-wrap: balance; }
+
+/* Size meta: never clip share lines */
+.size-iso-row-line {
+  grid-template-columns: 4.25rem minmax(0, 1fr) minmax(11rem, 15rem) !important;
+}
+.size-iso-row-meta {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 11rem;
+}
+.size-iso-share {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.35;
+  font-size: 12px !important;
+  color: var(--muted) !important;
+}
+
+/* Long-tail unit towers — Francis block dominates */
+.longtail-towers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: flex-end;
+  max-width: 28rem;
+}
+.longtail-tower {
+  display: inline-block;
+  width: 8px;
+  height: 22px;
+  background: var(--dot-other);
+  flex: 0 0 auto;
+}
+.longtail-tower.is-francis { background: var(--subject); height: 28px; }
+.longtail-tower.is-single { height: 10px; opacity: 0.85; }
+.longtail-key {
+  display: flex; flex-wrap: wrap; gap: 10px 14px;
+  margin: 8px 0 0; font-size: 11px; font-weight: 650; color: var(--muted);
+}
+.longtail-key-item { display: inline-flex; align-items: center; gap: 5px; }
+.longtail-key .longtail-tower { width: 6px; height: 12px; }
+.longtail-key .longtail-tower.is-francis { height: 14px; }
+.longtail-key .longtail-tower.is-single { height: 7px; }
+.longtail-list { display: none !important; } /* old bar rows */
+
+/* Search input: full placeholder */
+.table-search { flex: 1 1 16rem; min-width: 14rem; max-width: 28rem; }
+.table-search input {
+  width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 13px !important;
+}
+
+/* Table: stalls align; New tag; columns */
+.sites-tight thead th.num,
+.sites-tight td.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+  width: 4.5rem !important;
+}
+.new-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  padding: 0 4px;
+  line-height: 1.5;
+  border-radius: 0;
+}
+.sites-tight .new-cell { width: 3.5rem !important; }
+
+/* Footer: no double rule */
+.size-page-paper .foot-paper,
+.pub-lean .foot-paper {
+  border-top: 1px solid var(--hairline) !important;
+  margin-top: 24px !important;
+  box-shadow: none !important;
+}
+.size-page-paper .foot-paper::before,
+.pub-lean .foot-paper::before,
+.size-page .mod::after {
+  content: none !important;
+  display: none !important;
+}
+.size-mod-iso { border-bottom: 0 !important; }
+
+/* Dividers share content left edge (g12 padding) */
+.module, .g12.module, .size-mod {
+  border-left: 0 !important;
+}
+.pub-lean .g12 > .g12-span-full,
+.size-page-paper .g12 > .g12-span-full {
+  border-top-color: var(--hairline);
+}
+.module-head, .mod-head.flush-head, .lead-compact {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Dark toggle readable but demoted */
+.theme-toggle {
+  opacity: 0.55 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+}
+.theme-toggle:hover { opacity: 0.85 !important; color: var(--ink) !important; }
+
+/* Map zoom in-frame corner; quieter OK */
+.map-tools-inframe {
+  bottom: 14px !important;
+  right: 14px !important;
+  top: auto !important;
+  left: auto !important;
+  opacity: 0.55;
+}
+.ok-zoom-locator {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ok-zoom-title {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  width: 100%;
+}
+.ok-zoom-leader { opacity: 0.35; }
+.ok-zoom-city { font-size: 8px !important; }
+
+/* One quieter basemap */
+.usmap .state { fill: color-mix(in srgb, var(--ink) 4%, var(--paper)) !important; stroke: color-mix(in srgb, var(--ink) 14%, transparent) !important; }
+.usmap .state.has { fill: color-mix(in srgb, var(--ink) 7%, var(--paper)) !important; }

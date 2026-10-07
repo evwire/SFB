@@ -328,7 +328,6 @@ export default function RegionApp({
               areaNoun={areaNoun}
               upcoming={isUpcoming || isBoth}
               showStatus={phase !== "open"}
-              groupByOperator
               highlightCovered={showCoverage}
               fullWidth
               newOpenIds={newOpenIds}

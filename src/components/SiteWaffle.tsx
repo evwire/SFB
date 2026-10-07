@@ -31,7 +31,7 @@ export default function SiteWaffle({
         </span>
         <span className="site-waffle-item">
           <span className="site-waffle-swatch is-other" aria-hidden="true" />
-          {otherSites} sites · {otherOperators} other operators
+          {otherSites} sites, {otherOperators} other operators
         </span>
       </p>
     </div>

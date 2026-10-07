@@ -6,7 +6,7 @@ import type { Site } from "@/lib/types";
 
 type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened" | "new";
 
-const DEFAULT_VISIBLE = 12;
+const DEFAULT_VISIBLE = 15;
 
 function francisFirst(a: string, b: string): number {
   const af = /francis energy/i.test(a);
@@ -244,7 +244,7 @@ export default function SiteTable({
           </td>
         ) : null}
         <td className="num tnum">{s.stalls ?? "–"}</td>
-        <td className="new-cell">{neu ? <span className="new-dot" title="New since 25 Sep"><span className="sr-only">New</span></span> : null}</td>
+        <td className="new-cell">{neu ? <span className="new-tag" title="New since 25 Sep">New</span> : null}</td>
         {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">–</span>}</td> : null}
         {showStatus ? (
           <td>
@@ -261,8 +261,8 @@ export default function SiteTable({
   return (
     <div className={"table-wrap table-wrap-open table-tight" + (fullWidth ? " table-full" : "")}>
       <div className="table-tools">
-        <p className="table-new-key" aria-hidden="true">
-          <span className="new-dot" /> New since 25 Sep
+        <p className="table-new-key">
+          <span className="new-tag">New</span> opened since 25 Sep
         </p>
         <label className="table-search">
           <span className="sr-only">Search sites</span>
@@ -270,7 +270,7 @@ export default function SiteTable({
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search sites, operators, states…"
+            placeholder="Search by site, operator, or state"
           />
         </label>
       </div>

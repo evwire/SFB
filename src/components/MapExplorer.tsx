@@ -528,7 +528,7 @@ export default function MapExplorer({
             ))}
           </span>
         </div>
-        <div className="map-tools map-tools-corner map-tools-sw map-tools-quiet" aria-label="Map zoom controls">
+        <div className="map-tools map-tools-corner map-tools-sw map-tools-quiet map-tools-inframe" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
           <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
@@ -757,6 +757,7 @@ export default function MapExplorer({
               {" "}
               · {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length} Francis
             </span>
+            <a className="ok-zoom-locator" href="#map">US map</a>
           </h3>
           {(() => {
             const all = [...okDetail.points].sort((a, b) => (a.x ?? 0) - (b.x ?? 0) || (a.city ?? a.name).localeCompare(b.city ?? b.name));
@@ -808,17 +809,9 @@ export default function MapExplorer({
             );
             const kept: Lbl[] = [];
             for (const L of labeled) {
-              const city = (L.s.city ?? L.s.name).replace(/, OK$/i, "");
-              const short = city.length <= 9;
-              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 48);
-              if (kept.length >= 6) {
-                L.label = false;
-                continue;
-              }
-              if (isNewSite(L.s) && !hit) {
-                L.label = true;
-                kept.push(L);
-              } else if (!hit && short && kept.length < 6) {
+              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 52);
+              // Labels only for New sites — avoids halo/leader collisions
+              if (isNewSite(L.s) && !hit && kept.length < 4) {
                 L.label = true;
                 kept.push(L);
               } else {

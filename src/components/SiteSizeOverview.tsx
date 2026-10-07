@@ -16,8 +16,7 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
         <header className="mod-head flush-head">
           <h2 className="section-title">Layouts</h2>
           <p className="section-note">
-            Same scale in every row. Posts are stalls. Site-count bars under each drawing (scaled to{" "}
-            {maxSites}). Francis share is labelled, not painted into posts.
+            Open US sites by stall count. Site-count bars scaled to {maxSites}.
           </p>
         </header>
         <ul className="size-iso-rows-list" role="list">
@@ -60,7 +59,9 @@ export default function SiteSizeOverview({ data }: { data: SizeOverview }) {
                     <p className="size-iso-builders">{layer.buildersLabel}</p>
                   )}
                   <p className="size-iso-share tnum">
-                    {Math.round(layer.pct)}% of sites, {Math.round(layer.stallPct)}% of stalls
+                    {Math.round(layer.pct)}% of sites
+                    <br />
+                    {Math.round(layer.stallPct)}% of stalls
                   </p>
                 </div>
               </li>

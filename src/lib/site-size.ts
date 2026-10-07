@@ -156,7 +156,7 @@ function buildStory(
 
   const headline =
     four && eight
-      ? `Four-stall sites are most of the network. Eight-stall sites tie them on stalls.`
+      ? `Most sites are 4-stall. The 8-stall sites match them on total stalls.`
       : dominant
         ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
         : `${total} open US sites with a stall count.`;
@@ -195,10 +195,9 @@ function buildStory(
       : null;
   const subline = [
     four && eight
-      ? `${fourSitePctRound2}% of sites are 4-stall, yet 4-stall and 8-stall each hold ${stallTiePct}% of stalls (${four.sites}×4 and ${eight.sites}×8 = 160).`
+      ? `${fourSitePctRound2}% of sites are 4-stall; 4-stall and 8-stall each hold ${stallTiePct}% of stalls (${four.sites}×4 and ${eight.sites}×8 = 160).`
       : null,
     singleLine,
-    "Drawings share one scale. Francis share is labelled beside each row.",
   ]
     .filter(Boolean)
     .join(" ");
