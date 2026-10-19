@@ -7,10 +7,11 @@ import Feed from "@/components/Feed";
 import SiteTable from "@/components/SiteTable";
 import SciComparePanel from "@/components/SciComparePanel";
 import ThemeToggle from "@/components/ThemeToggle";
+import NewSinceFeed, { fmtDay } from "@/components/NewSinceFeed";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
 import { EUROPE_COUNTRIES, EU_VIEW_W, EU_VIEW_H } from "@/lib/europe-countries.generated";
 import { fmtDate, fmtNum } from "@/lib/style";
-import type { FeedItem, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
+import type { ChangeItem, FeedItem, LatestChanges, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
 
 type Props = {
   us: SiteData;
@@ -20,6 +21,7 @@ type Props = {
   sciCompare: SciCompare;
   feed: { items: FeedItem[]; source: string; asOf: string };
   coverageNote?: { source: string; asOf: string; tagCount: number; tagUrl: string };
+  changes?: LatestChanges;
 };
 
 function pulledLabel(generated: string) {
@@ -43,9 +45,25 @@ function pulledLabel(generated: string) {
   return generated;
 }
 
-export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciCompare, feed, coverageNote }: Props) {
+export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciCompare, feed, coverageNote, changes }: Props) {
   const [region, setRegion] = useState<Region>("us");
   const [phase, setPhase] = useState<SitePhase>("open");
+  const [focus, setFocus] = useState<{ slug: string; nonce: number } | null>(null);
+
+  // Sites new in the latest Tesla diff (opened, new, back on the list, new upcoming).
+  const newIds = useMemo(() => new Set((changes?.items ?? []).map((i) => i.id)), [changes]);
+  const newSince = changes?._meta?.from ? fmtDay(changes._meta.from) : null;
+  const nameOf = useMemo(() => {
+    const all = new Map<string, string>();
+    for (const d of [us, europe, usUpcoming, europeUpcoming]) for (const s of d.sites) all.set(s.slug, s.name);
+    return (id: string) => all.get(id) ?? null;
+  }, [us, europe, usUpcoming, europeUpcoming]);
+  const pickChange = (i: ChangeItem) => {
+    setRegion(i.region === "Europe" ? "europe" : "us");
+    if (i.phase === "upcoming" && phase === "open") setPhase("upcoming");
+    if (i.phase === "open" && phase === "upcoming") setPhase("open");
+    setFocus({ slug: i.id, nonce: Date.now() });
+  };
 
   const openData = region === "europe" ? europe : us;
   const upcomingData = region === "europe" ? europeUpcoming : usUpcoming;
@@ -353,6 +371,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
                   : isTesla
                     ? "Pins use Tesla’s published coordinates. Click a pin for details."
                     : "Click a pin for the full record and its source"}
+              {newSince && sites.some((s) => newIds.has(s.slug)) && ` Ringed pins are new since ${newSince}.`}
             </p>
           </div>
           <MapExplorer
@@ -368,7 +387,12 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             onPhaseChange={setPhase}
             openCount={openCount}
             upcomingCount={upcomingCount}
+            newIds={newIds}
+            newSince={newSince}
+            focusSlug={focus?.slug ?? null}
+            focusNonce={focus?.nonce ?? 0}
           />
+          {changes && <NewSinceFeed changes={changes} onPick={pickChange} nameOf={nameOf} />}
         </section>
 
         <section id="dashboard">
@@ -459,7 +483,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
               {isUpcoming || isBoth ? " · operator not shown on upcoming until open" : ""}
             </p>
           </div>
-          <SiteTable sites={sites} areaNoun={areaNoun} upcoming={isUpcoming || isBoth} />
+          <SiteTable sites={sites} areaNoun={areaNoun} upcoming={isUpcoming || isBoth} newIds={newIds} newSince={newSince} />
         </section>
 
         <section id="news">

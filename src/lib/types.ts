@@ -178,3 +178,46 @@ export type SciCompare = {
   regions: { us: SciCompareRegion; europe: SciCompareRegion };
   why_they_differ: string;
 };
+
+/** Compact "New since last check" feed, written by `diff:sfb --changes-out`. */
+export type ChangeKind =
+  | "opened"
+  | "new_open"
+  | "reappeared"
+  | "new_upcoming"
+  | "back_to_upcoming"
+  | "ownership_changed"
+  | "removed";
+
+export type ChangeItem = {
+  kind: ChangeKind;
+  id: string;
+  phase: "open" | "upcoming";
+  region: "US" | "Europe";
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  operator: string | null;
+  host: string | null;
+  stalls: number | null;
+  status: string | null;
+  badge: string | null;
+  source_url: string | null;
+  last_listed?: string;
+  previous_status?: string | null;
+  previous_badge?: string | null;
+  explanation?: "gone" | "gone_unverified" | "merged" | "replaced_by_other_pin" | "reclassified";
+  merged_into?: string;
+  merged_into_phase?: "open" | "upcoming";
+  other_pin?: string;
+  other_pin_ownership?: string | null;
+  now_ownership?: string | null;
+  distance_m?: number;
+};
+
+export type LatestChanges = {
+  _meta: { generated: string; from: string | null; to: string | null; counts: Record<string, number> };
+  items: ChangeItem[];
+  removed: ChangeItem[];
+};

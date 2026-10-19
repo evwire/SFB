@@ -21,6 +21,10 @@ export default function MapExplorer({
   onPhaseChange,
   openCount = 0,
   upcomingCount = 0,
+  newIds,
+  newSince = null,
+  focusSlug = null,
+  focusNonce = 0,
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -33,6 +37,10 @@ export default function MapExplorer({
   onPhaseChange?: (phase: SitePhase) => void;
   openCount?: number;
   upcomingCount?: number;
+  newIds?: Set<string>;
+  newSince?: string | null;
+  focusSlug?: string | null;
+  focusNonce?: number;
 }) {
   const [filter, setFilter] = useState<Filter>("All");
   const [showHeavy, setShowHeavy] = useState(false);
@@ -276,6 +284,13 @@ export default function MapExplorer({
     resetView();
   }, [phase, allAreasLabel, clearAllPointers, resetView]);
 
+  // A pick from the "New since last check" feed opens that site's card.
+  useEffect(() => {
+    if (!focusSlug || !focusNonce) return;
+    const hit = sites.find((s) => s.slug === focusSlug);
+    if (hit) setSelected(hit);
+  }, [focusSlug, focusNonce, sites]);
+
   const operators = useMemo(
     () => ["All operators", ...Array.from(new Set(sites.map((s) => s.operator ?? "Brand not stated"))).sort()],
     [sites]
@@ -446,6 +461,7 @@ export default function MapExplorer({
                 s.pinStyle === "upcoming" ||
                 (phase === "both" && s.status !== "Operational");
               const isFrancis = /francis energy/i.test(s.operator ?? "");
+              const isNew = newIds?.has(s.slug) ?? false;
               return (
                 <g
                   key={s.slug}
@@ -455,9 +471,10 @@ export default function MapExplorer({
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(s); } }}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.`}
+                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.${isNew ? ` New since ${newSince ?? "last check"}.` : ""}`}
                 >
                   {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
+                  {isNew && <circle className="new-ring" r={r + 5} />}
                   {ring ? (
                     <>
                       {/* Solid invisible hit target: fill:none ring otherwise misses clicks */}

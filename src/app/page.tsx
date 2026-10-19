@@ -2,7 +2,8 @@ import { getRegionalSiteData } from "@/lib/data";
 import { getFeed, getCoverageArticles } from "@/lib/feed";
 import { attachCoverage } from "@/lib/coverage";
 import RegionApp from "@/components/RegionApp";
-import type { SiteData } from "@/lib/types";
+import type { LatestChanges, SiteData } from "@/lib/types";
+import latestChanges from "../../data/latest-changes.json";
 
 export const revalidate = 300;
 
@@ -72,6 +73,7 @@ export default async function Page() {
         europeUpcoming={europeUpcomingCovered}
         sciCompare={sciCompare}
         feed={feed}
+        changes={latestChanges as unknown as LatestChanges}
         coverageNote={{
           source: coverage.source,
           asOf: coverage.asOf,

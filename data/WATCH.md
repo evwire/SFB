@@ -99,7 +99,11 @@ After a pull lands new JSON in a snapshot dir (or you rebuild the four files the
 2. Refresh open US + Europe ownership exports into `data/snapshots/<date>/`.
 3. Refresh upcoming CS classify (or resume checkpoint); rebuild upcoming site files into the same snapshot dir.
 4. `npm run diff:sfb -- --baseline data --fresh data/snapshots/<date> --out data/snapshots/<date>/CHANGELOG.md`
-5. Read the changelog. Accept → copy the four JSON files over committed `data/`, update `upcoming-coverage.json` / `sci-compare.json` if those were refreshed, then commit.
+   Add `--changes-out data/snapshots/<date>/latest-changes.json --universe data/snapshots/<date>/_work/third-party-cs-probe-out/batch-checkpoint.json`
+   to also write the home-page "New since last check" feed. `--universe` lets it tell pin clean-ups (merged into a
+   nearby listed site, or replaced by a Tesla-owned pin) from upcoming sites that really left the map. Older dated
+   snapshot dirs next to the fresh one are scanned automatically to label ids that came back ("Back on list").
+5. Read the changelog. Accept → copy the four JSON files and `latest-changes.json` over committed `data/`, update `upcoming-coverage.json` / `sci-compare.json` if those were refreshed, then commit.
 6. Reject or partial → leave committed baseline unchanged; keep the snapshot for a later retry.
 
 ## Recommended schedule

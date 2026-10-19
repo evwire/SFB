@@ -6,7 +6,7 @@ import type { Site } from "@/lib/types";
  * models actually read, so every site appears here in full even when the map cannot
  * plot it. Server-rendered or it does not exist (STACK.md).
  */
-export default function SiteTable({ sites, areaNoun = "states", upcoming = false }: { sites: Site[]; areaNoun?: string; upcoming?: boolean }) {
+export default function SiteTable({ sites, areaNoun = "states", upcoming = false, newIds, newSince = null }: { sites: Site[]; areaNoun?: string; upcoming?: boolean; newIds?: Set<string>; newSince?: string | null }) {
   const areaSingular = areaNoun.replace(/ies$/, "y").replace(/s$/, "");
 
   const rows = [...sites].sort((a, b) => {
@@ -38,6 +38,7 @@ export default function SiteTable({ sites, areaNoun = "states", upcoming = false
               <tr key={s.slug}>
                 <th scope="row">
                   <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">{s.name}</a>
+                  {newIds?.has(s.slug) && <span className="new-tag" title={newSince ? `New since ${newSince}` : "New since last check"}>New</span>}
                   <span className="cell-sub">
                     {s.city ? `${s.city}, ${s.state}` : `${s.state}, exact town not stated`}
                     {s.siteClass === "Heavy-duty" && " · heavy-duty MCS"}

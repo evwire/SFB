@@ -87,6 +87,9 @@ function parseArgs(argv) {
     else if (a === "--baseline") out.baseline = resolveArg(argv[++i]);
     else if (a === "--fresh") out.fresh = resolveArg(argv[++i]);
     else if (a === "--out") out.outPath = resolveArg(argv[++i]);
+    else if (a === "--changes-out") out.changesOut = resolveArg(argv[++i]);
+    else if (a === "--history") out.history = argv[++i].split(",").map(resolveArg);
+    else if (a === "--universe") out.universe = resolveArg(argv[++i]);
     else {
       console.error(`Unknown argument: ${a}`);
       process.exit(1);
@@ -499,10 +502,188 @@ function renderMarkdown(report, opts) {
   return lines.join("\n");
 }
 
+/* ------------------------------------------------------------------ */
+/* Compact "New since last check" feed (data/latest-changes.json)      */
+/* ------------------------------------------------------------------ */
+
+const NEAR_M = 250; // a removed pin this close to a listed site = pin cleanup, not a loss
+
+function distM(a, b) {
+  if (a?.lat == null || a?.lng == null || b?.lat == null || b?.lng == null) return Infinity;
+  const t = Math.PI / 180;
+  const x =
+    Math.sin(((b.lat - a.lat) * t) / 2) ** 2 +
+    Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.sin(((b.lng - a.lng) * t) / 2) ** 2;
+  return 12742000 * Math.asin(Math.sqrt(x));
+}
+
+function pulledDate(layersLoaded) {
+  const openUs = layersLoaded.find((l) => l.layer.key === "open-us");
+  const m = openUs?.data?.meta || {};
+  const iso = m.pulled_at || m.generated || null;
+  if (!iso) return null;
+  // Calendar date in Europe/Tallinn (where the watch runs)
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Tallinn" }).format(new Date(iso));
+}
+
+function feedItem(kind, site, layer, extra = {}) {
+  return {
+    kind,
+    id: siteId(site),
+    phase: layer.phase,
+    region: layer.region,
+    name: site.name ?? null,
+    city: site.city ?? null,
+    state: site.state ?? null,
+    country: site.country ?? (layer.region === "US" ? "US" : null),
+    operator: site.operator ?? null,
+    host: site.host ?? null,
+    stalls: site.stalls ?? null,
+    status: site.status ?? null,
+    badge: site.coming_soon_badge ?? null,
+    lat: site.lat ?? null,
+    lng: site.lng ?? null,
+    source_url: site.source_url ?? null,
+    ...extra,
+  };
+}
+
+function historyDirs(opts) {
+  if (opts.history) return opts.history;
+  const parent = path.dirname(opts.fresh);
+  if (!fs.existsSync(parent)) return [];
+  return fs
+    .readdirSync(parent, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && /^\d{4}-\d{2}-\d{2}/.test(d.name))
+    .map((d) => path.join(parent, d.name))
+    .filter((d) => path.resolve(d) !== path.resolve(opts.fresh));
+}
+
+/** Most recent older snapshot (by dir name) that listed this id, or null. */
+function lastSeen(id, dirs) {
+  let best = null;
+  for (const dir of dirs) {
+    for (const layer of LAYERS) {
+      const fp = path.join(dir, layer.file);
+      if (!fs.existsSync(fp)) continue;
+      let raw;
+      try { raw = JSON.parse(fs.readFileSync(fp, "utf8")); } catch { continue; }
+      if ((raw.sites || []).some((s) => siteId(s) === id)) {
+        const name = path.basename(dir).slice(0, 10);
+        if (!best || name > best.date) best = { date: name, phase: layer.phase };
+      }
+    }
+  }
+  return best;
+}
+
+function buildChangesFeed(report, baselineLayers, freshLayers, opts) {
+  const fromDate = pulledDate(baselineLayers);
+  const toDate = pulledDate(freshLayers);
+  const findIn = (layers, id) => {
+    for (const { layer, data } of layers) {
+      const s = data.byId.get(id);
+      if (s) return { layer, site: s };
+    }
+    return null;
+  };
+  const freshAll = freshLayers.flatMap(({ layer, data }) => data.sites.map((site) => ({ layer, site })));
+  const hist = historyDirs(opts);
+
+  let universe = null;
+  if (opts.universe && fs.existsSync(opts.universe)) {
+    const raw = JSON.parse(fs.readFileSync(opts.universe, "utf8"));
+    const pins = Array.isArray(raw) ? raw : raw.pins || Object.values(raw);
+    universe = pins.map((p) => ({
+      id: String(p.id),
+      lat: p.lat ?? p.latitude,
+      lng: p.lon ?? p.lng ?? p.longitude,
+      ownership: p.ownership_type ?? null,
+      name: p.title ?? p.coming_soon_name ?? null,
+    }));
+  }
+
+  const items = [];
+  for (const t of report.phase_transitions) {
+    const now = findIn(freshLayers, t.id);
+    if (!now) continue;
+    items.push(feedItem(t.to === "open" ? "opened" : "back_to_upcoming", now.site, now.layer, { previous_status: t.from_status, previous_badge: t.from_badge }));
+  }
+  for (const a of report.added) {
+    const now = findIn(freshLayers, a.id);
+    if (!now) continue;
+    const seen = lastSeen(a.id, hist);
+    const kind = seen ? "reappeared" : now.layer.phase === "open" ? "new_open" : "new_upcoming";
+    items.push(feedItem(kind, now.site, now.layer, seen ? { last_listed: seen.date } : {}));
+  }
+  for (const o of report.ownership_changes) {
+    const now = findIn(freshLayers, o.id);
+    if (now) items.push(feedItem("ownership_changed", now.site, now.layer, { from: o.from, to: o.to }));
+  }
+
+  const removed = [];
+  for (const r of report.removed) {
+    const was = findIn(baselineLayers, r.id);
+    if (!was) continue;
+    let extra = { explanation: "gone" };
+    const sameId = universe?.find((p) => p.id === r.id);
+    const nearListed = freshAll
+      .map((x) => ({ ...x, d: distM(was.site, x.site) }))
+      .filter((x) => x.d <= NEAR_M)
+      .sort((p, q) => p.d - q.d)[0];
+    const nearPin = universe
+      ?.filter((p) => p.id !== r.id)
+      .map((p) => ({ ...p, d: distM(was.site, p) }))
+      .filter((p) => p.d <= NEAR_M)
+      .sort((p, q) => p.d - q.d)[0];
+    if (sameId) {
+      extra = { explanation: "reclassified", now_ownership: sameId.ownership };
+    } else if (nearListed) {
+      extra = { explanation: "merged", merged_into: siteId(nearListed.site), merged_into_phase: nearListed.layer.phase, distance_m: Math.round(nearListed.d) };
+    } else if (nearPin) {
+      extra = { explanation: "replaced_by_other_pin", other_pin: nearPin.id, other_pin_ownership: nearPin.ownership, distance_m: Math.round(nearPin.d) };
+    } else if (!universe) {
+      extra = { explanation: "gone_unverified" };
+    }
+    removed.push(feedItem("removed", was.site, was.layer, extra));
+  }
+
+  const order = { opened: 0, new_open: 1, reappeared: 2, ownership_changed: 3, new_upcoming: 4, back_to_upcoming: 5 };
+  items.sort((a, b) => (order[a.kind] ?? 9) - (order[b.kind] ?? 9) || String(a.name).localeCompare(String(b.name)));
+  removed.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+  return {
+    _meta: {
+      generated: new Date().toISOString(),
+      from: fromDate,
+      to: toDate,
+      source: "scripts/diff-sfb-sites.mjs --changes-out (Tesla Find Us watch diff)",
+      rule: "Every field copied from the baseline/fresh Tesla pull records. Nulls stay null.",
+      history_checked: hist.map((d) => path.basename(d)),
+      universe_checked: Boolean(universe),
+      near_m: NEAR_M,
+      counts: {
+        items: items.length,
+        removed: removed.length,
+        removed_gone: removed.filter((r) => r.explanation === "gone" || r.explanation === "gone_unverified").length,
+        notable_field_changes: report.notable_changes.length,
+      },
+    },
+    items,
+    removed,
+  };
+}
+
 function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) {
     console.log(`Usage: node scripts/diff-sfb-sites.mjs [--baseline DIR] [--fresh DIR] [--out FILE] [--json]
+       [--changes-out FILE] [--history DIR,DIR] [--universe FILE]
+
+--changes-out writes the compact home-page feed (data/latest-changes.json).
+--history  older snapshot dirs used to tell "re-appeared" from "new" (default: dated siblings of --fresh).
+--universe the pull's classified coming-soon pins (third-party-cs-probe-out/batch-checkpoint.json),
+           used to explain removed upcoming pins (reclassified / replaced by a nearby pin).
 
 Default baseline and fresh are both ./data (identity dry-run).
 
@@ -528,6 +709,12 @@ Snapshot dirs should contain the four sites.tesla-*.json files (same names as da
 
   const report = classify(baselineLayers, freshLayers);
   const baselineStamps = metaStamp(baselineLayers);
+  if (opts.changesOut) {
+    const feed = buildChangesFeed(report, baselineLayers, freshLayers, opts);
+    fs.mkdirSync(path.dirname(opts.changesOut), { recursive: true });
+    fs.writeFileSync(opts.changesOut, JSON.stringify(feed, null, 2) + "\n");
+    console.error(`Wrote ${opts.changesOut} (${feed.items.length} items, ${feed.removed.length} removed)`);
+  }
   const freshStamps = metaStamp(freshLayers);
 
   if (opts.json) {

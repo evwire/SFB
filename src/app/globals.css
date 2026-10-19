@@ -1149,3 +1149,33 @@ html.dark .topnav a[aria-current="page"] {
 }
 
 html.dark .legend-chip.francis { color: var(--paper); }
+
+/* ---- New since last check (latest diff feed) ---- */
+.newfeed { margin-top: 18px; padding: 14px 18px 12px; border-radius: var(--r-tile); }
+.newfeed-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.newfeed-head h2 { font-size: 15px; font-family: var(--sans); font-weight: 650; letter-spacing: 0; margin: 0; }
+.newfeed-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.nf-item { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; height: 100%; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface); transition: border-color .15s ease, transform .15s var(--interact); }
+.nf-item:hover, .nf-item:focus-visible { border-color: var(--fg); transform: translateY(-1px); }
+.nf-item:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.nf-kind { font: 600 10.5px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.nf-kind.nf-opened, .nf-kind.nf-new_open { color: var(--signal); }
+.nf-place { font-size: 14px; font-weight: 650; color: var(--fg); }
+.nf-detail { font-size: 12.5px; color: var(--muted); }
+.nf-status { font-size: 11.5px; color: var(--faint); }
+.nf-empty { font-size: 13px; color: var(--muted); margin: 0; }
+.nf-removed { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.nf-removed summary { cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+.nf-removed p { margin: 6px 0 0; line-height: 1.5; }
+.nf-removed .dim, .newfeed .dim { color: var(--faint); }
+/* quiet "New" marker: thin ink ring on the map, small tag in the table */
+.pin .new-ring { fill: none; stroke: var(--fg); stroke-width: 1.3; opacity: .85; pointer-events: none; }
+.new-tag { display: inline-block; margin-left: 6px; padding: 0 5px; border: 1px solid currentColor; border-radius: 4px; font: 600 10px/1.5 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--fg); vertical-align: 1px; }
+@media (max-width: 560px) {
+  .newfeed { padding: 12px 12px 10px; }
+  .newfeed-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .nf-item { padding: 8px 9px; }
+  .nf-place { font-size: 13px; }
+  .nf-detail { font-size: 11.5px; }
+  .nf-status { font-size: 10.5px; }
+}
