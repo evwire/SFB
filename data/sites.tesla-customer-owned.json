@@ -1,18 +1,25 @@
 {
   "_meta": {
-    "generated": "2026-10-06",
-    "pulled_at": "2026-10-06T06:45:13.196Z",
+    "generated": "2026-10-19",
+    "pulled_at": "2026-10-19T08:09:23.048Z",
     "scope": "US Tesla Superchargers with ownershipType=CUSTOMER_OWNED from Find Us detail pages",
     "source": "Tesla Find Us (tesla.com/findus)",
     "official_filter": "ownershipType === \"CUSTOMER_OWNED\" from detail __NEXT_DATA__.props.pageProps.formattedData.chargerDetails.ownershipType",
     "method": "Playwright WebKit headed on Mac; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Chrome/Akamai Access Denied from this IP; curl 403.",
     "rule": "Every field is from the Tesla pull. Null/unstated when Tesla did not provide it. Seed article dataset is separate and untouched.",
     "counts": {
-      "sites": 64,
-      "stalls": 370,
-      "open": 64,
+      "sites": 67,
+      "stalls": 388,
+      "open": 67,
       "coming_soon": 0
-    }
+    },
+    "carried_forward": [
+      {
+        "findus_id": "484317",
+        "reason": "detail 404 x3 on 2026-10-19; live map still Customer Owned/open",
+        "from": "2026-10-06"
+      }
+    ]
   },
   "sites": [
     {
@@ -213,39 +220,6 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=80111",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "481259",
-      "publish": true
-    },
-    {
-      "slug": "484317",
-      "name": "Boca Raton, FL - North Federal Highway",
-      "operator": "DBRL",
-      "host": "Diamonds By Raymond Lee",
-      "host_type": null,
-      "address": "2801 N Federal Hwy",
-      "city": "Boca Raton",
-      "state": "FL",
-      "lat": 26.376228,
-      "lng": -80.07688,
-      "coord_precision": "Exact",
-      "stalls": 4,
-      "hardware": null,
-      "power_kw": 325,
-      "status": "Operational",
-      "verification": "Verified",
-      "evidence_grade": "A",
-      "first_confirmed": null,
-      "opened_on": null,
-      "milestone": null,
-      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand DBRL at Diamonds By Raymond Lee. ownershipType=CUSTOMER_OWNED. Status open.",
-      "source_url": "https://www.tesla.com/findus/location/supercharger/484317",
-      "unstated": [
-        "hardware",
-        "opened_on",
-        "first_confirmed"
-      ],
-      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=33431",
-      "ownership_type": "CUSTOMER_OWNED",
-      "findus_id": "484317",
       "publish": true
     },
     {
@@ -511,6 +485,39 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=60081",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "481358",
+      "publish": true
+    },
+    {
+      "slug": "496565",
+      "name": "Macomb, MI",
+      "operator": "M-59 Enterprises",
+      "host": "Mobil",
+      "host_type": null,
+      "address": "20745 Hall Rd",
+      "city": "Macomb",
+      "state": "MI",
+      "lat": 42.629733,
+      "lng": -82.915081,
+      "coord_precision": "Exact",
+      "stalls": 4,
+      "hardware": null,
+      "power_kw": 325,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand M-59 Enterprises at Mobil. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/496565",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=48044",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "496565",
       "publish": true
     },
     {
@@ -1776,6 +1783,39 @@
       "publish": true
     },
     {
+      "slug": "494780",
+      "name": "Orangeburg, SC - Five Chop Road",
+      "operator": "Quick Pantry",
+      "host": "Quick Pantry",
+      "host_type": null,
+      "address": "3224 Five Chop Rd",
+      "city": "Orangeburg",
+      "state": "SC",
+      "lat": 33.456889,
+      "lng": -80.734664,
+      "coord_precision": "Exact",
+      "stalls": 8,
+      "hardware": null,
+      "power_kw": 250,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand Quick Pantry at Quick Pantry. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/494780",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=29115",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "494780",
+      "publish": true
+    },
+    {
       "slug": "490806",
       "name": "Brentwood, TN - Moores Lane",
       "operator": "EV Auto",
@@ -1985,8 +2025,8 @@
       "address": "10626 W Sam Houston Pkwy N",
       "city": "Houston",
       "state": "TX",
-      "lat": 29.919704,
-      "lng": -95.555497,
+      "lat": 29.920067,
+      "lng": -95.555482,
       "coord_precision": "Exact",
       "stalls": 4,
       "hardware": null,
@@ -2140,6 +2180,72 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=84070",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "462510",
+      "publish": true
+    },
+    {
+      "slug": "490529",
+      "name": "Redmond, WA - 170th Avenue Northeast",
+      "operator": "Resound Energy",
+      "host": "Redmond Town Center",
+      "host_type": null,
+      "address": "7597 170th Ave NE",
+      "city": "Redmond",
+      "state": "WA",
+      "lat": 47.670463,
+      "lng": -122.114962,
+      "coord_precision": "Exact",
+      "stalls": 6,
+      "hardware": null,
+      "power_kw": 325,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand Resound Energy at Redmond Town Center. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/490529",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=98052",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "490529",
+      "publish": true
+    },
+    {
+      "slug": "484317",
+      "name": "Boca Raton, FL - North Federal Highway",
+      "operator": "DBRL",
+      "host": "Diamonds By Raymond Lee",
+      "host_type": null,
+      "address": "2801 N Federal Hwy",
+      "city": "Boca Raton",
+      "state": "FL",
+      "lat": 26.376228,
+      "lng": -80.07688,
+      "coord_precision": "Exact",
+      "stalls": 4,
+      "hardware": null,
+      "power_kw": 325,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand DBRL at Diamonds By Raymond Lee. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/484317",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=33431; 2026-10-19 watch: Find Us detail page returned 404 on 3 tries; live map still lists it as Customer Owned, site_status=open, show_on_find_us=1. Carried forward from the 2026-10-06 record, not re-verified today.",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "484317",
       "publish": true
     }
   ]
