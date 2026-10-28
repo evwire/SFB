@@ -1,22 +1,22 @@
 {
   "_meta": {
-    "generated": "2026-10-19",
-    "pulled_at": "2026-10-19T08:09:23.048Z",
+    "generated": "2026-10-27",
+    "pulled_at": "2026-10-27T13:22:56.405Z",
     "scope": "US Tesla Superchargers with ownershipType=CUSTOMER_OWNED from Find Us detail pages",
     "source": "Tesla Find Us (tesla.com/findus)",
     "official_filter": "ownershipType === \"CUSTOMER_OWNED\" from detail __NEXT_DATA__.props.pageProps.formattedData.chargerDetails.ownershipType",
     "method": "Playwright WebKit headed on Mac; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Chrome/Akamai Access Denied from this IP; curl 403.",
     "rule": "Every field is from the Tesla pull. Null/unstated when Tesla did not provide it. Seed article dataset is separate and untouched.",
     "counts": {
-      "sites": 67,
-      "stalls": 388,
-      "open": 67,
+      "sites": 68,
+      "stalls": 396,
+      "open": 68,
       "coming_soon": 0
     },
     "carried_forward": [
       {
         "findus_id": "484317",
-        "reason": "detail 404 x3 on 2026-10-19; live map still Customer Owned/open",
+        "reason": "detail 404 on 2026-10-19 and 2026-10-27; live map still Customer Owned/open",
         "from": "2026-10-06"
       }
     ]
@@ -2084,6 +2084,39 @@
       "publish": true
     },
     {
+      "slug": "498706",
+      "name": "Valley View, TX",
+      "operator": "Victron Energy",
+      "host": "Texas Best Smokehouse",
+      "host_type": null,
+      "address": "13965 I-35",
+      "city": "Valley View",
+      "state": "TX",
+      "lat": 33.437095,
+      "lng": -97.164055,
+      "coord_precision": "Exact",
+      "stalls": 8,
+      "hardware": null,
+      "power_kw": 325,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand Victron Energy at Texas Best Smokehouse. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/498706",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=76272",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "498706",
+      "publish": true
+    },
+    {
       "slug": "496254",
       "name": "Van, TX",
       "operator": "Victron Energy",
@@ -2243,7 +2276,7 @@
         "opened_on",
         "first_confirmed"
       ],
-      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=33431; 2026-10-19 watch: Find Us detail page returned 404 on 3 tries; live map still lists it as Customer Owned, site_status=open, show_on_find_us=1. Carried forward from the 2026-10-06 record, not re-verified today.",
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=33431; 2026-10-27 watch: Find Us detail page still returned 404 (also 19 Oct); live map still lists it as Customer Owned, site_status=open, show_on_find_us=1. Carried forward from the 2026-10-06 pull, not re-verified.",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "484317",
       "publish": true

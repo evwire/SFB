@@ -1,0 +1,64 @@
+{
+  "pulled_at": "2026-10-28T10:11:32.739Z",
+  "complete": true,
+  "honesty_banner": null,
+  "totals": {
+    "totalCS": 1062,
+    "classified": 1062,
+    "gaps": 0,
+    "http200": 1062,
+    "customerOwned": 232,
+    "teslaOwned": 830
+  },
+  "counts": {
+    "US": {
+      "totalCS": 702,
+      "http200": 702,
+      "classified": 702,
+      "http403": 0,
+      "httpOther": 0,
+      "gaps": 0,
+      "customerOwned": 232,
+      "teslaOwned": 470,
+      "nullOn200": 0,
+      "CO_UnderConstruction": 27,
+      "CO_InDevelopment": 205
+    },
+    "EU": {
+      "totalCS": 317,
+      "http200": 317,
+      "classified": 317,
+      "http403": 0,
+      "httpOther": 0,
+      "gaps": 0,
+      "customerOwned": 0,
+      "teslaOwned": 317,
+      "nullOn200": 0,
+      "CO_UnderConstruction": 0,
+      "CO_InDevelopment": 0
+    },
+    "GB": {
+      "totalCS": 43,
+      "http200": 43,
+      "classified": 43,
+      "http403": 0,
+      "httpOther": 0,
+      "gaps": 0,
+      "customerOwned": 0,
+      "teslaOwned": 43,
+      "nullOn200": 0,
+      "CO_UnderConstruction": 0,
+      "CO_InDevelopment": 0
+    }
+  },
+  "gaps": {
+    "gapCount": 0,
+    "gapsByRegion": {
+      "US": 0,
+      "EU": 0,
+      "GB": 0
+    },
+    "gapsByStatus": {}
+  },
+  "signal": "GET https://www.tesla.com/api/findus/get-location-details?locationSlug={id}&functionTypes=coming_soon_supercharger&locale=en_US&isInHkMoTw=false → data.supercharger_function.ownership_type"
+}
