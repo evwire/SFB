@@ -7,7 +7,7 @@ const p = await ctx.newPage();
 await p.goto(url, { waitUntil: "networkidle" });
 await p.waitForTimeout(600);
 for (const a of actions.split(";").filter(Boolean)) {
-  const [kind, arg] = a.split("=");
+  const i = a.indexOf("="); const kind = i < 0 ? a : a.slice(0, i), arg = i < 0 ? "" : a.slice(i + 1);
   if (kind === "click") await p.click(arg);
   if (kind === "ring") { // click ring whose label text matches
     await p.locator(".pad-ring", { has: p.locator("text", { hasText: arg }) }).first().click();
@@ -21,6 +21,10 @@ for (const a of actions.split(";").filter(Boolean)) {
       const b = best.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; }, [x, y]);
     await p.mouse.click(c[0], c[1]); }
   if (kind === "item") await p.locator(".pad-list button", { hasText: arg }).first().click();
+  if (kind === "scroll") { await p.evaluate((sel) => { const el = document.querySelector(sel); const r = el.getBoundingClientRect(); window.scrollBy(0, r.top + r.height / 2 - window.innerHeight / 2); }, arg); await p.waitForTimeout(1600); }
+  if (kind === "scrolltop") { await p.evaluate((sel) => { const el = document.querySelector(sel); window.scrollBy(0, el.getBoundingClientRect().top - 100); }, arg); await p.waitForTimeout(1600); }
+  if (kind === "end") { await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await p.waitForTimeout(1600); }
+  if (kind === "pin") { const c = await p.evaluate((i) => { const b = document.querySelectorAll(".scr-pin:not(.dim) .scr-pin-dot")[Number(i)].getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height / 2]; }, arg); await p.mouse.click(c[0], c[1]); }
   if (kind === "wait") await p.waitForTimeout(Number(arg));
 }
 await p.waitForTimeout(400);

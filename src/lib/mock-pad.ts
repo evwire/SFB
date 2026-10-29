@@ -74,6 +74,7 @@ export async function getPadData(withSize = false) {
     today: (latest as unknown as { _meta: { to: string } })._meta.to,
     pulls: FS._meta.pulls,
     size,
+    raw: { usOpen: us.sites.filter((s) => s.siteClass === "SfB").length, usUp: usUpcoming.sites.length, euOpen: europe.sites.filter((s) => s.siteClass === "SfB").length, euUp: europeUpcoming.sites.length },
   };
 }
 export type PadData = Awaited<ReturnType<typeof getPadData>>;
