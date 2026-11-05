@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pricingDigest } from "./findus-pricing.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -184,6 +185,12 @@ function fieldDiffs(before, after) {
       from: before.lat == null && before.lng == null ? null : [before.lat, before.lng],
       to: after.lat == null && after.lng == null ? null : [after.lat, after.lng],
     });
+  }
+  // Rates only. A new pulled_at on an unchanged pricebook is not a notable change.
+  const beforePricing = pricingDigest(before.findus_pricing);
+  const afterPricing = pricingDigest(after.findus_pricing);
+  if (beforePricing !== afterPricing) {
+    changes.push({ field: "findus_pricing", from: beforePricing, to: afterPricing });
   }
   return changes;
 }
@@ -491,7 +498,7 @@ function renderMarkdown(report, opts) {
   lines.push("3. **Phase transitions**  -  same id moves upcoming → open (or reverse)");
   lines.push("4. **Ownership type**  -  `ownership_type` field changes");
   lines.push(
-    "5. **Notable fields**  -  name, status, stalls, operator, host, address, city/state/country, power_kw, hardware, milestone, coming_soon_badge, site_phase, publish, lat/lng"
+    "5. **Notable fields**  -  name, status, stalls, operator, host, address, city/state/country, power_kw, hardware, milestone, coming_soon_badge, site_phase, publish, lat/lng, findus_pricing (rates only; pulled_at alone is quiet)"
   );
   lines.push("");
   lines.push(

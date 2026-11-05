@@ -5,7 +5,7 @@
     "scope": "US Tesla Superchargers with ownershipType=CUSTOMER_OWNED from Find Us detail pages",
     "source": "Tesla Find Us (tesla.com/findus)",
     "official_filter": "ownershipType === \"CUSTOMER_OWNED\" from detail __NEXT_DATA__.props.pageProps.formattedData.chargerDetails.ownershipType",
-    "method": "Playwright WebKit headed on Mac; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Chrome/Akamai Access Denied from this IP; curl 403.",
+    "method": "Playwright WebKit headed on Mac; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Chrome/Akamai Access Denied from this IP; curl 403. Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
     "rule": "Every field is from the Tesla pull. Null/unstated when Tesla did not provide it. Seed article dataset is separate and untouched.",
     "counts": {
       "sites": 68,
@@ -19,7 +19,14 @@
         "reason": "detail 404 on 2026-10-19 and 2026-10-27; live map still Customer Owned/open",
         "from": "2026-10-06"
       }
-    ]
+    ],
+    "pricing": {
+      "field": "findus_pricing",
+      "source_path": "props.pageProps.locationData.effectivePricebooks",
+      "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
+      "sites_with_pricing": 1,
+      "note": "findus_pricing is set only where a Find Us pricebook was parsed. Other sites omit it, and the card says not stated. Live Tesla returned 403 from the cloud VM, so these rates were read from checked-in page captures under data/fixtures/findus-pricing/. Re-run npm run pricing:pull on a Mac (headed WebKit) to refresh from Tesla. This is not programme.economics.tesla_fee."
+    }
   },
   "sites": [
     {
@@ -884,7 +891,68 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=True; zip=74523",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "492964",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": null,
+        "currency": "USD",
+        "tesla_and_members": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.44,
+              "uom": "kWh",
+              "currency": "USD",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.48,
+              "uom": "kWh",
+              "currency": "USD",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.52,
+              "uom": "kWh",
+              "currency": "USD",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.48,
+              "uom": "kWh",
+              "currency": "USD",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.44,
+              "uom": "kWh",
+              "currency": "USD",
+              "fee_type": "CHARGING"
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0.5,
+              "uom": "min",
+              "currency": "USD",
+              "fee_type": "CONGESTION"
+            }
+          ],
+          "congestion_qualifier": "up to",
+          "chart_axis_labels": [
+            "4a",
+            "8a",
+            "2p",
+            "7p",
+            "11p"
+          ]
+        },
+        "non_tesla": null,
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "screenshot",
+        "captured_on": "2026-11-05",
+        "capture_note": "Non-Tesla rates were not expanded on the page capture. Congestion is the cap printed on the page, not an hourly curve."
+      }
     },
     {
       "slug": "485807",

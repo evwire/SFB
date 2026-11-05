@@ -78,6 +78,14 @@
       "cs_universe_us": 702,
       "classified_us": 702,
       "gaps_us": 0
+    },
+    "method": "Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
+    "pricing": {
+      "field": "findus_pricing",
+      "source_path": "props.pageProps.locationData.effectivePricebooks",
+      "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
+      "sites_with_pricing": 1,
+      "note": "findus_pricing is set only where a Find Us pricebook was parsed. Other sites omit it, and the card says not stated. Live Tesla returned 403 from the cloud VM, so these rates were read from checked-in page captures under data/fixtures/findus-pricing/. Re-run npm run pricing:pull on a Mac (headed WebKit) to refresh from Tesla. This is not programme.economics.tesla_fee."
     }
   },
   "sites": [
@@ -8919,7 +8927,82 @@
       "findus_id": "58992",
       "coming_soon_badge": "Under Construction",
       "site_phase": "upcoming",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": null,
+        "currency": "USD",
+        "tesla_and_members": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.25,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "12:00 AM",
+              "end": "7:00 AM",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.3,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "7:00 AM",
+              "end": "11:00 AM",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.35,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "11:00 AM",
+              "end": "8:00 PM",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.3,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "8:00 PM",
+              "end": "12:00 AM",
+              "fee_type": "CHARGING"
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.25,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "12:00 AM",
+              "end": "7:00 AM",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.3,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "7:00 AM",
+              "end": "11:00 AM",
+              "fee_type": "CHARGING"
+            },
+            {
+              "rate": 0.35,
+              "uom": "kWh",
+              "currency": "USD",
+              "start": "11:00 AM",
+              "end": "8:00 PM",
+              "fee_type": "CHARGING"
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 7,
+        "capture": "screenshot",
+        "captured_on": "2026-11-05",
+        "capture_note": "The 8:00 PM to 12:00 AM rate for other EVs was covered on the page capture and is not stated."
+      }
     },
     {
       "slug": "505010",

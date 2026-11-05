@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "diff:sfb": "node scripts/diff-sfb-sites.mjs"
+    "diff:sfb": "node scripts/diff-sfb-sites.mjs",
+    "pricing:test": "node --test scripts/findus-pricing.test.mjs",
+    "pricing:apply": "node scripts/pull-findus-pricing.mjs --fixtures",
+    "pricing:pull": "node scripts/pull-findus-pricing.mjs --live"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",

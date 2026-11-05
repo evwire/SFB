@@ -64,9 +64,11 @@ Script: `scripts/diff-sfb-sites.mjs`.
 2. **Removed**  -  id gone from all four layers
 3. **Phase transitions**  -  upcoming → open (or reverse) for the same id
 4. **Ownership type**  -  `ownership_type` changes
-5. **Notable fields**  -  name, status, stalls, operator, host, address, city/state/country, power_kw, hardware, milestone, coming_soon_badge, site_phase, publish, lat/lng
+5. **Notable fields**  -  name, status, stalls, operator, host, address, city/state/country, power_kw, hardware, milestone, coming_soon_badge, site_phase, publish, lat/lng, findus_pricing
 
 Null stays null. The reporter never fills gaps from general knowledge.
+
+`findus_pricing` is the per-site Find Us pricebook (Tesla and members, non-Tesla, congestion). A change to the rates is notable. A new `pulled_at` on the same rates is not. It is not `programme.economics.tesla_fee`.
 
 ## How to pull (live Tesla; not run by the diff script)
 
@@ -92,6 +94,36 @@ Pull scripts live under `data/tesla-ownership-pull/` (gitignored junk + tools). 
 | `METHOD.md`, `METHOD-europe.md`, `METHOD-upcoming-complete.md` | Exact field paths and caveats |
 
 After a pull lands new JSON in a snapshot dir (or you rebuild the four files there), run `npm run diff:sfb` against `data/`.
+
+### Per-site pricing (Find Us `effectivePricebooks`)
+
+Open detail pages embed rates in `__NEXT_DATA__.props.pageProps.locationData.effectivePricebooks`. There is no separate pricing URL (those 404). The same WebKit fetch that reads `ownershipType` can read the pricebook.
+
+Committed parser and pull:
+
+| Command | Role |
+|---|---|
+| `npm run pricing:apply` | Merge checked-in page captures from `data/fixtures/findus-pricing/` onto matching `findus_id`s. No network. |
+| `npm run pricing:pull` | Live pull. Headed Playwright WebKit, warm `https://www.tesla.com/findus`, then `page.evaluate` fetch of `https://www.tesla.com/findus/location/supercharger/{id}`. |
+| `node scripts/pull-findus-pricing.mjs --from-html <dir>` | Parse saved `{findus_id}.html` or `.json` if you already have the detail pages. |
+| `npm run pricing:test` | Parser fixtures plus a diff check that a rate change is notable. |
+
+Run the live pull on the Mac. Akamai 403s this cloud VM, curl, and headless Chrome. `--headless` is there for a retry, but the ownership pulls that worked used **headed WebKit**. A failed id does not wipe `findus_pricing` already on the site.
+
+From `data/tesla-ownership-pull/*.mjs`, after the detail HTML is in hand:
+
+```js
+import { parseFindUsPricing } from "../../scripts/findus-pricing.mjs";
+const findus_pricing = parseFindUsPricing(html, {
+  pulled_at: new Date().toISOString(),
+  capture: "live",
+});
+if (findus_pricing) record.findus_pricing = findus_pricing;
+```
+
+Upcoming sites get a pricebook only when that detail HTML actually contains `effectivePricebooks`. Do not copy the programme fee (`$0.10/kWh` in the seed) into `findus_pricing`.
+
+`npm run pricing:apply` rebuilds the two captured sites (Antlers `492964`, Chicago `58992`) from screenshots. It overwrites those ids, so do not run it after a live pull you want to keep. Other sample ids (Victron `495401`, Charge & Go `490203`, ChargedEV `487103`, 5420 Sunset `472652`, BA `485163`, EV OTM UK `440311`) stay without a pricebook until a live pull. The card says "not stated" for them.
 
 ### Suggested post-pull steps
 

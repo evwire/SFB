@@ -1,4 +1,5 @@
 import { getSiteData } from "@/lib/data";
+import { pricingPlain } from "@/lib/findus-pricing";
 
 export const revalidate = 300;
 
@@ -46,6 +47,8 @@ export async function GET() {
     ];
     lines.push(`- **${s.name}**, ${loc}. ${bits.join("; ")}. ${s.summary} Source: ${s.sourceUrl}`);
     if (s.milestone) lines.push(`  - Milestone: ${s.milestone}`);
+    const pricing = pricingPlain(s.findusPricing);
+    if (pricing) lines.push(`  - Find Us pricing (per site, not the programme fee): ${pricing}`);
     if (s.unstated.length) lines.push(`  - Our coverage did not state: ${s.unstated.join(", ")}`);
   }
   lines.push("");

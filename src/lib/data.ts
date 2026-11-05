@@ -23,6 +23,7 @@ import type {
   UpcomingCoverage,
   SitePhase,
   SciCompare,
+  FindUsPricing,
 } from "./types";
 
 /**
@@ -63,6 +64,12 @@ type SeedSite = (typeof seed.sites)[number];
 type TeslaUsSite = (typeof teslaUs.sites)[number];
 type TeslaEuSite = (typeof teslaEu.sites)[number];
 
+function findusPricingOf(s: object): FindUsPricing | null {
+  const value = (s as { findus_pricing?: FindUsPricing | null }).findus_pricing;
+  if (!value || typeof value !== "object") return null;
+  return value;
+}
+
 function fromSeed(s: SeedSite): Site {
   const { x, y } = projectUs(s.lat, s.lng);
   return {
@@ -92,6 +99,7 @@ function fromSeed(s: SeedSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    findusPricing: findusPricingOf(s),
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     publish: !(s.notes ?? "").includes("UNPUBLISHED DRAFT"),
@@ -127,6 +135,7 @@ function fromTeslaUs(s: TeslaUsSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    findusPricing: findusPricingOf(s),
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     publish: s.publish !== false,
@@ -163,6 +172,7 @@ function fromTeslaEu(s: TeslaEuSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    findusPricing: findusPricingOf(s),
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     publish: s.publish !== false,
@@ -229,6 +239,7 @@ function fromTeslaUpcomingUs(s: TeslaUpcomingSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    findusPricing: findusPricingOf(s),
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     publish: s.publish !== false,
@@ -265,6 +276,7 @@ function fromTeslaUpcomingEu(s: UpcomingRawSite): Site {
     milestone: s.milestone ?? null,
     summary: s.summary,
     sourceUrl: s.source_url,
+    findusPricing: findusPricingOf(s),
     unstated: s.unstated ?? [],
     notes: s.notes ?? null,
     publish: s.publish !== false,
@@ -315,6 +327,7 @@ function fromAirtable(r: AirtableRecord): Site | null {
     milestone: str("Milestone"),
     summary: str("Summary") ?? "",
     sourceUrl: str("Source URL") ?? "",
+    findusPricing: null,
     unstated: (str("Unstated") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     notes: str("Notes"),
     publish: f["Publish"] === true,

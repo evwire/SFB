@@ -51,6 +51,12 @@ Three separate axes, never collapsed into one:
 which is a different Tesla product line. It is off by default behind a toggle. Do not merge
 the two into one count, and do not put Semi pricing next to Supercharger for Business pricing.
 
+Per-site Find Us rates live on `findus_pricing`, parsed from
+`effectivePricebooks` on the location page. `programme.economics.tesla_fee` is a
+different number: the programme-level fee Tesla publishes for the product. Do not
+copy one into the other. A site with no parsed pricebook omits `findus_pricing`,
+and the card says "not stated".
+
 ## Adding a site
 
 1. The site must come from a published EVwire article. Drafts get `Publish` unchecked.

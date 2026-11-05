@@ -78,6 +78,14 @@
       "cs_universe_eu": 360,
       "classified_eu": 360,
       "gaps_eu": 0
+    },
+    "method": "Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
+    "pricing": {
+      "field": "findus_pricing",
+      "source_path": "props.pageProps.locationData.effectivePricebooks",
+      "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
+      "sites_with_pricing": 0,
+      "note": "No per-site pricebook is stored in this file. Sites omit findus_pricing, and the card says not stated. npm run pricing:pull on a Mac (headed WebKit) fills the field when Tesla sends effectivePricebooks. This is not programme.economics.tesla_fee."
     }
   },
   "sites": []
