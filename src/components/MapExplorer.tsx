@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import FindUsPricingBlock from "@/components/FindUsPricing";
 import { STATUS_STYLE, STATUS_ORDER, COVERED_STYLE, pinRadius, fmtDate, humaniseUnstated, humanisePublicCopy } from "@/lib/style";
 import type { Site, SiteStatus, Region, SitePhase } from "@/lib/types";
 
@@ -471,6 +472,7 @@ export default function MapExplorer({
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(s); } }}
                   tabIndex={0}
                   role="button"
+                  data-slug={s.slug}
                   aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.${isNew ? ` New since ${newSince ?? "last check"}.` : ""}`}
                 >
                   {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
@@ -571,6 +573,8 @@ export default function MapExplorer({
                 <div><dt>Opened</dt><dd>{selected.openedOn ? fmtDate(selected.openedOn) : <em>not stated</em>}</dd></div>
                 <div><dt>First covered</dt><dd>{fmtDate(selected.firstConfirmed)}</dd></div>
               </dl>
+
+              <FindUsPricingBlock pricing={selected.findusPricing} />
 
               <p className="summary">{humanisePublicCopy(selected.summary)}</p>
 

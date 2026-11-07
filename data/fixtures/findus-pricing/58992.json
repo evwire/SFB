@@ -1,0 +1,89 @@
+{
+  "_capture": {
+    "findus_id": "58992",
+    "apply": true,
+    "source_url": "https://www.tesla.com/findus/location/supercharger/58992",
+    "capture": "screenshot",
+    "captured_on": "2026-11-05",
+    "note": "The 8:00 PM to 12:00 AM rate for other EVs was covered on the page capture and is not stated.",
+    "detail": "Reconstructed from the attached Tesla Find Us screenshot of Chicago, IL - South Ashland Avenue (findus 58992, EVgo). Akamai returned 403 for a live fetch from this environment, so this is not a byte-for-byte __NEXT_DATA__ payload. Rates and clock ranges are only the rows readable on that page. Field names follow the verified effectivePricebooks shape (feeType, rateBase, uom, currencyCode, startTime, endTime, isTou, isMemberPricebook). The page headings were Charging Fees for Tesla Owner and Charging Fees for Other EVs. The 8:00 PM to 12:00 AM Other EVs row sat behind the cookie banner and is omitted. Status, address, operator, and stall count visible on that page were not copied onto the site record."
+  },
+  "props": {
+    "pageProps": {
+      "locationData": {
+        "effectivePricebooks": [
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.25,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "12:00 AM",
+            "endTime": "7:00 AM",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.3,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "7:00 AM",
+            "endTime": "11:00 AM",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.35,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "11:00 AM",
+            "endTime": "8:00 PM",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.3,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "8:00 PM",
+            "endTime": "12:00 AM",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.25,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "12:00 AM",
+            "endTime": "7:00 AM",
+            "isTou": true,
+            "isMemberPricebook": false
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.3,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "7:00 AM",
+            "endTime": "11:00 AM",
+            "isTou": true,
+            "isMemberPricebook": false
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.35,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "startTime": "11:00 AM",
+            "endTime": "8:00 PM",
+            "isTou": true,
+            "isMemberPricebook": false
+          }
+        ]
+      }
+    }
+  }
+}

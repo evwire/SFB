@@ -1,3 +1,4 @@
+import { pricingPlain } from "@/lib/findus-pricing";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
@@ -43,6 +44,7 @@ export default function SiteTable({ sites, areaNoun = "states", upcoming = false
                     {s.city ? `${s.city}, ${s.state}` : `${s.state}, exact town not stated`}
                     {s.siteClass === "Heavy-duty" && " · heavy-duty MCS"}
                   </span>
+                  {s.findusPricing && <span className="cell-sub">{pricingPlain(s.findusPricing)}</span>}
                 </th>
                 <td>{s.operator ?? <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>}</td>
                 <td className="mono">{s.stalls ?? <span className="dim">n/s</span>}</td>

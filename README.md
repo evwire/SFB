@@ -130,3 +130,13 @@ npm run diff:sfb -- --baseline data --fresh data/snapshots/YYYY-MM-DD
 Full pull + schedule notes: [`data/WATCH.md`](data/WATCH.md). Diff script:
 `scripts/diff-sfb-sites.mjs`. Live Find Us pulls still need headed WebKit on Mac
 (Akamai blocks plain curl); the diff itself needs no network.
+
+Per-site Find Us rates, when Tesla publishes a pricebook, sit on `findus_pricing`
+and on the site card. That field is not the programme-level Tesla fee. Checked-in
+page captures cover two sites until a Mac pull fills the rest:
+
+```sh
+npm run pricing:test
+npm run pricing:apply    # fixtures only, no network
+npm run pricing:pull     # live WebKit, on a Mac
+```

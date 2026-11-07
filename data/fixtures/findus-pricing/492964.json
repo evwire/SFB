@@ -1,0 +1,72 @@
+{
+  "_capture": {
+    "findus_id": "492964",
+    "apply": true,
+    "source_url": "https://www.tesla.com/findus/location/supercharger/492964",
+    "capture": "screenshot",
+    "captured_on": "2026-11-05",
+    "note": "Non-Tesla rates were not expanded on the page capture. Congestion is the cap printed on the page, not an hourly curve.",
+    "detail": "Reconstructed from the attached Tesla Find Us screenshot of Antlers, OK (findus 492964, Francis Energy at Gardner Grocery, 319 W Main St). Akamai returned 403 for a live fetch from this environment, so this is not a byte-for-byte __NEXT_DATA__ payload. The expanded section was Pricing for Tesla & Members, with a busy-times chart. The five per-kWh prices, in chart order, were $0.44, $0.48, $0.52, $0.48, $0.44. The labels under the chart were 4a, 8a, 2p, 7p, 11p. Those labels are stored as chart axis text, not as clock-range boundaries, because the page did not print start and end times. The line under the chart read Congestion fees (up to $0.50/min). Pricing for Non-Tesla was collapsed, so no non-Tesla rates are stored. pricingChart is capture metadata beside the books. A live __NEXT_DATA__ pull is not expected to include that key."
+  },
+  "props": {
+    "pageProps": {
+      "locationData": {
+        "pricingChart": {
+          "audience": "tesla_and_members",
+          "axis_labels": ["4a", "8a", "2p", "7p", "11p"]
+        },
+        "effectivePricebooks": [
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.44,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.48,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.52,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.48,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CHARGING",
+            "rateBase": 0.44,
+            "uom": "kWh",
+            "currencyCode": "USD",
+            "isTou": true,
+            "isMemberPricebook": true
+          },
+          {
+            "feeType": "CONGESTION",
+            "rateBase": 0.5,
+            "uom": "min",
+            "currencyCode": "USD",
+            "isTou": false,
+            "isMemberPricebook": true,
+            "displayText": "Congestion fees (up to $0.50/min)"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -21,6 +21,47 @@ export type CoordPrecision = "Exact" | "Approximate" | "Area-Only" | "None";
 
 export type SiteClass = "SfB" | "Heavy-duty";
 
+/** One Find Us pricebook row, normalized. Null rate means Tesla sent the row without a number. */
+export type FindUsRate = {
+  rate: number | null;
+  uom?: string | null;
+  currency?: string | null;
+  start?: string | null;
+  end?: string | null;
+  days?: string[] | null;
+  fee_type?: string | null;
+  tiers?: number[] | null;
+};
+
+/** Tesla/member rates, non-Tesla rates, or a book Tesla did not label. */
+export type FindUsAudiencePricing = {
+  tou: boolean | null;
+  energy?: FindUsRate[];
+  congestion?: FindUsRate[];
+  other?: FindUsRate[];
+  /** Set when Tesla's own label said "up to", or the book marked the rate as a ceiling. */
+  congestion_qualifier?: "up to" | null;
+  /** Axis text from a busy-times chart when clock ranges were not in the books. */
+  chart_axis_labels?: string[] | null;
+};
+
+/**
+ * Per-site rates from Tesla Find Us `effectivePricebooks`.
+ * This is not `programme.economics.tesla_fee`, which is the programme-level fee.
+ */
+export type FindUsPricing = {
+  pulled_at: string | null;
+  currency: string | null;
+  tesla_and_members: FindUsAudiencePricing | null;
+  non_tesla: FindUsAudiencePricing | null;
+  unspecified?: FindUsAudiencePricing | null;
+  source: "findus_effective_pricebooks";
+  book_count: number;
+  capture?: "live" | "screenshot" | null;
+  captured_on?: string | null;
+  capture_note?: string | null;
+};
+
 export type Site = {
   slug: string;
   name: string;
@@ -50,6 +91,11 @@ export type Site = {
   milestone: string | null;
   summary: string;
   sourceUrl: string;
+  /**
+   * Per-site Tesla Find Us rates. Null when this record has no parsed pricebook.
+   * Not programme.economics.tesla_fee.
+   */
+  findusPricing: FindUsPricing | null;
   /** Fields the source article did not state. Surfaced in the UI so gaps read as gaps. */
   unstated: string[];
   notes: string | null;
