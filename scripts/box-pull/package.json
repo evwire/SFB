@@ -1,0 +1,8 @@
+{
+  "name": "sfb-box-pull",
+  "private": true,
+  "description": "Pinned Playwright for the box weekly pull. Chromium 130 (Playwright 1.48, the repo devDependency) gets Akamai Access Denied; current Chromium does not. Kept separate so the Mac WebKit path and the app build are untouched.",
+  "dependencies": {
+    "playwright": "1.65.0"
+  }
+}

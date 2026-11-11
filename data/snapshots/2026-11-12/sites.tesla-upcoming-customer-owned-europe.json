@@ -1,0 +1,92 @@
+{
+  "_meta": {
+    "generated": "2026-10-28",
+    "pulled_at": "2026-10-28T10:11:32.739Z",
+    "scope": "Europe+GB coming_soon_supercharger pins with ownership_type=Customer Owned via get-location-details",
+    "source": "Tesla Find Us get-location-details",
+    "official_filter": "ownership_type === \"Customer Owned\"",
+    "phase": "upcoming",
+    "no_brand": true,
+    "coverage": {
+      "pulled_at": "2026-10-28T10:11:32.739Z",
+      "complete": true,
+      "honesty_banner": null,
+      "totals": {
+        "totalCS": 1062,
+        "classified": 1062,
+        "gaps": 0,
+        "http200": 1062,
+        "customerOwned": 232,
+        "teslaOwned": 830
+      },
+      "counts": {
+        "US": {
+          "totalCS": 702,
+          "http200": 702,
+          "classified": 702,
+          "http403": 0,
+          "httpOther": 0,
+          "gaps": 0,
+          "customerOwned": 232,
+          "teslaOwned": 470,
+          "nullOn200": 0,
+          "CO_UnderConstruction": 27,
+          "CO_InDevelopment": 205
+        },
+        "EU": {
+          "totalCS": 317,
+          "http200": 317,
+          "classified": 317,
+          "http403": 0,
+          "httpOther": 0,
+          "gaps": 0,
+          "customerOwned": 0,
+          "teslaOwned": 317,
+          "nullOn200": 0,
+          "CO_UnderConstruction": 0,
+          "CO_InDevelopment": 0
+        },
+        "GB": {
+          "totalCS": 43,
+          "http200": 43,
+          "classified": 43,
+          "http403": 0,
+          "httpOther": 0,
+          "gaps": 0,
+          "customerOwned": 0,
+          "teslaOwned": 43,
+          "nullOn200": 0,
+          "CO_UnderConstruction": 0,
+          "CO_InDevelopment": 0
+        }
+      },
+      "gaps": {
+        "gapCount": 0,
+        "gapsByRegion": {
+          "US": 0,
+          "EU": 0,
+          "GB": 0
+        },
+        "gapsByStatus": {}
+      },
+      "signal": "GET https://www.tesla.com/api/findus/get-location-details?locationSlug={id}&functionTypes=coming_soon_supercharger&locale=en_US&isInHkMoTw=false → data.supercharger_function.ownership_type"
+    },
+    "counts": {
+      "sites": 0,
+      "under_construction": 0,
+      "in_development": 0,
+      "cs_universe_eu": 360,
+      "classified_eu": 360,
+      "gaps_eu": 0
+    },
+    "method": "Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
+    "pricing": {
+      "field": "findus_pricing",
+      "source_path": "props.pageProps.locationData.effectivePricebooks",
+      "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
+      "sites_with_pricing": 0,
+      "note": "No per-site pricebook is stored in this file. Sites omit findus_pricing, and the card says not stated. npm run pricing:pull on a Mac (headed WebKit) fills the field when Tesla sends effectivePricebooks. This is not programme.economics.tesla_fee."
+    }
+  },
+  "sites": []
+}

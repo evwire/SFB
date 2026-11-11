@@ -1,0 +1,92 @@
+{
+  "status": "OK",
+  "date": "2026-11-12",
+  "pulled_at": "2026-11-11T22:39:59.626Z",
+  "runtime_s": 379,
+  "engine": "chromium headed (xvfb on Linux)",
+  "counts": {
+    "open_us": 71,
+    "open_eu": 42,
+    "upcoming_us": 229,
+    "upcoming_eu": 0
+  },
+  "layer_counts": {
+    "open-us": {
+      "baseline": 68,
+      "fresh": 71
+    },
+    "open-eu": {
+      "baseline": 41,
+      "fresh": 42
+    },
+    "upcoming-us": {
+      "baseline": 232,
+      "fresh": 229
+    },
+    "upcoming-eu": {
+      "baseline": 0,
+      "fresh": 0
+    }
+  },
+  "added": [
+    {
+      "id": "503414",
+      "label": "Basildon, UK (Basildon, GB)",
+      "phase": "open",
+      "region": "Europe"
+    }
+  ],
+  "removed": [],
+  "phase_changes": [
+    {
+      "id": "499626",
+      "label": "East Wenatchee, WA (East Wenatchee, WA)",
+      "phase": null,
+      "region": "US",
+      "from": "upcoming",
+      "to": "open"
+    },
+    {
+      "id": "507321",
+      "label": "Yukon, OK (Tulsa, OK)",
+      "phase": null,
+      "region": "US",
+      "from": "upcoming",
+      "to": "open"
+    },
+    {
+      "id": "58992",
+      "label": "Chicago, IL - South Ashland Avenue (Chicago, IL)",
+      "phase": null,
+      "region": "US",
+      "from": "upcoming",
+      "to": "open"
+    }
+  ],
+  "ownership_flips": [],
+  "notable_changes_non_price": [
+    {
+      "id": "492816",
+      "label": "Stillwater, OK (Stillwater, OK)",
+      "phase": "open",
+      "region": "US",
+      "fields": [
+        "power_kw"
+      ]
+    }
+  ],
+  "price_changes": 109,
+  "prices": {
+    "open_sites_with_live_price": 113,
+    "open_sites": 113
+  },
+  "eu_operator_not_ev_otm_or_ev_point": [],
+  "carried_forward": [],
+  "gaps": [],
+  "removed_from_map": [],
+  "duplicates": [],
+  "files": {
+    "changelog": "data/snapshots/2026-11-12/CHANGELOG.md",
+    "latest_changes": "data/snapshots/2026-11-12/latest-changes.json"
+  }
+}

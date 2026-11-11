@@ -72,9 +72,9 @@
       "signal": "GET https://www.tesla.com/api/findus/get-location-details?locationSlug={id}&functionTypes=coming_soon_supercharger&locale=en_US&isInHkMoTw=false → data.supercharger_function.ownership_type"
     },
     "counts": {
-      "sites": 232,
-      "under_construction": 27,
-      "in_development": 205,
+      "sites": 229,
+      "under_construction": 26,
+      "in_development": 203,
       "cs_universe_us": 702,
       "classified_us": 702,
       "gaps_us": 0
@@ -86,7 +86,18 @@
       "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
       "sites_with_pricing": 1,
       "note": "findus_pricing is set only where a Find Us pricebook was parsed. Other sites omit it, and the card says not stated. Live Tesla returned 403 from the cloud VM, so these rates were read from checked-in page captures under data/fixtures/findus-pricing/. Re-run npm run pricing:pull on a Mac (headed WebKit) to refresh from Tesla. This is not programme.economics.tesla_fee."
-    }
+    },
+    "weekly_open_moves": [
+      {
+        "date": "2026-11-12",
+        "moved_to_open": [
+          "507321",
+          "499626",
+          "58992"
+        ],
+        "note": "Removed from upcoming because the weekly open pull found them open Customer Owned on Find Us. The upcoming classify itself was not re-run; coverage below is from its own pulled_at."
+      }
+    ]
   },
   "sites": [
     {
@@ -4970,46 +4981,6 @@
       "publish": true
     },
     {
-      "slug": "507321",
-      "name": "Yukon, OK",
-      "operator": null,
-      "host": null,
-      "host_type": null,
-      "address": null,
-      "city": "Yukon",
-      "state": "OK",
-      "country": "US",
-      "lat": 35.4740126,
-      "lng": -97.7463588,
-      "coord_precision": "Exact",
-      "stalls": null,
-      "hardware": null,
-      "power_kw": null,
-      "status": "Planned",
-      "verification": "Verified",
-      "evidence_grade": "A",
-      "first_confirmed": null,
-      "opened_on": null,
-      "milestone": "In Development",
-      "summary": "Tesla Find Us get-location-details lists this as ownership_type=Customer Owned (UI: Third Party Owned Supercharger Coming Soon). Status badge: In Development. Brand/operator not stated on upcoming details.",
-      "source_url": "https://www.tesla.com/findus?location=507321",
-      "unstated": [
-        "operator",
-        "brand",
-        "stalls",
-        "hardware",
-        "power_kw",
-        "address",
-        "opened_on"
-      ],
-      "notes": "FINDUS_DETAILS_CUSTOMER_OWNED; customer_facing_coming_soon_date=In Development; coming_soon_name=Yukon, OK",
-      "ownership_type": "CUSTOMER_OWNED",
-      "findus_id": "507321",
-      "coming_soon_badge": "In Development",
-      "site_phase": "upcoming",
-      "publish": true
-    },
-    {
       "slug": "507383",
       "name": "Golden, CO",
       "operator": null,
@@ -6046,46 +6017,6 @@
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "493806",
       "coming_soon_badge": "Under Construction",
-      "site_phase": "upcoming",
-      "publish": true
-    },
-    {
-      "slug": "499626",
-      "name": "East Wenatchee, WA",
-      "operator": null,
-      "host": null,
-      "host_type": null,
-      "address": null,
-      "city": "East Wenatchee",
-      "state": "WA",
-      "country": "US",
-      "lat": 47.4107965,
-      "lng": -120.2907867,
-      "coord_precision": "Exact",
-      "stalls": null,
-      "hardware": null,
-      "power_kw": null,
-      "status": "Planned",
-      "verification": "Verified",
-      "evidence_grade": "A",
-      "first_confirmed": null,
-      "opened_on": null,
-      "milestone": "In Development",
-      "summary": "Tesla Find Us get-location-details lists this as ownership_type=Customer Owned (UI: Third Party Owned Supercharger Coming Soon). Status badge: In Development. Brand/operator not stated on upcoming details.",
-      "source_url": "https://www.tesla.com/findus?location=499626",
-      "unstated": [
-        "operator",
-        "brand",
-        "stalls",
-        "hardware",
-        "power_kw",
-        "address",
-        "opened_on"
-      ],
-      "notes": "FINDUS_DETAILS_CUSTOMER_OWNED; customer_facing_coming_soon_date=In Development; coming_soon_name=East Wenatchee, WA",
-      "ownership_type": "CUSTOMER_OWNED",
-      "findus_id": "499626",
-      "coming_soon_badge": "In Development",
       "site_phase": "upcoming",
       "publish": true
     },
@@ -8888,121 +8819,6 @@
       "coming_soon_badge": "In Development",
       "site_phase": "upcoming",
       "publish": true
-    },
-    {
-      "slug": "58992",
-      "name": "Chicago, IL",
-      "operator": null,
-      "host": null,
-      "host_type": null,
-      "address": null,
-      "city": "Chicago",
-      "state": "IL",
-      "country": "US",
-      "lat": 41.8365517,
-      "lng": -87.6637955,
-      "coord_precision": "Exact",
-      "stalls": null,
-      "hardware": null,
-      "power_kw": null,
-      "status": "Construction",
-      "verification": "Verified",
-      "evidence_grade": "A",
-      "first_confirmed": null,
-      "opened_on": null,
-      "milestone": "Under Construction",
-      "summary": "Tesla Find Us get-location-details lists this as ownership_type=Customer Owned (UI: Third Party Owned Supercharger Coming Soon). Status badge: Under Construction. Brand/operator not stated on upcoming details.",
-      "source_url": "https://www.tesla.com/findus?location=58992",
-      "unstated": [
-        "operator",
-        "brand",
-        "stalls",
-        "hardware",
-        "power_kw",
-        "address",
-        "opened_on"
-      ],
-      "notes": "FINDUS_DETAILS_CUSTOMER_OWNED; customer_facing_coming_soon_date=Under Construction; coming_soon_name=Chicago, IL",
-      "ownership_type": "CUSTOMER_OWNED",
-      "findus_id": "58992",
-      "coming_soon_badge": "Under Construction",
-      "site_phase": "upcoming",
-      "publish": true,
-      "findus_pricing": {
-        "pulled_at": null,
-        "currency": "USD",
-        "tesla_and_members": {
-          "tou": true,
-          "energy": [
-            {
-              "rate": 0.25,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "12:00 AM",
-              "end": "7:00 AM",
-              "fee_type": "CHARGING"
-            },
-            {
-              "rate": 0.3,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "7:00 AM",
-              "end": "11:00 AM",
-              "fee_type": "CHARGING"
-            },
-            {
-              "rate": 0.35,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "11:00 AM",
-              "end": "8:00 PM",
-              "fee_type": "CHARGING"
-            },
-            {
-              "rate": 0.3,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "8:00 PM",
-              "end": "12:00 AM",
-              "fee_type": "CHARGING"
-            }
-          ]
-        },
-        "non_tesla": {
-          "tou": true,
-          "energy": [
-            {
-              "rate": 0.25,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "12:00 AM",
-              "end": "7:00 AM",
-              "fee_type": "CHARGING"
-            },
-            {
-              "rate": 0.3,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "7:00 AM",
-              "end": "11:00 AM",
-              "fee_type": "CHARGING"
-            },
-            {
-              "rate": 0.35,
-              "uom": "kWh",
-              "currency": "USD",
-              "start": "11:00 AM",
-              "end": "8:00 PM",
-              "fee_type": "CHARGING"
-            }
-          ]
-        },
-        "source": "findus_effective_pricebooks",
-        "book_count": 7,
-        "capture": "screenshot",
-        "captured_on": "2026-11-05",
-        "capture_note": "The 8:00 PM to 12:00 AM rate for other EVs was covered on the page capture and is not stated."
-      }
     },
     {
       "slug": "505010",

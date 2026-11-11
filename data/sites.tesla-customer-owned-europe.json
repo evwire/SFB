@@ -1,16 +1,16 @@
 {
   "_meta": {
-    "generated": "2026-10-27",
-    "pulled_at": "2026-10-27T15:40:02+02:00",
+    "generated": "2026-11-12",
+    "pulled_at": "2026-11-11T22:39:59.626Z",
     "scope": "Europe Tesla Superchargers with ownershipType=CUSTOMER_OWNED from Find Us detail pages",
     "source": "Tesla Find Us (tesla.com/findus)",
     "official_filter": "ownershipType === \"CUSTOMER_OWNED\" from detail __NEXT_DATA__.props.pageProps.formattedData.chargerDetails.ownershipType",
-    "method": "Playwright WebKit headed on Mac; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Chrome/Akamai Access Denied from this IP; curl 403. European country map params (DE/FR/GB/EU/…) return the same Customer Owned EU set. Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
+    "method": "Playwright chromium headed (xvfb) via scripts/box-pull/pull-open.mjs; page.evaluate fetch of findus detail HTML; parse __NEXT_DATA__ ownershipType. Map get-locations Customer Owned pins (US + Europe bbox) are the targets; baseline open ids are re-checked too. Per-site pricing, when Tesla sends it, is parsed from the same detail page __NEXT_DATA__ at props.pageProps.locationData.effectivePricebooks and stored as findus_pricing. It is not the programme-level tesla_fee.",
     "rule": "Every field is from the Tesla pull. Null/unstated when Tesla did not provide it. Never invent. US dataset is separate and untouched.",
     "counts": {
-      "sites": 41,
-      "stalls": 234,
-      "open": 41,
+      "sites": 42,
+      "stalls": 238,
+      "open": 42,
       "coming_soon": 0,
       "countries": 1
     },
@@ -18,8 +18,9 @@
       "field": "findus_pricing",
       "source_path": "props.pageProps.locationData.effectivePricebooks",
       "separate_from": "programme.economics.tesla_fee (programme-level fee on the seed, not a per-site rate)",
-      "sites_with_pricing": 0,
-      "note": "No per-site pricebook is stored in this file. Sites omit findus_pricing, and the card says not stated. npm run pricing:pull on a Mac (headed WebKit) fills the field when Tesla sends effectivePricebooks. This is not programme.economics.tesla_fee."
+      "sites_with_pricing": 42,
+      "live_on_pull": 42,
+      "note": "findus_pricing holds per-site rates parsed from Find Us detail HTML on this pull. A failed fetch keeps the previous value. Sites with no pricebook omit the field, and the card says not stated. This is not programme.economics.tesla_fee."
     }
   },
   "sites": [
@@ -55,7 +56,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=AB12 4XX; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "440311",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:08.425Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.63,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "455116",
@@ -89,7 +171,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=EX31; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "455116",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:35:12.317Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "460070",
@@ -123,7 +286,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=L36 6AD; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "460070",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:04.858Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "438855",
@@ -157,7 +401,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=RH14 9HY; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "438855",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:51.150Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "453224",
@@ -191,7 +516,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=B26 3QS; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "453224",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:04.270Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "455257",
@@ -225,7 +631,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=B11 3RP; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "455257",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:07.489Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "493162",
@@ -259,7 +746,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=BB2 5EP; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "493162",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:36.004Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.49,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "466355",
@@ -293,7 +861,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=BB1 3HR; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "466355",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:59.319Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.6,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "434010",
@@ -327,7 +976,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=MK18 4AG; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "434010",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:54.163Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "460090",
@@ -361,7 +1091,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=BB11 4SB; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "460090",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:05.407Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.6,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "450906",
@@ -395,7 +1206,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=IP30 9QR; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "450906",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:09.077Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "428868",
@@ -429,7 +1321,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=SK23 0RB; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "428868",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:19.144Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.63,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "500806",
@@ -458,12 +1431,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=NP16 6UP; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "500806",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:23.478Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "438953",
@@ -497,7 +1552,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=PR7 7NA; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "438953",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:18.195Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "440263",
@@ -531,7 +1667,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=BD19 3QE; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "440263",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:20.765Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "450962",
@@ -565,7 +1782,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=BB8 9FJ; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "450962",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:57.297Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.57,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "438856",
@@ -599,7 +1897,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=DN2 4SQ; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "438856",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:06.627Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.63,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "434161",
@@ -633,7 +2012,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=EH33 1EJ; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "434161",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:06.861Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "440164",
@@ -667,7 +2127,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=G468QF; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "440164",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:22.128Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "500506",
@@ -696,12 +2237,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=G33 6DE; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "500506",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:16.232Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.49,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "481502",
@@ -735,7 +2358,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=DH4 6RE; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "481502",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:10.130Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.57,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "454958",
@@ -769,7 +2473,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=LS29 8BS; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "454958",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:23.169Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "450465",
@@ -803,7 +2588,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=IP2 8NW; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "450465",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:35:13.009Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.63,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "455258",
@@ -837,7 +2703,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=LN1 2SZ; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "455258",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:22.857Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "453079",
@@ -871,7 +2818,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=L33 7AL; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "453079",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:37.758Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "459878",
@@ -905,7 +2933,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=L36 8HL; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "459878",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:19.774Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "450811",
@@ -939,7 +3048,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=L13 0AR; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "450811",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:31.225Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "461115",
@@ -973,7 +3163,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=L31 1BE; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "461115",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:03.716Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "493454",
@@ -1002,12 +3273,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=SE5 0EG; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "493454",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:17.491Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "492867",
@@ -1036,12 +3389,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=SW16 3BS; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "492867",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:24.157Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "455118",
@@ -1075,7 +3510,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=NE27 0BY; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "455118",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:52.706Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.6,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "454959",
@@ -1109,7 +3625,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=NN6 7EX; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "454959",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:58.116Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.69,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.57,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "493073",
@@ -1138,12 +3735,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=NG2 3BS; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "493073",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:02.855Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "424934",
@@ -1177,7 +3856,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=PR4 0RS; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "424934",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:38:07.874Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "455117",
@@ -1211,7 +3971,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=IP14 2AJ; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "455117",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:53.322Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.75,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.62,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "454912",
@@ -1245,7 +4086,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=IP14 5XF; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "454912",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:06.084Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.72,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.6,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "500756",
@@ -1274,12 +4196,94 @@
       "unstated": [
         "hardware",
         "opened_on",
-        "first_confirmed"
+        "first_confirmed",
+        "host"
       ],
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=TF1 3QA; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "500756",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:34:44.820Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.49,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "424809",
@@ -1313,7 +4317,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=ST14 5AA; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "424809",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:20.635Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.8,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.8,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.67,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "424914",
@@ -1347,7 +4432,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=WF2 7UA; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "424914",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:51.910Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "424982",
@@ -1381,7 +4547,88 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=PR4 1AD; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "424982",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:21.312Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.77,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.64,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     },
     {
       "slug": "33274",
@@ -1415,7 +4662,204 @@
       "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=PE21 7NG; country=GB",
       "ownership_type": "CUSTOMER_OWNED",
       "findus_id": "33274",
-      "publish": true
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:36:24.869Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.59,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.49,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
+    },
+    {
+      "slug": "503414",
+      "name": "Basildon, UK",
+      "operator": "EV OTM",
+      "host": null,
+      "host_type": null,
+      "address": "1000 Arterial Rd",
+      "city": "Basildon",
+      "state": "GB",
+      "country": "GB",
+      "lat": 51.592185,
+      "lng": 0.479079,
+      "coord_precision": "Exact",
+      "stalls": 4,
+      "hardware": null,
+      "power_kw": 250,
+      "status": "Operational",
+      "verification": "Verified",
+      "evidence_grade": "A",
+      "first_confirmed": null,
+      "opened_on": null,
+      "milestone": null,
+      "summary": "Tesla Find Us lists this as a customer-owned Supercharger operated under brand EV OTM. ownershipType=CUSTOMER_OWNED. Status open.",
+      "source_url": "https://www.tesla.com/findus/location/supercharger/503414",
+      "unstated": [
+        "hardware",
+        "opened_on",
+        "first_confirmed",
+        "host"
+      ],
+      "notes": "Tesla Find Us detail: ownershipType=CUSTOMER_OWNED; mapOwnershipType=Customer Owned; locationType=party; openToNonTeslas=true; zip=SS14 3HZ; country=GB",
+      "ownership_type": "CUSTOMER_OWNED",
+      "findus_id": "503414",
+      "publish": true,
+      "findus_pricing": {
+        "pulled_at": "2026-11-11T22:37:05.516Z",
+        "currency": "GBP",
+        "tesla_and_members": {
+          "tou": false,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "non_tesla": {
+          "tou": true,
+          "energy": [
+            {
+              "rate": 0.55,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0.46,
+              "uom": "kWh",
+              "currency": "GBP",
+              "fee_type": "CHARGING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ],
+          "congestion": [
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            },
+            {
+              "rate": 0,
+              "uom": "min",
+              "currency": "GBP",
+              "fee_type": "PARKING",
+              "tiers": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "source": "findus_effective_pricebooks",
+        "book_count": 6,
+        "capture": "live"
+      }
     }
   ]
 }

@@ -9,6 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "diff:sfb": "node scripts/diff-sfb-sites.mjs",
+    "watch:box": "bash scripts/box-pull/run-weekly.sh",
     "pricing:test": "node --test scripts/findus-pricing.test.mjs",
     "pricing:apply": "node scripts/pull-findus-pricing.mjs --fixtures",
     "pricing:pull": "node scripts/pull-findus-pricing.mjs --live"

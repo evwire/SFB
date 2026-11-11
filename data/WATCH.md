@@ -138,6 +138,15 @@ Upcoming sites get a pricebook only when that detail HTML actually contains `eff
 5. Read the changelog. Accept → copy the four JSON files and `latest-changes.json` over committed `data/`, update `upcoming-coverage.json` / `sci-compare.json` if those were refreshed, then commit.
 6. Reject or partial → leave committed baseline unchanged; keep the snapshot for a later retry.
 
+### Box pull (weekly, no Mac)
+
+Since 2026-11-12 the weekly open US + Europe refresh runs on the Linux box:
+`bash scripts/box-pull/run-weekly.sh` (headed Chromium under xvfb, pinned Playwright in
+`scripts/box-pull/`). It writes `data/snapshots/<date>/` with the four files, CHANGELOG.md,
+latest-changes.json and weekly-summary.json, and exits 3 with BLOCKED if Akamai denies it.
+`--promote` copies the snapshot into `data/`; commit/push stays human-approved.
+Upcoming classify is still the monthly Mac job (TODO: port to the box). See `scripts/box-pull/README.md`.
+
 ## Recommended schedule
 
 | Cadence | What | Why |

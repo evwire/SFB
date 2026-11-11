@@ -1,0 +1,42 @@
+{
+  "status": "OK",
+  "pulled_at": "2026-11-11T22:39:59.626Z",
+  "date": "2026-11-12",
+  "engine": "chromium",
+  "headless": false,
+  "map_pins": 23468,
+  "targets": 119,
+  "denied_responses": 0,
+  "gaps": [],
+  "carried_forward": [],
+  "removed_from_map": [],
+  "moved_to_open": [
+    {
+      "id": "507321",
+      "name": "Yukon, OK",
+      "region": "US"
+    },
+    {
+      "id": "499626",
+      "name": "East Wenatchee, WA",
+      "region": "US"
+    },
+    {
+      "id": "58992",
+      "name": "Chicago, IL - South Ashland Avenue",
+      "region": "US"
+    }
+  ],
+  "eu_other_operators": [],
+  "counts": {
+    "open_us": 71,
+    "open_eu": 42,
+    "upcoming_us": 229,
+    "upcoming_eu": 0
+  },
+  "prices": {
+    "open_sites_with_live_price": 113,
+    "open_sites": 113
+  },
+  "runtime_s": 378
+}
