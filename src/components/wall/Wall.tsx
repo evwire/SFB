@@ -64,6 +64,8 @@ export default function Wall({
   const worldRef = useRef<HTMLDivElement>(null);
   const tileEls = useRef(new Map<number, HTMLAnchorElement>());
   const labEls = useRef<(HTMLDivElement | null)[]>([]);
+  const cloneEls = useRef(new Map<number, HTMLSpanElement>());
+  const cloneWorld = useRef<HTMLDivElement | null>(null);
 
   useIso(() => {
     const track = trackRef.current!;
@@ -201,7 +203,16 @@ export default function Wall({
         el.style.width = `${a.w + (b.w - a.w) * e}px`;
         el.style.height = `${a.h + (b.h - a.h) * e}px`;
         el.style.setProperty("--ln", String(1 - e));
+        // keep the glass lens' copy of the wall in step while the hero is on screen
+        const ce = p < 0.45 ? cloneEls.current.get(t.id) : undefined;
+        if (ce) {
+          ce.style.transform = el.style.transform;
+          ce.style.width = el.style.width;
+          ce.style.height = el.style.height;
+          ce.style.setProperty("--ln", String(1 - e));
+        }
       });
+      if (p < 0.45 && cloneWorld.current) cloneWorld.current.style.transform = world.style.transform;
       labEls.current.forEach((el, i) => {
         if (!el) return;
         const o = Math.max(0, Math.min(1, (eAll - 0.55 - i * 0.0) * 2.2));
@@ -326,6 +337,160 @@ export default function Wall({
     };
   }, []);
 
+  // Hero e, clear Liquid Glass. The lens holds a magnified live copy of the wall, kept aligned to whatever is
+  // behind it. Where SVG filters can use feImage (Chromium, Firefox) the copy is bent at the rim by a
+  // displacement map built from a rounded-rect SDF, once per colour channel for a prismatic fringe.
+  // Elsewhere (Safari) the lens keeps the magnified, clear copy plus the rim and highlights.
+  useEffect(() => {
+    if (document.documentElement.dataset.hero !== "e") return;
+    const stage = stageRef.current!;
+    const lens = stage.querySelector<HTMLElement>(".e-lens");
+    const mag = stage.querySelector<HTMLElement>(".e-mag");
+    const world = stage.querySelector<HTMLDivElement>(".e-world");
+    if (!lens || !mag || !world) return;
+    cloneWorld.current = world;
+    const brands = (navigator as unknown as { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands;
+    const bends =
+      Boolean(brands?.some((b) => /Chromium|Google Chrome/.test(b.brand))) || /Firefox\//.test(navigator.userAgent);
+    const img = document.getElementById("e-map") as SVGFEImageElement | null;
+    const filter = document.getElementById("e-lens") as SVGFilterElement | null;
+    const scales = ["e-dr", "e-dg", "e-db"].map((id) => document.getElementById(id) as SVGFEDisplacementMapElement | null);
+
+    let raf = 0;
+    let mapRaf = 0;
+    let tx = 0;
+    let ty = 0;
+    let cx = 0;
+    let cy = 0;
+    let ang = -45;
+    let lastRect = "";
+
+    const buildMap = () => {
+      if (!bends || !img || !filter) return;
+      const w = Math.round(lens.offsetWidth);
+      const h = Math.round(lens.offsetHeight);
+      if (w < 60 || h < 60) return;
+      const cs = getComputedStyle(lens);
+      const r = Math.min(parseFloat(cs.borderTopLeftRadius) || 56, w / 2, h / 2);
+      const bezel = parseFloat(cs.getPropertyValue("--bezel")) || 36;
+      const reach = parseFloat(cs.getPropertyValue("--reach")) || 26; // px of inward shift at the rim (green channel)
+      const S = 2; // oversample so the bend has no steps
+      const cw = w * S;
+      const ch = h * S;
+      const cv = document.createElement("canvas");
+      cv.width = cw;
+      cv.height = ch;
+      const ctx = cv.getContext("2d")!;
+      const im = ctx.createImageData(cw, ch);
+      const hx = w / 2 - r;
+      const hy = h / 2 - r;
+      for (let y = 0; y < ch; y++) {
+        for (let x = 0; x < cw; x++) {
+          const px = (x + 0.5) / S - w / 2;
+          const py = (y + 0.5) / S - h / 2;
+          const qx = Math.abs(px) - hx;
+          const qy = Math.abs(py) - hy;
+          const ox = Math.max(qx, 0);
+          const oy = Math.max(qy, 0);
+          const dd = -(Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r);
+          let nx = 0;
+          let ny = 0;
+          if (ox > 0 || oy > 0) {
+            const l = Math.hypot(ox, oy) || 1;
+            nx = (Math.sign(px) * ox) / l;
+            ny = (Math.sign(py) * oy) / l;
+          } else if (qx > qy) nx = Math.sign(px);
+          else ny = Math.sign(py);
+          const t = Math.min(1, Math.max(0, dd / bezel));
+          // convex dome: the shift is largest at the rim and fades smoothly to nothing, so the fold stays monotonic
+          const m = Math.pow(1 - t, 1.0);
+          const i = (y * cw + x) * 4;
+          im.data[i] = 128 - nx * m * 127;
+          im.data[i + 1] = 128 - ny * m * 127;
+          im.data[i + 2] = 128;
+          im.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(im, 0, 0);
+      for (const el of [filter, img]) {
+        el.setAttribute("width", String(w));
+        el.setAttribute("height", String(h));
+      }
+      img.setAttribute("href", cv.toDataURL("image/png"));
+      // channel scales: shift_max = scale / 2. Red bends least, blue most: that spread is the colour fringe.
+      const g = reach * 2;
+      [g * 0.95, g, g * 1.07].forEach((v, i) => scales[i]?.setAttribute("scale", String(Math.round(v * 10) / 10)));
+      document.documentElement.classList.add("lg-refract");
+    };
+
+    const tick = () => {
+      raf = 0;
+      cx += (tx - cx) * 0.14;
+      cy += (ty - cy) * 0.14;
+      lens.style.setProperty("--lx", `${cx.toFixed(2)}px`);
+      lens.style.setProperty("--ly", `${cy.toFixed(2)}px`);
+      const sr = stage.getBoundingClientRect();
+      const lr = lens.getBoundingClientRect();
+      const lw = lens.offsetWidth;
+      const lh = lens.offsetHeight;
+      const s = lr.width / lw || 1;
+      const M = (parseFloat(getComputedStyle(lens).getPropertyValue("--mag")) || 1.1) / s;
+      const ccx = lr.left + lr.width / 2 - sr.left;
+      const ccy = lr.top + lr.height / 2 - sr.top;
+      const key = `${sr.width}|${sr.height}`;
+      if (key !== lastRect) {
+        lastRect = key;
+        mag.style.width = `${sr.width}px`;
+        mag.style.height = `${sr.height}px`;
+      }
+      mag.style.transform = `translate(${(lw / 2 - ccx * M).toFixed(2)}px,${(lh / 2 - ccy * M).toFixed(2)}px) scale(${M.toFixed(4)})`;
+      const moving = Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05;
+      const hp = parseFloat(stage.style.getPropertyValue("--hp")) || 0;
+      if ((moving || hp > 0.001) && hp < 1) raf = requestAnimationFrame(tick);
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      const b = lens.getBoundingClientRect();
+      const mx = Math.max(0, Math.min(1, (e.clientX - b.left) / b.width));
+      const my = Math.max(0, Math.min(1, (e.clientY - b.top) / b.height));
+      lens.style.setProperty("--mx", `${mx * 100}%`);
+      lens.style.setProperty("--my", `${my * 100}%`);
+      const dx = e.clientX - (b.left + b.width / 2);
+      const dy = e.clientY - (b.top + b.height / 2);
+      ang = (Math.atan2(dx, -dy) * 180) / Math.PI;
+      lens.style.setProperty("--ang", `${ang.toFixed(1)}deg`);
+      // the lens leans a little toward the pointer
+      tx = Math.max(-1, Math.min(1, (e.clientX / innerWidth - 0.5) * 2)) * 16;
+      ty = Math.max(-1, Math.min(1, (e.clientY / innerHeight - 0.5) * 2)) * 12;
+      kick();
+    };
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(mapRaf);
+      mapRaf = requestAnimationFrame(() => {
+        buildMap();
+        kick();
+      });
+    });
+    ro.observe(lens);
+    buildMap();
+    kick();
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+      cancelAnimationFrame(mapRaf);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("resize", kick);
+      document.documentElement.classList.remove("lg-refract");
+    };
+  }, []);
+
   return (
     <section className="w-track" ref={trackRef} aria-label="Photos from our Supercharger reporting, sorted by who hosts them">
       <svg className="w-lg-defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -333,6 +498,18 @@ export default function Wall({
           <filter id="w-lg" filterUnits="userSpaceOnUse" x="0" y="0" width="560" height="320" colorInterpolationFilters="sRGB">
             <feImage id="w-lg-map" href="" x="0" y="0" width="560" height="320" preserveAspectRatio="none" result="map" />
             <feDisplacementMap id="w-lg-disp" in="SourceGraphic" in2="map" scale="60" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          {/* hero e: the lens' copy of the wall is bent at the rim, one displacement pass per colour channel */}
+          <filter id="e-lens" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="600" height="340" colorInterpolationFilters="sRGB">
+            <feImage id="e-map" href="" x="0" y="0" width="600" height="340" preserveAspectRatio="none" result="map" />
+            <feDisplacementMap id="e-dr" in="SourceGraphic" in2="map" scale="48" xChannelSelector="R" yChannelSelector="G" result="dr" />
+            <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r" />
+            <feDisplacementMap id="e-dg" in="SourceGraphic" in2="map" scale="52" xChannelSelector="R" yChannelSelector="G" result="dg" />
+            <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g" />
+            <feDisplacementMap id="e-db" in="SourceGraphic" in2="map" scale="57" xChannelSelector="R" yChannelSelector="G" result="db" />
+            <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b" />
+            <feComposite in="r" in2="g" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="rg" />
+            <feComposite in="rg" in2="b" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
           </filter>
         </defs>
       </svg>
@@ -393,7 +570,26 @@ export default function Wall({
           Anyone can own a Supercharger. Here is who did.
         </div>
 
-        <Heroes openSites={openSites} operators={operators} asOf={asOf} />
+        <Heroes
+          openSites={openSites}
+          operators={operators}
+          asOf={asOf}
+          lensWorld={groups.map((g) =>
+            g.photos.map((p) => (
+              <span
+                key={p.id}
+                className="w-tile e-tile"
+                ref={(el) => {
+                  if (el) cloneEls.current.set(p.id, el);
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.src} width={p.w} height={p.h} alt="" decoding="async" style={{ objectPosition: p.focus }} />
+                <span className="w-tile-name">{p.name}</span>
+              </span>
+            ))
+          )}
+        />
 
         <div className="w-hint">
           <i aria-hidden="true" />

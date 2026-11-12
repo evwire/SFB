@@ -1,4 +1,6 @@
-/** The four hero treatments. Only the one picked by ?hero= (html[data-hero]) is shown; see hero.css. */
+import type { ReactNode } from "react";
+
+/** The hero treatments. Only the one picked by ?hero= (html[data-hero]) is shown; see hero.css. */
 
 export function Arrow() {
   return (
@@ -31,10 +33,12 @@ export default function Heroes({
   openSites,
   operators,
   asOf,
+  lensWorld,
 }: {
   openSites: number;
   operators: number;
   asOf: string;
+  lensWorld: ReactNode;
 }) {
   const sub = `${openSites} open sites and ${operators} operators on Tesla's map. These are real photos from our reporting.`;
   return (
@@ -137,6 +141,32 @@ export default function Heroes({
             <div className="d-links">
               <Cta />
               <More />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* E: clear Liquid Glass lens. The lens holds a live, magnified copy of the wall (lensWorld) that the
+          SVG filter bends at the rim, so the photos stay sharp and in colour behind it. */}
+      <div className="hero hero-e">
+        <div className="e-lens">
+          <div className="e-glass" aria-hidden="true">
+            <div className="e-mag">
+              <div className="w-world e-world">{lensWorld}</div>
+            </div>
+          </div>
+          <span className="e-tint" aria-hidden="true" />
+          <span className="e-edge" aria-hidden="true" />
+          <span className="e-rim" aria-hidden="true" />
+          <div className="e-copy">
+            <h1>
+              Anyone can own a Supercharger. <em>Here is who did.</em>
+            </h1>
+            <p>
+              {openSites} open sites, {operators} operators. Real photos from our reporting.
+            </p>
+            <div className="e-links">
+              <Cta />
             </div>
           </div>
         </div>

@@ -6,8 +6,9 @@
 html[data-hero="a"] .hero-a,
 html[data-hero="b"] .hero-b,
 html[data-hero="c"] .hero-c,
-html[data-hero="d"] .hero-d { display: block; }
-.hero a, .hero .c-band, .hero .d-lens { pointer-events: auto; }
+html[data-hero="d"] .hero-d,
+html[data-hero="e"] .hero-e { display: block; }
+.hero a, .hero .c-band, .hero .d-lens, .hero .e-lens { pointer-events: auto; }
 .w-stage[data-gone="1"] .w-hero * { pointer-events: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .w-hero h1, .w-hero p, .w-hero dl, .w-hero dd { margin: 0; }
@@ -161,6 +162,81 @@ html.dark .d-spec { background: radial-gradient(55% 45% at var(--mx, 18%) var(--
 .w-lg-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .d-body { background: var(--bg); }
+}
+
+/* ---------- E: clear Liquid Glass lens ----------
+   Clear, not frosted: the photos behind stay sharp and in colour. The lens holds a lightly magnified copy of
+   the wall (see Wall.tsx) that the SVG filter #e-lens bends at the rim, one pass per colour channel. */
+.hero-e { --fg: #f2f5f4; --bg: #06080b; }
+.e-lens {
+  --bezel: 44px; --reach: 26px; --mag: 1.12; --r: 64px;
+  --lx: 0px; --ly: 0px; --ang: -45deg; --mx: 22%; --my: 8%;
+  position: absolute; left: 50%; top: 50%; width: min(620px, calc(100% - 32px)); border-radius: var(--r);
+  padding: 50px 54px 44px; color: #f2f5f4;
+  transform: translate(-50%, -50%) translate(var(--lx), var(--ly)) translateY(calc(var(--hp) * -92vh)) scale(calc(1 - var(--hp) * 0.06));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 30px -10px rgba(0, 0, 0, 0.5), 0 40px 80px -30px rgba(0, 0, 0, 0.55);
+}
+.e-glass { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; background: #cfd5d3; filter: saturate(1.2) contrast(1.04); }
+html.lg-refract .e-glass { filter: url(#e-lens) saturate(1.2) contrast(1.04); }
+.e-mag { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.e-world { position: absolute; left: 0; top: 0; width: 100%; }
+.e-tile { opacity: 1 !important; transition: none !important; }
+.e-tile img { transition: none !important; }
+.e-tile .w-tile-name { display: none; }
+
+/* a soft, local darkening behind the words only; the rest of the glass stays clear */
+.e-tint {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 28% 55%, rgba(6, 8, 11, 0.3) 0%, rgba(6, 8, 11, 0.17) 50%, rgba(6, 8, 11, 0.02) 100%);
+}
+/* inner glow, dark lower lip and a thin inner bevel */
+.e-edge {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 0 7px rgba(255, 255, 255, 0.05),
+    inset 0 0 30px 3px rgba(255, 255, 255, 0.26),
+    inset 0 -16px 26px -10px rgba(6, 8, 11, 0.55),
+    inset 0 12px 20px -12px rgba(255, 255, 255, 0.6),
+    inset 12px 0 22px -14px rgba(255, 255, 255, 0.4),
+    inset -2px -3px 3px -1px rgba(6, 8, 11, 0.4);
+}
+/* specular rim: a fixed top-left light plus one that turns toward the pointer */
+.e-rim {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; padding: 2px;
+  background:
+    conic-gradient(from calc(var(--ang) - 38deg) at 50% 50%, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.9) 38deg, rgba(255, 255, 255, 0) 76deg, rgba(255, 255, 255, 0) 360deg),
+    linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.85) 14%, rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0.28) 86%, rgba(255, 255, 255, 0.65) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
+}
+.e-rim::after {
+  content: ""; position: absolute; inset: -2px; border-radius: inherit;
+  background: radial-gradient(260px 160px at var(--mx) var(--my), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 70%);
+  -webkit-mask: none; mask: none; mix-blend-mode: screen;
+}
+.e-copy { position: relative; z-index: 2; text-shadow: 0 1px 2px rgba(6, 8, 11, 0.55), 0 2px 22px rgba(6, 8, 11, 0.55); }
+.e-copy::before {
+  content: ""; position: absolute; z-index: -1; inset: -22px -26px -14px -30px; border-radius: 48px; pointer-events: none;
+  background: rgba(6, 8, 11, 0.36); filter: blur(24px);
+}
+.e-copy h1 { font: 800 clamp(34px, 3.8vw, 52px) / 0.98 var(--disp); letter-spacing: -0.05em; text-wrap: balance; color: #f6f9f8; }
+.e-copy h1 em { font-style: normal; color: var(--signal-bright); }
+.e-copy p { margin-top: 14px; font: 500 17px/25px var(--sans); color: #f6f9f8; }
+.e-links { margin-top: 22px; display: flex; align-items: center; gap: 24px; }
+.e-lens .h-cta { text-shadow: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 22px -10px rgba(0, 0, 0, 0.65); }
+.hero-e .h-cta { background: #f2f5f4; color: #06080b !important; }
+.hero-e .h-cta i { background: var(--signal); color: #fff; }
+/* no SVG filter (Safari): still clear glass, magnified, with the same rim and light */
+html:not(.lg-refract) .e-lens { --mag: 1.1; }
+@media (prefers-reduced-transparency: reduce) { .e-tint { background: rgba(6, 8, 11, 0.7); } }
+@media (max-width: 760px) {
+  .e-lens { --bezel: 28px; --reach: 15px; --mag: 1.1; --r: 48px; top: auto; bottom: 56px; width: calc(100% - 24px); padding: 36px 30px 30px;
+    transform: translate(-50%, 0) translate(var(--lx), var(--ly)) translateY(calc(var(--hp) * -92vh)); }
+  .e-copy h1 { font-size: 32px; }
+  .e-copy p { font-size: 14.5px; line-height: 21px; margin-top: 10px; }
+  .e-links { margin-top: 16px; }
 }
 
 /* ---------- small screens ---------- */
