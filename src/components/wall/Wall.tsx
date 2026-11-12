@@ -241,8 +241,102 @@ export default function Wall({
     };
   }, [groups]);
 
+  // Liquid Glass: build an edge-refraction map the size of the headline panel and feed it to an
+  // SVG displacement filter used as a backdrop filter. Chromium only; elsewhere the panel keeps
+  // its blur, saturation, rim and shadow (see the CSS fallback).
+  useEffect(() => {
+    const stage = stageRef.current!;
+    const card = cardRef.current!;
+    const q = new URLSearchParams(location.search).get("hero");
+    stage.dataset.hero = q === "flat" ? "flat" : "glass";
+    const brands = (navigator as unknown as { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands;
+    const chromium = Boolean(brands?.some((b) => /Chromium|Google Chrome/.test(b.brand)));
+    if (!chromium || q === "flat") return;
+    const filter = document.getElementById("w-lg") as SVGFilterElement | null;
+    const img = document.getElementById("w-lg-map") as SVGFEImageElement | null;
+    const disp = document.getElementById("w-lg-disp") as SVGFEDisplacementMapElement | null;
+    if (!filter || !img || !disp) return;
+    let raf = 0;
+    const build = () => {
+      const w = Math.round(card.offsetWidth);
+      const h = Math.round(card.offsetHeight);
+      if (w < 40 || h < 40) return;
+      const r = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 26;
+      const bezel = Math.min(56, Math.min(w, h) * 0.22);
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const ctx = cv.getContext("2d")!;
+      const im = ctx.createImageData(w, h);
+      const hx = w / 2 - r;
+      const hy = h / 2 - r;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const px = x + 0.5 - w / 2;
+          const py = y + 0.5 - h / 2;
+          const qx = Math.abs(px) - hx;
+          const qy = Math.abs(py) - hy;
+          const ox = Math.max(qx, 0);
+          const oy = Math.max(qy, 0);
+          const sd = Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r;
+          const d = -sd;
+          let nx = 0;
+          let ny = 0;
+          if (ox > 0 || oy > 0) {
+            const l = Math.hypot(ox, oy) || 1;
+            nx = (Math.sign(px) * ox) / l;
+            ny = (Math.sign(py) * oy) / l;
+          } else if (qx > qy) nx = Math.sign(px);
+          else ny = Math.sign(py);
+          const t = Math.min(1, Math.max(0, d / bezel));
+          const m = Math.pow(1 - t, 2.4); // strongest at the very edge, none past the bezel
+          const i = (y * w + x) * 4;
+          im.data[i] = 128 - nx * m * 127; // sample from the inside: content squeezes toward the rim
+          im.data[i + 1] = 128 - ny * m * 127;
+          im.data[i + 2] = 128;
+          im.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(im, 0, 0);
+      filter.setAttribute("width", String(w));
+      filter.setAttribute("height", String(h));
+      img.setAttribute("width", String(w));
+      img.setAttribute("height", String(h));
+      img.setAttribute("href", cv.toDataURL("image/png"));
+      disp.setAttribute("scale", String(Math.round(bezel * 3)));
+      document.documentElement.classList.add("lg-refract");
+    };
+    build();
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(build);
+    });
+    ro.observe(card);
+    // a soft specular that follows the pointer
+    const onMove = (e: PointerEvent) => {
+      const b = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)) * 100}%`);
+      card.style.setProperty("--my", `${Math.max(0, Math.min(1, (e.clientY - b.top) / b.height)) * 100}%`);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.classList.remove("lg-refract");
+    };
+  }, []);
+
   return (
     <section className="w-track" ref={trackRef} aria-label="Photos from our Supercharger reporting, sorted by who hosts them">
+      <svg className="w-lg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="w-lg" filterUnits="userSpaceOnUse" x="0" y="0" width="560" height="320" colorInterpolationFilters="sRGB">
+            <feImage id="w-lg-map" href="" x="0" y="0" width="560" height="320" preserveAspectRatio="none" result="map" />
+            <feDisplacementMap id="w-lg-disp" in="SourceGraphic" in2="map" scale="60" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
       <div className="w-stage" ref={stageRef}>
         <div className="w-world" ref={worldRef}>
           {groups.map((g) =>
