@@ -1,5 +1,5 @@
 import "server-only";
-import { readFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 export type SnapshotDelta = {
@@ -15,11 +15,22 @@ export type SnapshotDelta = {
 };
 
 /**
- * Verified from data/snapshots/2026-10-06/CHANGELOG.md layer counts.
- * Parsed at build time so the KPI cannot invent a number.
+ * Parsed at build time from the latest snapshot CHANGELOG so the KPI
+ * cannot invent a number. Uses the newest dated snapshot CHANGELOG
+ * (main keeps later pulls than the Oct 6 file the redesign originally hardcoded).
  */
 export function getSnapshotDelta(): SnapshotDelta {
-  const sourcePath = "data/snapshots/2026-10-06/CHANGELOG.md";
+  const snapRoot = join(process.cwd(), "data", "snapshots");
+  const dirs = existsSync(snapRoot)
+    ? readdirSync(snapRoot).filter((name) => /^\d{4}-\d{2}-\d{2}$/.test(name)).sort()
+    : [];
+  const latest = [...dirs].reverse().find((name) =>
+    existsSync(join(snapRoot, name, "CHANGELOG.md"))
+  );
+  if (!latest) {
+    throw new Error("No snapshot CHANGELOG.md found under data/snapshots");
+  }
+  const sourcePath = `data/snapshots/${latest}/CHANGELOG.md`;
   const raw = readFileSync(join(process.cwd(), sourcePath), "utf8");
   const openUs = raw.match(/\| open-us[^|]*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([+-]?\d+)/);
   const upcomingUs = raw.match(/\| upcoming-us[^|]*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([+-]?\d+)/);
