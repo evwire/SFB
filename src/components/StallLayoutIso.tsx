@@ -6,8 +6,12 @@
 
 type Props = {
   stalls: number;
-  /** CSS colour or var() used for plate + posts. */
+  /** CSS colour or var() used for plate + posts (ink baseline). */
   color: string;
+  /** Optional Francis/subject colour for the first `subjectCount` posts. */
+  subjectColor?: string;
+  /** How many posts (of `stalls`) draw in subjectColor — rounded honest share. */
+  subjectCount?: number;
   className?: string;
   /** Uniform display scale (geometry units → CSS px). Same for every size. */
   scale?: number;
@@ -24,13 +28,11 @@ const S30 = 0.5;
 /** Geometry → CSS px. Keeps the full chart ~one screen on desktop. */
 export const ISO_DISPLAY_SCALE = 0.96;
 
+/** Single row always — width ∝ stall count at shared scale (8 reads longer than 4). */
 function layoutFor(n: number): { rows: number; perRow: number[] } {
   const count = Math.max(0, Math.floor(n));
   if (count <= 0) return { rows: 0, perRow: [] };
-  if (count <= 6) return { rows: 1, perRow: [count] };
-  const a = Math.ceil(count / 2);
-  const b = count - a;
-  return { rows: 2, perRow: [a, b] };
+  return { rows: 1, perRow: [count] };
 }
 
 function P(ox: number, oy: number, x: number, y: number, z = 0): [number, number] {
@@ -80,6 +82,8 @@ export function isoDisplaySize(stalls: number, scale = ISO_DISPLAY_SCALE): IsoMe
 export default function StallLayoutIso({
   stalls,
   color,
+  subjectColor,
+  subjectCount = 0,
   className,
   scale = ISO_DISPLAY_SCALE,
 }: Props) {
@@ -110,9 +114,16 @@ export default function StallLayoutIso({
   const plate = `color-mix(in srgb, ${color} 14%, white)`;
   const plateEdge = `color-mix(in srgb, ${color} 40%, #666)`;
   const plateSide = `color-mix(in srgb, ${color} 28%, #444)`;
-  const postTop = `color-mix(in srgb, ${color} 25%, white)`;
-  const postLeft = `color-mix(in srgb, ${color} 82%, black)`;
-  const postRight = `color-mix(in srgb, ${color} 62%, black)`;
+  const nSubject = Math.max(0, Math.min(stalls, Math.round(subjectCount)));
+  function shades(c: string) {
+    return {
+      top: `color-mix(in srgb, ${c} 25%, white)`,
+      left: `color-mix(in srgb, ${c} 82%, black)`,
+      right: `color-mix(in srgb, ${c} 62%, black)`,
+    };
+  }
+  const inkSh = shades(color);
+  const subSh = shades(subjectColor ?? color);
 
   const boxes: { x0: number; y0: number }[] = [];
   for (let r = 0; r < rows; r++) {
@@ -188,6 +199,7 @@ export default function StallLayoutIso({
       {boxes.map(({ x0, y0 }, idx) => {
         const x1 = x0 + 9;
         const y1 = y0 + 8;
+        const sh = idx < nSubject && subjectColor ? subSh : inkSh;
         return (
           <g key={idx}>
             <polygon
@@ -197,7 +209,7 @@ export default function StallLayoutIso({
                 P(ox, oy, x1, y1, HH),
                 P(ox, oy, x0, y1, HH),
               ])}
-              fill={postLeft}
+              fill={sh.left}
             />
             <polygon
               points={pts([
@@ -206,7 +218,7 @@ export default function StallLayoutIso({
                 P(ox, oy, x1, y1, HH),
                 P(ox, oy, x1, y0, HH),
               ])}
-              fill={postRight}
+              fill={sh.right}
             />
             <polygon
               points={pts([
@@ -215,7 +227,7 @@ export default function StallLayoutIso({
                 P(ox, oy, x1, y1, HH),
                 P(ox, oy, x0, y1, HH),
               ])}
-              fill={postTop}
+              fill={sh.top}
             />
           </g>
         );

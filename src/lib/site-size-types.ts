@@ -11,8 +11,14 @@ export type SizeIsoLayer = {
   stalls: number;
   sites: number;
   pct: number;
+  /** Share of all open stalls in this size band. */
+  stallPct: number;
   sitesLabel: string;
   buildersLabel: string;
+  /** Francis Energy sites in this size class (for honest blue share in layouts). */
+  francisSites: number;
+  /** True when Francis has the most sites of any operator in this size class. */
+  francisIsLeader: boolean;
 };
 
 export type SizeCell = {
@@ -39,9 +45,7 @@ export type SizeStatTile = {
 };
 
 export type SizeStory = {
-  /** Big Fraunces answer, e.g. "Most are small: 40 of 64 sites have just 4 stalls." */
   headline: string;
-  /** Who goes bigger, plain English. */
   subline: string;
   tiles: SizeStatTile[];
 };

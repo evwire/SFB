@@ -2,11 +2,8 @@
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import FindUsPricingBlock from "@/components/FindUsPricing";
-import { STATUS_STYLE, STATUS_ORDER, COVERED_STYLE, pinRadius, fmtDate, humaniseUnstated, humanisePublicCopy } from "@/lib/style";
-import type { Site, SiteStatus, Region, SitePhase } from "@/lib/types";
-
-type Filter = "All" | SiteStatus;
+import { STATUS_STYLE, COVERED_STYLE, pinRadius, fmtDate, humaniseUnstated, humanisePublicCopy } from "@/lib/style";
+import type { Site, Region, SitePhase } from "@/lib/types";
 
 export type MapShape = { abbr: string; name: string; d: string; cx: number | null; cy: number | null };
 
@@ -20,12 +17,18 @@ export default function MapExplorer({
   upcomingStyle = false,
   phase = "open",
   onPhaseChange,
+  onRegionChange,
   openCount = 0,
   upcomingCount = 0,
-  newIds,
-  newSince = null,
-  focusSlug = null,
-  focusNonce = 0,
+  usOpenCount = 0,
+  usUpcomingCount = 0,
+  euOpenCount = 0,
+  euUpcomingCount = 0,
+  defaultHighlightOperator = null,
+  showCoverage: showCoverageProp,
+  onShowCoverageChange,
+  splitOklahoma = false,
+  newOpenIds = [],
 }: {
   sites: Site[];
   shapes: MapShape[];
@@ -36,16 +39,37 @@ export default function MapExplorer({
   upcomingStyle?: boolean;
   phase?: SitePhase;
   onPhaseChange?: (phase: SitePhase) => void;
+  onRegionChange?: (region: Region) => void;
   openCount?: number;
   upcomingCount?: number;
-  newIds?: Set<string>;
-  newSince?: string | null;
-  focusSlug?: string | null;
-  focusNonce?: number;
+  usOpenCount?: number;
+  usUpcomingCount?: number;
+  euOpenCount?: number;
+  euUpcomingCount?: number;
+  defaultHighlightOperator?: string | null;
+  showCoverage?: boolean;
+  onShowCoverageChange?: (v: boolean) => void;
+  /** Side-by-side Oklahoma zoom panel (US only). */
+  splitOklahoma?: boolean;
+  newOpenIds?: string[];
 }) {
-  const [filter, setFilter] = useState<Filter>("All");
+  const [showCoverageLocal, setShowCoverageLocal] = useState(false);
+  const showCoverage = showCoverageProp ?? showCoverageLocal;
+  const setShowCoverage = (v: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof v === "function" ? v(showCoverage) : v;
+    if (onShowCoverageChange) onShowCoverageChange(next);
+    else setShowCoverageLocal(next);
+  };
   const [showHeavy, setShowHeavy] = useState(false);
+  const newSet = useMemo(() => new Set(newOpenIds), [newOpenIds]);
+  const isNewSite = (s: Site) => {
+    const fromUrl = s.sourceUrl.match(/supercharger\/(\d+)/i);
+    const key = fromUrl ? fromUrl[1]! : s.slug;
+    return newSet.has(key);
+  };
   const [operator, setOperator] = useState<string>("All operators");
+  const highlightOperator =
+    operator !== "All operators" ? operator : defaultHighlightOperator;
   const allAreasLabel = `All ${areaNoun}`;
   const [stateFilter, setStateFilter] = useState<string>(allAreasLabel);
   const [selected, setSelected] = useState<Site | null>(null);
@@ -276,7 +300,7 @@ export default function MapExplorer({
 
   // Keep filters coherent when phase changes (also if remount key is removed later).
   useEffect(() => {
-    setFilter("All");
+    setShowCoverage(false);
     setOperator("All operators");
     setStateFilter(allAreasLabel);
     setShowHeavy(false);
@@ -284,13 +308,6 @@ export default function MapExplorer({
     clearAllPointers();
     resetView();
   }, [phase, allAreasLabel, clearAllPointers, resetView]);
-
-  // A pick from the "New since last check" feed opens that site's card.
-  useEffect(() => {
-    if (!focusSlug || !focusNonce) return;
-    const hit = sites.find((s) => s.slug === focusSlug);
-    if (hit) setSelected(hit);
-  }, [focusSlug, focusNonce, sites]);
 
   const operators = useMemo(
     () => ["All operators", ...Array.from(new Set(sites.map((s) => s.operator ?? "Brand not stated"))).sort()],
@@ -306,20 +323,25 @@ export default function MapExplorer({
     () =>
       sites.filter((s) => {
         if (s.siteClass === "Heavy-duty" && !showHeavy) return false;
-        if (filter !== "All" && s.status !== filter) return false;
         if (operator !== "All operators" && s.operator !== operator) return false;
         if (stateFilter !== allAreasLabel && s.state !== stateFilter) return false;
         return true;
       }),
-    [sites, filter, showHeavy, operator, stateFilter, allAreasLabel]
+    [sites, showHeavy, operator, stateFilter, allAreasLabel]
   );
 
   const plotted = visible.filter((s) => s.x != null && s.y != null);
   const unplotted = visible.filter((s) => s.x == null || s.y == null);
-  const statesWithSites = useMemo(
-    () => new Set(sites.filter((s) => s.siteClass === "SfB").map((s) => s.state)),
-    [sites]
-  );
+  const stateCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const s of sites) {
+      if (s.siteClass !== "SfB") continue;
+      m[s.state] = (m[s.state] ?? 0) + 1;
+    }
+    return m;
+  }, [sites]);
+  const maxStateCount = Math.max(1, ...Object.values(stateCounts), 0);
+
 
   // Escape closes the panel and the scroll lock is set on the documentElement,
   // because body-level locks reset the scroll position (STACK.md, Events build).
@@ -336,94 +358,184 @@ export default function MapExplorer({
     };
   }, [selected, close]);
 
+  // State label positions: densest states get an on-map callout.
+  const visibleShapes = useMemo(() => {
+    if (region !== "us") return shapes;
+    return shapes.filter((st) => {
+      if (st.abbr === "AK" || st.abbr === "HI") return (stateCounts[st.abbr] ?? 0) > 0;
+      return true;
+    });
+  }, [shapes, region, stateCounts]);
+
+  const okDetail = useMemo(() => {
+    if (region !== "us") return null;
+    const pts = plotted.filter((s) => s.state === "OK");
+    if (pts.length < 5) return null;
+    const xs = pts.map((s) => s.x!);
+    const ys = pts.map((s) => s.y!);
+    const pad = 14;
+    return {
+      n: pts.length,
+      minX: Math.min(...xs) - pad,
+      maxX: Math.max(...xs) + pad,
+      minY: Math.min(...ys) - pad,
+      maxY: Math.max(...ys) + pad,
+      points: pts,
+    };
+  }, [plotted, region]);
+
+  const stateLabels = useMemo(() => {
+    const entries = Object.entries(stateCounts).sort((a, b) => b[1] - a[1]);
+    // Offsets push labels into empty space (Pacific / Gulf / Atlantic).
+    const offset: Record<string, { dx: number; dy: number }> = {
+      // Pacific / Gulf / Atlantic empties — keep labels off the left clip edge
+      OK: { dx: 0, dy: -28 },
+      TX: { dx: 10, dy: 42 },
+      CA: { dx: 58, dy: -22 },  // east of CA (inland) — west offset clipped the left edge
+      FL: { dx: 48, dy: 10 },
+      NY: { dx: 38, dy: -10 },
+      GA: { dx: 42, dy: 14 },
+    };
+    const out: { abbr: string; name: string; n: number; x: number; y: number; lx: number; ly: number }[] = [];
+    for (const [abbr, n] of entries) {
+      if (n < 3) continue;
+      // Oklahoma is labeled on the in-map magnifier; skip duplicate callout
+      if (abbr === "OK") continue;
+      const shape = shapes.find((s) => s.abbr === abbr);
+      if (!shape || shape.cx == null || shape.cy == null) continue;
+      const name =
+        abbr === "OK"
+          ? "Oklahoma"
+          : abbr === "TX"
+            ? "Texas"
+            : abbr === "CA"
+              ? "California"
+              : abbr === "FL"
+                ? "Florida"
+                : shape.name;
+      const off = offset[abbr] ?? { dx: 0, dy: -18 };
+      out.push({
+        abbr,
+        name,
+        n,
+        x: shape.cx,
+        y: shape.cy,
+        lx: shape.cx + off.dx,
+        ly: shape.cy + off.dy,
+      });
+      if (out.length >= 6) break;
+    }
+    return out;
+  }, [stateCounts, shapes]);
+
   return (
     <div className="map-wrap">
-      <div className="controls">
-        {onPhaseChange && (
-          <div className="filter-row phase-map-row" role="group" aria-label="Open, upcoming, or both">
+      <div className="map-toolbar" role="toolbar" aria-label="Map filters">
+        <div className="map-toolbar-seg" role="group" aria-label="Status">
+          {(["open", "upcoming", "both"] as SitePhase[]).map((p) => (
             <button
+              key={p}
               type="button"
-              className={"fbtn phase-fbtn" + (phase === "open" ? " on" : "")}
-              onClick={() => onPhaseChange("open")}
-              aria-pressed={phase === "open"}
+              className={"map-tb-btn" + (phase === p ? " on" : "")}
+              aria-pressed={phase === p}
+              onClick={() => onPhaseChange?.(p)}
             >
-              Open <span className="mono fbtn-count">{openCount}</span>
+              {p === "both" ? "Both" : p === "open" ? "Open" : "Upcoming"}
             </button>
+          ))}
+        </div>
+        <span className="map-tb-sep" aria-hidden="true" />
+        <div className="map-toolbar-seg" role="group" aria-label="Region">
+          {(["us", "europe"] as Region[]).map((r) => (
             <button
+              key={r}
               type="button"
-              className={"fbtn phase-fbtn" + (phase === "upcoming" ? " on" : "")}
-              onClick={() => onPhaseChange("upcoming")}
-              aria-pressed={phase === "upcoming"}
+              className={"map-tb-btn" + (region === r ? " on" : "")}
+              aria-pressed={region === r}
+              onClick={() => onRegionChange?.(r)}
             >
-              Upcoming <span className="mono fbtn-count">{upcomingCount}</span>
+              {r === "us" ? "US" : "Europe"}
             </button>
-            <button
-              type="button"
-              className={"fbtn phase-fbtn" + (phase === "both" ? " on" : "")}
-              onClick={() => onPhaseChange("both")}
-              aria-pressed={phase === "both"}
-            >
-              Both <span className="mono fbtn-count">{openCount + upcomingCount}</span>
-            </button>
-          </div>
-        )}
-        <div className="filter-row" role="group" aria-label="Filter sites by status">
+          ))}
+        </div>
+        <span className="map-tb-sep" aria-hidden="true" />
+        <label className="map-tb-select">
+          <span className="sr-only">Operator</span>
+          <select value={operator} onChange={(e) => setOperator(e.target.value)}>
+            {operators.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+        </label>
+        <label className="map-tb-select">
+          <span className="sr-only">State</span>
+          <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
+            {stateOptions.map((st) => (
+              <option key={st} value={st}>
+                {st === allAreasLabel ? "All states" : st}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="map-tb-sep" aria-hidden="true" />
+        <div className="map-toolbar-seg" role="group" aria-label="EVwire stories">
           <button
-            className={"fbtn" + (filter === "All" ? " on" : "")}
-            onClick={() => setFilter("All")}
-            aria-pressed={filter === "All"}
+            type="button"
+            className={"map-tb-btn" + (!showCoverage ? " on" : "")}
+            aria-pressed={!showCoverage}
+            onClick={() => setShowCoverage(false)}
           >
-            <span aria-hidden="true">◆</span> All ({sites.filter((s) => showHeavy || s.siteClass === "SfB").length})
+            All sites
           </button>
-          {STATUS_ORDER.filter((st) => sites.some((s) => s.status === st)).map((st) => {
-            const n = sites.filter((s) => s.status === st && (showHeavy || s.siteClass === "SfB")).length;
-            if (n === 0) return null;
-            const style = STATUS_STYLE[st];
-            return (
-              <button
-                key={st}
-                className={"fbtn" + (filter === st ? " on" : "")}
-                onClick={() => setFilter(st)}
-                aria-pressed={filter === st}
-              >
-                <span aria-hidden="true" style={{ color: style.color }}>{style.glyph}</span> {style.label} ({n})
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className={"map-tb-btn" + (showCoverage ? " on" : "")}
+            aria-pressed={showCoverage}
+            onClick={() => setShowCoverage(true)}
+          >
+            Stories
+          </button>
         </div>
-
-        <div className="filter-row secondary">
-          <label className="sel">
-            <span className="sr-only">Filter by operator</span>
-            <select value={operator} onChange={(e) => setOperator(e.target.value)}>
-              {operators.map((o) => <option key={o}>{o}</option>)}
-            </select>
-          </label>
-          <label className="sel">
-            <span className="sr-only">Filter by {areaNoun.slice(0, -1)}</span>
-            <select value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
-              {stateOptions.map((st) => <option key={st}>{st}</option>)}
-            </select>
-          </label>
-          {sites.some((s) => s.siteClass === "Heavy-duty") && (
-            <label className="toggle">
-              <input type="checkbox" checked={showHeavy} onChange={(e) => setShowHeavy(e.target.checked)} />
-              <span>Include heavy-duty Tesla MCS sites</span>
-            </label>
-          )}
-        </div>
+        {sites.some((s) => s.siteClass === "Heavy-duty") ? (
+          <button
+            type="button"
+            className={"map-tb-btn" + (showHeavy ? " on" : "")}
+            aria-pressed={showHeavy}
+            onClick={() => setShowHeavy((v) => !v)}
+          >
+            Heavy-duty
+          </button>
+        ) : null}
       </div>
 
-      <figure className="map-figure glass">
-        <div className="map-tools" aria-label="Map zoom controls">
+      <div className={"map-split" + (splitOklahoma ? " map-split-on" : "")}>
+      <figure className="map-figure map-figure-flush map-national">
+        <div className="map-figure-head">
+          <span className="map-figure-title">
+            {region === "europe" ? "Europe" : "United States"}
+            {phase === "upcoming" ? " · upcoming" : phase === "both" ? " · open + upcoming" : " · open"}
+          </span>
+          <span className="legend-chip legend-sizes" aria-label="Dot size by stalls">
+            {([4, 6, 8, 12, 20] as const).map((n) => (
+              <span key={n} className="legend-size-step">
+                <span
+                  className="legend-size-dot"
+                  style={{ width: 6 + n * 0.55, height: 6 + n * 0.55 }}
+                  aria-hidden="true"
+                />
+                {n}
+              </span>
+            ))}
+          </span>
+        </div>
+        <div className="map-tools map-tools-corner map-tools-sw map-tools-quiet map-tools-inframe" aria-label="Map zoom controls">
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale + 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom in">+</button>
-          <span className="zoom-level mono" aria-live="polite">{zoomPercent}%</span>
           <button type="button" className="zoom-btn" onClick={() => setZoomAt(mapView.scale - 0.5, { x: viewW / 2, y: viewH / 2 })} aria-label="Zoom out">−</button>
-          <button type="button" className="reset-btn" onClick={resetView}>Reset view</button>
+          <button type="button" className="reset-btn" onClick={resetView}>Reset</button>
         </div>
         <svg
           ref={svgRef}
-          viewBox={`0 0 ${viewW} ${viewH}`}
+          viewBox={`-40 -24 ${viewW + 80} ${viewH + 56}`}
           className={"usmap" + (isInteracting ? " is-dragging" : "")}
           role="img"
           aria-label={`Map of ${region === "europe" ? "Europe" : "the United States"} showing ${plotted.length} ${
@@ -437,22 +549,27 @@ export default function MapExplorer({
           onLostPointerCapture={onLostPointerCapture}
         >
           <g transform={`translate(${mapView.x} ${mapView.y}) scale(${mapView.scale})`}>
-            <g>
-              {shapes.map((st) => (
-                <path
-                  key={st.abbr}
-                  d={st.d}
-                  className={"state" + (statesWithSites.has(st.abbr) ? " has" : "")}
-                >
-                  <title>{st.name}</title>
-                </path>
-              ))}
-            </g>
-            <g>
+              {visibleShapes.map((st) => {
+                const n = stateCounts[st.abbr] ?? 0;
+                const heat = n > 0 ? 0.04 + (n / maxStateCount) * 0.1 : 0;
+                return (
+                  <path
+                    key={st.abbr}
+                    d={st.d}
+                    className={"state" + (n > 0 ? " has" : "")}
+                    style={n > 0 ? { fill: `color-mix(in srgb, var(--ink) ${Math.round(heat * 100)}%, var(--paper))` } : undefined}
+                  >
+                    <title>{n > 0 ? `${st.name}: ${n} site${n === 1 ? "" : "s"}` : st.name}</title>
+                  </path>
+                );
+              })}
               {plotted.map((s) => {
               const style = STATUS_STYLE[s.status];
               const covered = Boolean(s.articles?.length);
-              const pinColor = covered ? COVERED_STYLE.color : style.color;
+              const isHighlight =
+                Boolean(highlightOperator) &&
+                (s.operator ?? "Brand not stated") === highlightOperator;
+              const pinColor = isHighlight ? "var(--subject)" : "var(--dot-other)";
               const r = pinRadius(s.stalls);
               const isArea = s.coordPrecision === "Area-Only";
               const on = selected?.slug === s.slug;
@@ -462,76 +579,168 @@ export default function MapExplorer({
                 s.pinStyle === "upcoming" ||
                 (phase === "both" && s.status !== "Operational");
               const isFrancis = /francis energy/i.test(s.operator ?? "");
-              const isNew = newIds?.has(s.slug) ?? false;
               return (
                 <g
                   key={s.slug}
-                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "") + (isFrancis ? " francis" : "")}
+                  className={"pin" + (on ? " on" : "") + (covered ? " covered" : "") + (isFrancis ? " francis" : "") + (isHighlight ? " highlight" : "")}
                   transform={`translate(${s.x} ${s.y})`}
                   onClick={() => setSelected(s)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(s); } }}
                   tabIndex={0}
                   role="button"
-                  data-slug={s.slug}
-                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.${isNew ? ` New since ${newSince ?? "last check"}.` : ""}`}
+                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.`}
                 >
-                  {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
-                  {isNew && <circle className="new-ring" r={r + 5} />}
+                  {isArea && <circle className="halo" r={r + 6} style={{ stroke: pinColor }} />}
+                  {showCoverage && covered && (
+                    <circle
+                      className="covered-ring"
+                      r={r + (ring ? 4 : 2.8)}
+                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.1, opacity: 0.75 }}
+                    />
+                  )}
+                  {isNewSite(s) && (
+                    <circle
+                      className="new-ring"
+                      r={r + 3.2}
+                      style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 1.5, strokeDasharray: "3 2" }}
+                    />
+                  )}
                   {ring ? (
                     <>
-                      {/* Solid invisible hit target: fill:none ring otherwise misses clicks */}
                       <circle className="hit" r={r + 2} />
-                      <circle className="core upcoming-ring" r={r + 2} style={{ fill: "none", stroke: pinColor, strokeWidth: 2.2 }} />
-                      <circle className="core upcoming-dot" r={Math.max(2.5, r - 2)} style={{ fill: pinColor, opacity: 0.85 }} />
+                      <circle className="core upcoming-ring" r={r + 2} style={{ fill: "none", stroke: pinColor, strokeWidth: 2 }} />
+                      <circle className="core upcoming-dot" r={Math.max(2.2, r - 2)} style={{ fill: pinColor, opacity: 0.9 }} />
                     </>
                   ) : (
-                    <circle className="core" r={r} style={{ fill: pinColor }} />
+                    <circle
+                      className="core"
+                      r={r}
+                      style={
+                        isHighlight
+                          ? { fill: "var(--subject)", stroke: "#fff", strokeWidth: 1.6 }
+                          : showCoverage && covered
+                            ? { fill: "var(--ink)", stroke: "#fff", strokeWidth: 1.25, opacity: 0.9 }
+                            : {
+                                fill: "var(--dot-other)",
+                                stroke: "var(--paper)",
+                                strokeWidth: 1,
+                                opacity: showCoverage ? 0.35 : 0.85,
+                              }
+                      }
+                    />
                   )}
-                  {isFrancis && (
-                    <text
-                      className="pin-letter"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      dy="0.05em"
-                      aria-hidden="true"
-                    >
-                      F
-                    </text>
-                  )}
+                  {/* F letter only in Oklahoma zoom panel */}
                   {s.siteClass === "Heavy-duty" && <circle className="hd" r={r + 3.5} />}
                 </g>
               );
               })}
-            </g>
+              {stateLabels.map((lab) => (
+                <g key={`lab-${lab.abbr}`} className="state-callout">
+                  <line
+                    className="state-leader"
+                    x1={lab.x}
+                    y1={lab.y}
+                    x2={lab.lx}
+                    y2={lab.ly}
+                  />
+                  <text
+                    className="state-callout-text"
+                    x={lab.lx}
+                    y={lab.ly}
+                    textAnchor={lab.lx < lab.x ? "end" : "start"}
+                    dy="0.35em"
+                  >
+                    {lab.n} in {lab.name}
+                  </text>
+                </g>
+              ))}
+
+              {okDetail && region === "us" && !splitOklahoma ? (
+                <g className="ok-inset" transform={`translate(${viewW * 0.07}, ${viewH * 0.55})`}>
+                  <line
+                    className="ok-inset-leader"
+                    x1={((okDetail.minX + okDetail.maxX) / 2) - viewW * 0.07}
+                    y1={((okDetail.minY + okDetail.maxY) / 2) - viewH * 0.55}
+                    x2={54}
+                    y2={54}
+                  />
+                  <rect className="ok-inset-frame" x={0} y={0} width={108} height={118} rx={4} />
+                  <clipPath id="ok-inset-clip">
+                    <rect x={2} y={2} width={104} height={104} rx={2} />
+                  </clipPath>
+                  <g clipPath="url(#ok-inset-clip)">
+                    <rect x={2} y={2} width={104} height={104} className="ok-inset-bg" />
+                    <g
+                      transform={`translate(54 54) scale(${(92 / Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY)).toFixed(4)}) translate(${(-(okDetail.minX + okDetail.maxX) / 2).toFixed(2)} ${(-(okDetail.minY + okDetail.maxY) / 2).toFixed(2)})`}
+                    >
+                      {visibleShapes
+                        .filter((st) => st.abbr === "OK")
+                        .map((st) => (
+                          <path key={`ins-${st.abbr}`} d={st.d} className="state has" />
+                        ))}
+                      {okDetail.points.map((s) => {
+                        const isHl =
+                          Boolean(highlightOperator) &&
+                          (s.operator ?? "Brand not stated") === highlightOperator;
+                        const rr = Math.max(1.8, pinRadius(s.stalls) * 0.4);
+                        return (
+                          <circle
+                            key={`insp-${s.slug}`}
+                            cx={s.x!}
+                            cy={s.y!}
+                            r={rr}
+                            style={{
+                              fill: isHl ? "var(--subject)" : "var(--dot-other)",
+                              stroke: "none",
+                              opacity: isHl ? 1 : 0.55,
+                            }}
+                          />
+                        );
+                      })}
+                    </g>
+                  </g>
+                  <text className="ok-inset-label" textAnchor="middle" x={54} y={114}>
+                    {okDetail.n} in Oklahoma
+                  </text>
+                </g>
+              ) : null}
+
           </g>
+
         </svg>
 
-        <figcaption className="map-caption">
-          <div className="map-legend" aria-label="Map legend">
+        <div className="map-frame-legend" aria-label="Map legend">
+          <span className="legend-chip">
+            <span className="legend-swatch solid" style={{ background: "var(--subject)" }} aria-hidden="true" />
+            Francis Energy
+          </span>
+          <span className="legend-chip">
+            <span className="legend-swatch solid" style={{ background: "var(--dot-other)" }} aria-hidden="true" />
+            Other operators
+          </span>
+          {newOpenIds.length > 0 ? (
             <span className="legend-chip">
-              <span className="legend-swatch solid" style={{ background: "var(--signal)" }} aria-hidden="true" />
-              Open
+              <span className="legend-swatch ring new-swatch-ink" aria-hidden="true" />
+              New since 25 Sep ({newOpenIds.length})
             </span>
+          ) : null}
+          {phase !== "open" || upcomingStyle ? (
             <span className="legend-chip">
-              <span className="legend-swatch ring" style={{ borderColor: "var(--blue)" }} aria-hidden="true" />
+              <span className="legend-swatch ring" style={{ borderColor: "var(--upcoming)" }} aria-hidden="true" />
               Upcoming
             </span>
+          ) : null}
+          {showCoverage ? (
             <span className="legend-chip covered">
-              <span className="legend-swatch solid" style={{ background: COVERED_STYLE.color }} aria-hidden="true" />
-              <span aria-hidden="true">{COVERED_STYLE.glyph}</span> {COVERED_STYLE.label}
+              <span className="legend-swatch ring" style={{ borderColor: "var(--ink)" }} aria-hidden="true" />
+              {COVERED_STYLE.label}
             </span>
-            <span className="legend-chip francis">
-              <span className="legend-swatch solid francis-swatch" aria-hidden="true">F</span>
-              Francis Energy
-            </span>
-          </div>
-          <span className="mono">
-            Pins use Tesla’s published coordinates when available. Soft ring = town-level only.
-            Amber pins are sites EVwire has written about.
-          </span>
-          <span className="mono map-gap-note">
-            EVgo sites aren’t on this map yet — we’re still building that layer.
-          </span>
+          ) : null}
+        </div>
+        <figcaption className="map-caption map-caption-quiet">
+          {phase !== "open" ? (
+            <span className="map-gap-note">EVgo sites are not on this map.</span>
+          ) : null}
           {unplotted.length > 0 && (
             <span className="mono warn">
               {unplotted.length} site{unplotted.length > 1 ? "s" : ""} cannot be plotted because the
@@ -540,6 +749,141 @@ export default function MapExplorer({
           )}
         </figcaption>
       </figure>
+      {splitOklahoma && okDetail && region === "us" ? (
+        <aside className="ok-zoom-panel" aria-label="Oklahoma detail">
+          <h3 className="ok-zoom-title">
+            Oklahoma · {okDetail.n} sites
+            <span className="ok-zoom-sub">
+              {" "}
+              · {okDetail.points.filter((s) => /francis energy/i.test(s.operator ?? "")).length} Francis
+            </span>
+            <a className="ok-zoom-locator" href="#map">US map</a>
+          </h3>
+          {(() => {
+            const all = [...okDetail.points].sort((a, b) => (a.x ?? 0) - (b.x ?? 0) || (a.city ?? a.name).localeCompare(b.city ?? b.name));
+            const span = Math.max(okDetail.maxX - okDetail.minX, okDetail.maxY - okDetail.minY, 1);
+            const scale = 240 / span;
+            const cx0 = (okDetail.minX + okDetail.maxX) / 2;
+            const cy0 = (okDetail.minY + okDetail.maxY) / 2;
+            type Pt = { s: (typeof okDetail.points)[0]; i: number; x: number; y: number; r: number; francis: boolean };
+            const projected: Pt[] = all.map((s, i) => ({
+              s,
+              i: i + 1,
+              x: 160 + (s.x! - cx0) * scale,
+              y: 125 + (s.y! - cy0) * scale,
+              r: Math.max(5, Math.min(9, (s.stalls ?? 4) * 0.65)),
+              francis: /francis energy/i.test(s.operator ?? ""),
+            }));
+            for (let pass = 0; pass < 10; pass++) {
+              for (let a = 0; a < projected.length; a++) {
+                for (let b = a + 1; b < projected.length; b++) {
+                  const A = projected[a]!;
+                  const B = projected[b]!;
+                  let dx = B.x - A.x;
+                  let dy = B.y - A.y;
+                  let dist = Math.hypot(dx, dy) || 0.01;
+                  const minD = A.r + B.r + 2.5;
+                  if (dist < minD) {
+                    const push = (minD - dist) / 2;
+                    dx /= dist;
+                    dy /= dist;
+                    A.x -= dx * push;
+                    A.y -= dy * push;
+                    B.x += dx * push;
+                    B.y += dy * push;
+                  }
+                }
+              }
+            }
+            // City labels: show when spaced; always keep New sites
+            type Lbl = Pt & { label: boolean; ly: number };
+            const labeled: Lbl[] = projected.map((p) => ({
+              ...p,
+              ly: p.y + p.r + 8,
+              label: true,
+            }));
+            labeled.sort(
+              (a, b) =>
+                (isNewSite(b.s) ? 1 : 0) - (isNewSite(a.s) ? 1 : 0) ||
+                (b.s.stalls ?? 0) - (a.s.stalls ?? 0)
+            );
+            const kept: Lbl[] = [];
+            for (const L of labeled) {
+              const hit = kept.some((K) => Math.hypot(K.x - L.x, K.ly - L.ly) < 52);
+              // Labels only for New sites — avoids halo/leader collisions
+              if (isNewSite(L.s) && !hit && kept.length < 4) {
+                L.label = true;
+                kept.push(L);
+              } else {
+                L.label = false;
+              }
+            }
+            return (
+              <>
+                <svg viewBox="0 0 320 250" className="ok-zoom-svg" role="img" aria-label="Oklahoma sites west to east">
+                  <rect x="0" y="0" width="320" height="250" className="ok-zoom-bg" />
+                  <g>
+                    {visibleShapes
+                      .filter((st) => st.abbr === "OK")
+                      .map((st) => (
+                        <path
+                          key={`okz-${st.abbr}`}
+                          d={st.d}
+                          className="state has"
+                          transform={`translate(160 125) scale(${scale.toFixed(4)}) translate(${(-cx0).toFixed(2)} ${(-cy0).toFixed(2)})`}
+                        />
+                      ))}
+                  </g>
+                  {labeled.map((p) => (
+                    <g key={`okzp-${p.s.slug}`}>
+                      {isNewSite(p.s) ? (
+                        <circle cx={p.x} cy={p.y} r={p.r + 2.5} className="ok-zoom-new" style={{ stroke: "var(--ink)", strokeDasharray: "3 2" }} />
+                      ) : null}
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={p.r}
+                        className={p.francis ? "ok-zoom-dot" : "ok-zoom-other"}
+                      />
+                      {p.francis && p.r >= 6 ? (
+                        <text
+                          x={p.x}
+                          y={p.y}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          className="ok-zoom-f"
+                        >
+                          F
+                        </text>
+                      ) : null}
+                      {p.label ? (
+                        <g className="ok-zoom-label">
+                          <line
+                            x1={p.x}
+                            y1={p.y + p.r + 1}
+                            x2={p.x}
+                            y2={p.ly - 2}
+                            className="ok-zoom-leader"
+                          />
+                          <text x={p.x} y={p.ly + 1} textAnchor="middle" className="ok-zoom-city">
+                            {(() => {
+                              const c = (p.s.city ?? p.s.name).replace(/, OK$/i, "");
+                              return c.length > 10 ? c.split(/\s+/)[0]! : c;
+                            })()}
+                          </text>
+                        </g>
+                      ) : null}
+                      <title>{`${p.s.city ?? p.s.name}${p.s.stalls != null ? ` · ${p.s.stalls} stalls` : ""}${isNewSite(p.s) ? " · New" : ""}`}</title>
+                    </g>
+                  ))}
+                </svg>
+              </>
+            );
+          })()}
+        </aside>
+      ) : null}
+
+      </div>
 
       {mounted && selected && createPortal(
         <div className="scrim" onClick={close} role="presentation">
@@ -573,8 +917,6 @@ export default function MapExplorer({
                 <div><dt>Opened</dt><dd>{selected.openedOn ? fmtDate(selected.openedOn) : <em>not stated</em>}</dd></div>
                 <div><dt>First covered</dt><dd>{fmtDate(selected.firstConfirmed)}</dd></div>
               </dl>
-
-              <FindUsPricingBlock pricing={selected.findusPricing} />
 
               <p className="summary">{humanisePublicCopy(selected.summary)}</p>
 

@@ -57,9 +57,9 @@ function buildTakeaways(
     const four = francis.cells.find((c) => c.stalls === 4)?.count ?? 0;
     const eight = francis.cells.find((c) => c.stalls === 8)?.count ?? 0;
     if (four >= eight && four > 0) {
-      out.push(`Francis Energy builds mostly 4-stall sites: ${four} of ${francis.totalSites}.`);
+      out.push(`Francis Energy: ${four} of ${francis.totalSites} open sites are 4-stall.`);
     } else if (eight > 0) {
-      out.push(`Francis Energy builds mostly 8-stall sites: ${eight} of ${francis.totalSites}.`);
+      out.push(`Francis Energy: ${eight} of ${francis.totalSites} open sites are 8-stall.`);
     }
   }
 
@@ -76,10 +76,16 @@ function buildTakeaways(
     }
   }
 
+  const byOpCount = new Map<string, number>();
+  for (const s of sites) {
+    const k = s.operator?.trim() || "Brand not stated";
+    byOpCount.set(k, (byOpCount.get(k) ?? 0) + 1);
+  }
+  const singleSiteOps = [...byOpCount.values()].filter((n) => n === 1).length;
   const rollup = rows.find((r) => r.isRollup);
   if (rollup && rollup.totalSites > 0) {
     out.push(
-      `${rollup.totalSites} single-site operators each run one 4-stall site.`
+      `${rollup.totalSites} of ${singleSiteOps} single-site operators run a 4-stall site only.`
     );
   }
 
@@ -128,9 +134,32 @@ function buildStory(
 ): SizeStory {
   const total = sites.length;
   const dominant = [...sizeShares].sort((a, b) => b.sites - a.sites || a.stalls - b.stalls)[0];
-  const headline = dominant
-    ? `Most are small: ${dominant.sites} of ${total} sites have just ${dominant.stalls} stalls.`
-    : `${total} open US sites with a stall count.`;
+  const four = sizeShares.find((s) => s.stalls === 4);
+  const eight = sizeShares.find((s) => s.stalls === 8);
+  const fourStalls = four ? four.stalls * four.sites : 0;
+  const eightStalls = eight ? eight.stalls * eight.sites : 0;
+  const allStalls = sites.reduce((a, s) => a + (s.stalls ?? 0), 0);
+  const fourShare = allStalls > 0 ? fourStalls / allStalls : 0;
+  const eightShare = allStalls > 0 ? eightStalls / allStalls : 0;
+  const sharesEqual =
+    four && eight && Math.abs(fourShare - eightShare) < 0.005 && fourShare > 0.3;
+
+  const singleOps = [...byOp.values()].filter((b) => b.sites.length === 1);
+  const singlesMin = singleOps.filter((b) => {
+    const st = b.sites[0]?.stalls;
+    return st === 4;
+  });
+  const slopeInsight =
+    four && eight
+      ? `4-stall sites are ${four.pct}% of the network but only ${Math.round(fourShare * 1000) / 10}% of stalls; 8-stall sites flip that (${eight.pct}% of sites → ${Math.round(eightShare * 1000) / 10}% of stalls).`
+      : null;
+
+  const headline =
+    four && eight
+      ? `Most sites are 4-stall. The 8-stall sites match them on total stalls.`
+      : dominant
+        ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
+        : `${total} open US sites with a stall count.`;
 
   type Bigger = { operator: string; stalls: number[]; max: number; sites: number; median: number };
   const bigger: Bigger[] = [];
@@ -158,10 +187,20 @@ function buildStory(
     const label = shortOperatorName(b.operator);
     return `${label} (${sizeRangeLabel(b.stalls)})`;
   });
-  const subline =
-    named.length === 0
-      ? "Almost every open site is the same size."
-      : `Only a few builders go bigger: ${named.join(", ")}.`;
+  const fourSitePctRound2 = four ? Math.round(four.pct) : 0;
+  const stallTiePct = Math.round(fourShare * 100);
+  const singleLine =
+    singlesMin.length > 0 && singleOps.length > 0
+      ? `${singlesMin.length} of ${singleOps.length} single-site operators run a 4-stall site.`
+      : null;
+  const subline = [
+    four && eight
+      ? `${fourSitePctRound2}% of sites are 4-stall; 4-stall and 8-stall each hold ${stallTiePct}% of stalls (${four.sites}×4 and ${eight.sites}×8 = 160).`
+      : null,
+    singleLine,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const pctSmall =
     dominant && total > 0 ? Math.floor((dominant.sites / total) * 100) : 0;
@@ -208,6 +247,11 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
       );
 
       const sitesLabel = share.sites === 1 ? "1 site" : `${share.sites} sites`;
+      const francisSites = inLayer.filter((s) =>
+        /francis energy/i.test(s.operator ?? "")
+      ).length;
+      const francisIsLeader =
+        ranked.length > 0 && /francis energy/i.test(ranked[0]![0]);
 
       let buildersLabel = "";
       if (ranked.length === 0) {
@@ -221,10 +265,9 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
             : name;
       } else {
         const top = ranked[0]!;
-        const pluralityShare = top[1] / share.sites;
-        // One operator with plurality and ≥40% of sites in this size → "mostly …"
-        if (pluralityShare >= 0.4 && (ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0))) {
-          buildersLabel = `mostly ${top[0]}`;
+        const clearLead = ranked.length === 1 || top[1] > (ranked[1]?.[1] ?? 0);
+        if (clearLead && top[1] >= 2) {
+          buildersLabel = `${shortOperatorName(top[0])} ${top[1]}`;
         } else {
           const named = ranked.slice(0, 3).map(([op]) => shortOperatorName(op));
           const rest = ranked.length - named.length;
@@ -233,12 +276,19 @@ function buildIsoLayers(sites: Site[], sizeShares: SizeShare[]): SizeIsoLayer[] 
         }
       }
 
+      const layerStalls = share.stalls * share.sites;
+      const allStalls = sites.reduce((a, s) => a + (s.stalls ?? 0), 0);
+      const stallPct = allStalls > 0 ? Math.round((layerStalls / allStalls) * 1000) / 10 : 0;
+
       return {
         stalls: share.stalls,
         sites: share.sites,
         pct: share.pct,
+        stallPct,
         sitesLabel,
         buildersLabel,
+        francisSites,
+        francisIsLeader,
       };
     });
 }
@@ -284,14 +334,10 @@ export function buildSizeOverview(
 
   for (const bucket of byOp.values()) {
     const siteCount = bucket.sites.length;
-    const hasLarge = bucket.sites.some((s) => (s.stalls ?? 0) >= 8);
-    const onlySingleFour = siteCount === 1 && bucket.sites[0]?.stalls === 4;
-
-    if (onlySingleFour) {
+    if (siteCount === 1) {
       rollupSites.push(...bucket.sites);
       rollupOps.push(bucket.operator);
     } else {
-      // Own row: 2+ sites, any 8+ stall site, or a single non-4 site (e.g. 6 stalls).
       named.push(bucket);
     }
   }

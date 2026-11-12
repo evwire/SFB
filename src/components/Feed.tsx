@@ -1,41 +1,63 @@
 import { fmtDate } from "@/lib/style";
-import type { FeedItem } from "@/lib/types";
+import type { FeedItem, Site } from "@/lib/types";
 
+function siteForItem(it: FeedItem, sites: Site[]): Site | null {
+  const title = it.title.toLowerCase();
+  let best: Site | null = null;
+  let bestScore = 0;
+  for (const s of sites) {
+    let score = 0;
+    if (s.city && title.includes(s.city.toLowerCase())) score += 3;
+    if (s.operator && title.includes(s.operator.toLowerCase())) score += 2;
+    const short = s.name.split(",")[0]?.trim().toLowerCase();
+    if (short && short.length > 3 && title.includes(short)) score += 2;
+    if (score > bestScore) {
+      bestScore = score;
+      best = s;
+    }
+  }
+  return bestScore >= 3 ? best : null;
+}
+
+function placeFor(it: FeedItem, matched: Site | null): string {
+  if (matched?.city) return `${matched.city}, ${matched.state}`;
+  if (matched) return matched.state;
+  return "—";
+}
+
+/** Wire list: date | location | headline — even row rhythm, fixed location column. */
 export default function Feed({
   items,
-  source,
-  asOf,
+  sites = [],
 }: {
   items: FeedItem[];
-  source: string;
-  asOf: string;
+  sites?: Site[];
+  source?: string;
+  asOf?: string;
 }) {
   return (
-    <>
-      <ul className="feed">
-        {items.map((it) => (
-          <li key={it.url} className="feed-item">
-            <a href={it.url} target="_blank" rel="noopener">
-              {it.image ? (
-                // Plain img: these are beehiiv CDN URLs already sized by cdn-cgi.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.image} alt="" loading="lazy" className="feed-img" />
+    <ul className="feed feed-wire feed-cols">
+      {items.map((it) => {
+        const matched = sites.length ? siteForItem(it, sites) : null;
+        const place = placeFor(it, matched);
+        return (
+          <li key={it.url} className="feed-row">
+            <span className="feed-date mono">{fmtDate(it.published)}</span>
+            <span className="feed-place">
+              {matched ? (
+                <a className="link" href={`#site-${matched.slug}`}>
+                  {place}
+                </a>
               ) : (
-                <span className="feed-img placeholder" aria-hidden="true" />
+                place
               )}
-              <span className="feed-text">
-                <span className="feed-date mono">{fmtDate(it.published)}</span>
-                <span className="feed-title">{it.title}</span>
-                {it.description && <span className="feed-desc">{it.description}</span>}
-              </span>
+            </span>
+            <a className="feed-title" href={it.url} target="_blank" rel="noopener">
+              {it.title}
             </a>
           </li>
-        ))}
-      </ul>
-      <p className="section-note" style={{ marginTop: 14 }}>
-        Pulled from the {source} for the Supercharger for Business and Tesla Third Party
-        Superchargers tags. Last refreshed {asOf}.
-      </p>
-    </>
+        );
+      })}
+    </ul>
   );
 }

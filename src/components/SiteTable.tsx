@@ -1,70 +1,322 @@
-import { pricingPlain } from "@/lib/findus-pricing";
+"use client";
+
+import { useMemo, useState, Fragment } from "react";
 import { STATUS_STYLE } from "@/lib/style";
 import type { Site } from "@/lib/types";
 
-/**
- * The server-rendered list under the map. This is the part crawlers and language
- * models actually read, so every site appears here in full even when the map cannot
- * plot it. Server-rendered or it does not exist (STACK.md).
- */
-export default function SiteTable({ sites, areaNoun = "states", upcoming = false, newIds, newSince = null }: { sites: Site[]; areaNoun?: string; upcoming?: boolean; newIds?: Set<string>; newSince?: string | null }) {
-  const areaSingular = areaNoun.replace(/ies$/, "y").replace(/s$/, "");
+type SortKey = "site" | "city" | "state" | "operator" | "stalls" | "status" | "opened" | "new";
 
-  const rows = [...sites].sort((a, b) => {
-    const s = (a.state ?? "").localeCompare(b.state ?? "");
-    return s !== 0 ? s : (a.city ?? "").localeCompare(b.city ?? "");
-  });
+const DEFAULT_VISIBLE = 15;
+
+function francisFirst(a: string, b: string): number {
+  const af = /francis energy/i.test(a);
+  const bf = /francis energy/i.test(b);
+  if (af && !bf) return -1;
+  if (!af && bf) return 1;
+  return a.localeCompare(b);
+}
+
+function findusKey(s: Site): string {
+  const fromUrl = s.sourceUrl.match(/supercharger\/(\d+)/i);
+  if (fromUrl) return fromUrl[1]!;
+  return s.slug;
+}
+
+function sentenceCase(raw: string): string {
+  if (!raw) return raw;
+  if (raw === raw.toUpperCase() && /[A-Z]/.test(raw)) {
+    return raw
+      .toLowerCase()
+      .replace(/(^|[\s\-–/])([a-z])/g, (_, p, c) => p + c.toUpperCase());
+  }
+  if (raw[0] && raw[0] === raw[0].toLowerCase()) {
+    return raw[0].toUpperCase() + raw.slice(1);
+  }
+  return raw;
+}
+
+function displaySiteName(raw: string): string {
+  let s = raw;
+  s = s.replace(/\bUs-(\d+)/gi, "US-$1");
+  s = s.replace(/\bMt\.\s/gi, "Mount ");
+  s = s.replace(/\bCtr\.?\b/g, "Center");
+  return sentenceCase(s);
+}
+
+/** Split "Street – City" / "City - Street" style names. */
+function splitPlace(s: Site): { site: string; city: string | null; street: string | null } {
+  const city = s.city?.trim() || null;
+  let raw = s.name;
+  if (s.state && (raw.endsWith(`, ${s.state}`) || raw.includes(`, ${s.state} -`))) {
+    raw = raw.replace(new RegExp(`, ${s.state}(?=\\s*-|$)`), "").trim();
+  }
+  // "City - Street" or "City – Street"
+  const dash = raw.match(/^(.+?)\s+[–—-]\s+(.+)$/);
+  if (dash) {
+    const left = dash[1]!.trim();
+    const right = dash[2]!.trim();
+    if (city && left.toLowerCase() === city.toLowerCase()) {
+      return { site: displaySiteName(right), city, street: displaySiteName(right) };
+    }
+    if (city && right.toLowerCase() === city.toLowerCase()) {
+      return { site: displaySiteName(left), city, street: displaySiteName(left) };
+    }
+    // Prefer left as site label when no city match
+    return { site: displaySiteName(raw), city, street: displaySiteName(right) };
+  }
+  if (city && raw.toLowerCase() === city.toLowerCase()) {
+    const street = s.address?.split(",")[0]?.trim() || null;
+    return {
+      site: street ? displaySiteName(street) : displaySiteName(raw),
+      city,
+      street: street ? displaySiteName(street) : null,
+    };
+  }
+  return { site: displaySiteName(raw), city, street: null };
+}
+
+
+export default function SiteTable({
+  sites,
+  upcoming = false,
+  showStatus = false,
+  highlightCovered = false,
+  fullWidth = true,
+  groupByOperator = false,
+  newOpenIds = [],
+}: {
+  sites: Site[];
+  areaNoun?: string;
+  upcoming?: boolean;
+  showStatus?: boolean;
+  groupByOperator?: boolean;
+  highlightCovered?: boolean;
+  fullWidth?: boolean;
+  newOpenIds?: string[];
+}) {
+  const newSet = useMemo(() => new Set(newOpenIds), [newOpenIds]);
+  const isNew = (s: Site) => newSet.has(findusKey(s));
+
+  const hasOpened = useMemo(() => sites.some((s) => Boolean(s.openedOn)), [sites]);
+  const [sortKey, setSortKey] = useState<SortKey>("new");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [expanded, setExpanded] = useState(false);
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return sites;
+    return sites.filter((s) => {
+      const blob = [s.name, s.operator, s.city, s.state, s.status, s.address]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return blob.includes(needle);
+    });
+  }, [sites, q]);
+
+  const rows = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      const cmpStr = (x: string, y: string) => x.localeCompare(y) * dir;
+      const cmpNum = (x: number | null, y: number | null) => {
+        if (x == null && y == null) return 0;
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return (x - y) * dir;
+      };
+      // Default: keep operator groups contiguous; New first within group, then stalls desc
+      if (sortKey === "new") {
+        if (groupByOperator) {
+          const op = francisFirst(a.operator ?? "", b.operator ?? "");
+          if (op !== 0) return op;
+        }
+        const an = isNew(a) ? 1 : 0;
+        const bn = isNew(b) ? 1 : 0;
+        if (an !== bn) return (bn - an) * (sortDir === "desc" ? 1 : -1);
+        const stallCmp = cmpNum(a.stalls, b.stalls);
+        if (stallCmp !== 0) return stallCmp;
+        return a.name.localeCompare(b.name);
+      }
+      switch (sortKey) {
+        case "operator": {
+          const base = francisFirst(a.operator ?? "", b.operator ?? "");
+          return (sortDir === "asc" ? base : -base) || cmpStr(a.name, b.name);
+        }
+        case "stalls":
+          return cmpNum(a.stalls, b.stalls);
+        case "status":
+          return cmpStr(a.status, b.status);
+        case "state":
+          return cmpStr(a.state ?? "", b.state ?? "");
+        case "city":
+          return cmpStr(a.city ?? "", b.city ?? "");
+        case "opened":
+          return cmpStr(a.openedOn ?? "", b.openedOn ?? "");
+        case "site":
+        default:
+          return cmpStr(a.name, b.name);
+      }
+    });
+  }, [filtered, sortKey, sortDir, newSet, groupByOperator]);
+
+  const visible = expanded ? rows : rows.slice(0, DEFAULT_VISIBLE);
+  const shown = visible.length;
+
+  const opTotals = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of rows) {
+      const op = s.operator ?? (upcoming ? "not stated until open" : "n/s");
+      m.set(op, (m.get(op) ?? 0) + 1);
+    }
+    return m;
+  }, [rows, upcoming]);
+
+  const groups = useMemo(() => {
+    if (!groupByOperator) return null;
+    const out: { op: string; rows: Site[]; total: number }[] = [];
+    for (const s of visible) {
+      const op = s.operator ?? (upcoming ? "not stated until open" : "n/s");
+      const last = out[out.length - 1];
+      if (last && last.op === op) last.rows.push(s);
+      else out.push({ op, rows: [s], total: opTotals.get(op) ?? 1 });
+    }
+    return out;
+  }, [visible, groupByOperator, upcoming, opTotals]);
+
+  function onSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "stalls" || key === "new" ? "desc" : "asc");
+    }
+  }
+
+  function th(key: SortKey, label: string, align: "left" | "right" = "left") {
+    const on = sortKey === key;
+    return (
+      <th scope="col" className={align === "right" ? "num" : undefined}>
+        <button
+          type="button"
+          className={"th-sort" + (on ? " on" : "")}
+          onClick={() => onSort(key)}
+          aria-sort={on ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+        >
+          {label}
+          {on ? (
+            <span className="th-dir" aria-hidden="true">
+              {sortDir === "asc" ? " ↑" : " ↓"}
+            </span>
+          ) : null}
+        </button>
+      </th>
+    );
+  }
+
+  function renderRow(s: Site) {
+    const st = STATUS_STYLE[s.status];
+    const covered = Boolean(s.articles?.length);
+    const place = splitPlace(s);
+    const neu = isNew(s);
+    return (
+      <tr key={s.slug} id={`site-${s.slug}`} className={neu ? "is-new" : undefined}>
+        <th scope="row">
+          <a className="link site-name" href={s.sourceUrl} target="_blank" rel="noopener">
+            {place.city && place.site.toLowerCase() === place.city.toLowerCase() && place.street
+              ? place.street
+              : place.site}
+          </a>
+          {highlightCovered && covered ? <span className="badge-covered">Covered</span> : null}
+        </th>
+        <td>
+          {groupByOperator
+            ? place.city && s.state
+              ? `${place.city}, ${s.state}`
+              : place.city ?? s.state ?? <span className="dim">–</span>
+            : place.city ?? <span className="dim">–</span>}
+        </td>
+        {!groupByOperator ? <td>{s.state}</td> : null}
+        {!groupByOperator ? (
+          <td>
+            {s.operator ?? (
+              <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>
+            )}
+          </td>
+        ) : null}
+        <td className="num tnum">{s.stalls ?? "–"}</td>
+        <td className="new-cell">{neu ? <span className="new-tag" title="New since 25 Sep">New</span> : null}</td>
+        {hasOpened ? <td className="tnum">{s.openedOn ?? <span className="dim">–</span>}</td> : null}
+        {showStatus ? (
+          <td>
+            <span aria-hidden="true">{st.glyph}</span> {st.label}
+          </td>
+        ) : null}
+      </tr>
+    );
+  }
+
+  const colSpan =
+    4 + (groupByOperator ? 0 : 2) + (hasOpened ? 1 : 0) + (showStatus ? 1 : 0);
 
   return (
-    <div className="table-wrap glass">
-      <table className="sites">
-        <caption className="sr-only">
-          Every Tesla customer-owned Supercharger in this region, with operator, stall count,
-          power, status and source.
-        </caption>
+    <div className={"table-wrap table-wrap-open table-tight" + (fullWidth ? " table-full" : "")}>
+      <div className="table-tools">
+        <p className="table-new-key">
+          <span className="new-tag">New</span> opened since 25 Sep
+        </p>
+        <label className="table-search">
+          <span className="sr-only">Search sites</span>
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by site, operator, or state"
+          />
+        </label>
+      </div>
+      <table className="sites sites-full sites-tight">
+        <caption className="sr-only">Every Tesla customer-owned Supercharger in this region.</caption>
         <thead>
           <tr>
-            <th scope="col">Location</th>
-            <th scope="col">Operator</th>
-            <th scope="col">Stalls</th>
-            <th scope="col">Power</th>
-            <th scope="col">Status</th>
-            <th scope="col">{areaSingular[0].toUpperCase() + areaSingular.slice(1)}</th>
+            {th("site", "Site")}
+            {th("city", "City")}
+            {!groupByOperator ? th("state", "State") : null}
+            {!groupByOperator ? th("operator", "Operator") : null}
+            {th("stalls", "Stalls", "right")}
+            {th("new", "New")}
+            {hasOpened ? th("opened", "Opened") : null}
+            {showStatus ? th("status", "Status") : null}
           </tr>
         </thead>
         <tbody>
-          {rows.map((s) => {
-            const st = STATUS_STYLE[s.status];
-            return (
-              <tr key={s.slug}>
-                <th scope="row">
-                  <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">{s.name}</a>
-                  {newIds?.has(s.slug) && <span className="new-tag" title={newSince ? `New since ${newSince}` : "New since last check"}>New</span>}
-                  <span className="cell-sub">
-                    {s.city ? `${s.city}, ${s.state}` : `${s.state}, exact town not stated`}
-                    {s.siteClass === "Heavy-duty" && " · heavy-duty MCS"}
-                  </span>
-                  {s.findusPricing && <span className="cell-sub">{pricingPlain(s.findusPricing)}</span>}
-                </th>
-                <td>{s.operator ?? <span className="dim">{upcoming ? "not stated until open" : "n/s"}</span>}</td>
-                <td className="mono">{s.stalls ?? <span className="dim">n/s</span>}</td>
-                <td className="mono">{s.powerKw != null ? `${s.powerKw} kW` : <span className="dim">n/s</span>}</td>
-                <td>
-                  <span aria-hidden="true" style={{ color: st.color }}>{st.glyph}</span> {st.label}
-                </td>
-                <td className="mono">{s.state}</td>
-              </tr>
-            );
-          })}
+          {groups
+            ? groups.map((g) => (
+                <Fragment key={g.op}>
+                  <tr className="op-group-row">
+                    <th scope="rowgroup" colSpan={colSpan}>
+                      {g.op}
+                      <span className="op-group-n tnum"> {g.total}</span>
+                    </th>
+                  </tr>
+                  {g.rows.map(renderRow)}
+                </Fragment>
+              ))
+            : visible.map(renderRow)}
         </tbody>
       </table>
-      <p className="table-foot">
-        <span className="mono">n/s</span> means Tesla did not publish that figure. Links open the
-        Tesla Find Us page.{" "}
-        {upcoming
-          ? "Operator isn’t shown on upcoming sites until they open."
-          : "Operator names come from Tesla."}
-      </p>
+      {rows.length > DEFAULT_VISIBLE || expanded ? (
+        <div className="table-expand">
+          <button type="button" className="table-expand-btn" onClick={() => setExpanded((v) => !v)}>
+            {expanded
+              ? `Show fewer`
+              : `See all ${rows.length} sites`}
+          </button>
+        </div>
+      ) : (
+        <p className="table-shown tnum">
+          Showing {shown} of {rows.length}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,17 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import MapExplorer from "@/components/MapExplorer";
-import Dashboard from "@/components/Dashboard";
-import Feed from "@/components/Feed";
+import SiteWaffle from "@/components/SiteWaffle";
+import LongTailChart from "@/components/LongTailChart";
 import SiteTable from "@/components/SiteTable";
-import SciComparePanel from "@/components/SciComparePanel";
-import ThemeToggle from "@/components/ThemeToggle";
-import NewSinceFeed, { fmtDay } from "@/components/NewSinceFeed";
+import ShellChrome from "@/components/ShellChrome";
 import { US_STATES, VIEW_W, VIEW_H } from "@/lib/us-states.generated";
 import { EUROPE_COUNTRIES, EU_VIEW_W, EU_VIEW_H } from "@/lib/europe-countries.generated";
-import { fmtDate, fmtNum } from "@/lib/style";
-import type { ChangeItem, FeedItem, LatestChanges, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
+import { fmtNum, fmtTallinnStamp } from "@/lib/style";
+import { openUsDeltaLabel } from "@/lib/open-delta";
+import type { FeedItem, Region, SciCompare, SiteData, SitePhase } from "@/lib/types";
+import type { OpenHistoryPoint } from "@/lib/open-history-types";
+
+type SnapshotDelta = {
+  openUsBaseline: number;
+  openUsFresh: number;
+  openUsDelta: number;
+  upcomingUsBaseline: number;
+  upcomingUsFresh: number;
+  upcomingUsDelta: number;
+  baselineLabel: string;
+  freshLabel: string;
+  sourcePath: string;
+};
 
 type Props = {
   us: SiteData;
@@ -19,58 +31,110 @@ type Props = {
   usUpcoming: SiteData;
   europeUpcoming: SiteData;
   sciCompare: SciCompare;
+  snapshotDelta: SnapshotDelta;
+  openHistory: OpenHistoryPoint[];
+  newOpenIds?: string[];
   feed: { items: FeedItem[]; source: string; asOf: string };
   coverageNote?: { source: string; asOf: string; tagCount: number; tagUrl: string };
-  changes?: LatestChanges;
 };
 
-function pulledLabel(generated: string) {
-  try {
-    const d = new Date(generated);
-    if (!Number.isNaN(d.getTime())) {
-      return (
-        d.toLocaleString("en-GB", {
-          timeZone: "Europe/Tallinn",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }) + " EET"
-      );
-    }
-  } catch {
-    /* fall through */
+function thesis(
+  region: Region,
+  phase: SitePhase,
+  openSites: SiteData["sites"],
+  openCount: number,
+  upcomingCount: number
+): { h1: ReactNode } {
+  const sfb = openSites.filter((s) => s.siteClass === "SfB");
+
+  if (phase === "upcoming") {
+    return {
+      h1: (
+        <>
+          {upcomingCount} third-party Superchargers coming to{" "}
+          {region === "europe" ? "Europe" : "the US"}
+        </>
+      ),
+    };
   }
-  return generated;
+  if (phase === "both") {
+    return {
+      h1: (
+        <>
+          {openCount} open and {upcomingCount} upcoming customer-owned sites
+        </>
+      ),
+    };
+  }
+
+  if (region === "europe") {
+    const byOp = new Map<string, number>();
+    for (const s of sfb) {
+      const k = s.operator ?? "Brand not stated";
+      byOp.set(k, (byOp.get(k) ?? 0) + 1);
+    }
+    const top = [...byOp.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+    if (top) {
+      return {
+        h1: (
+          <>
+            {top[0]} runs {top[1]} of {openCount} open Europe sites
+          </>
+        ),
+      };
+    }
+  }
+
+  const byOp = new Map<string, { n: number; states: Map<string, number> }>();
+  for (const s of sfb) {
+    const k = s.operator ?? "Brand not stated";
+    if (!byOp.has(k)) byOp.set(k, { n: 0, states: new Map() });
+    const row = byOp.get(k)!;
+    row.n += 1;
+    row.states.set(s.state, (row.states.get(s.state) ?? 0) + 1);
+  }
+  const topOp = [...byOp.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))[0];
+
+  if (region === "us" && topOp && /francis energy/i.test(topOp[0])) {
+    const francisSites = topOp[1].n;
+    const pct = openCount > 0 ? Math.round((francisSites / openCount) * 100) : 0;
+    return {
+      h1: <>One operator owns {pct}% of sites. The rest is a long tail of one-offs.</>,
+    };
+  }
+
+  if (topOp && topOp[1].n >= 2) {
+    return {
+      h1: (
+        <>
+          {topOp[0]} runs {topOp[1].n} of {openCount} open US sites
+        </>
+      ),
+    };
+  }
+
+  return {
+    h1: <>{openCount} open customer-owned Superchargers in the US</>,
+  };
 }
 
-export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciCompare, feed, coverageNote, changes }: Props) {
+export default function RegionApp({
+  us,
+  europe,
+  usUpcoming,
+  europeUpcoming,
+  openHistory,
+  newOpenIds = [],
+}: Props) {
   const [region, setRegion] = useState<Region>("us");
   const [phase, setPhase] = useState<SitePhase>("open");
-  const [focus, setFocus] = useState<{ slug: string; nonce: number } | null>(null);
-
-  // Sites new in the latest Tesla diff (opened, new, back on the list, new upcoming).
-  const newIds = useMemo(() => new Set((changes?.items ?? []).map((i) => i.id)), [changes]);
-  const newSince = changes?._meta?.from ? fmtDay(changes._meta.from) : null;
-  const nameOf = useMemo(() => {
-    const all = new Map<string, string>();
-    for (const d of [us, europe, usUpcoming, europeUpcoming]) for (const s of d.sites) all.set(s.slug, s.name);
-    return (id: string) => all.get(id) ?? null;
-  }, [us, europe, usUpcoming, europeUpcoming]);
-  const pickChange = (i: ChangeItem) => {
-    setRegion(i.region === "Europe" ? "europe" : "us");
-    if (i.phase === "upcoming" && phase === "open") setPhase("upcoming");
-    if (i.phase === "open" && phase === "upcoming") setPhase("open");
-    setFocus({ slug: i.id, nonce: Date.now() });
-  };
+  const [showCoverage, setShowCoverage] = useState(false);
 
   const openData = region === "europe" ? europe : us;
   const upcomingData = region === "europe" ? europeUpcoming : usUpcoming;
 
   const openCount = openData.sites.filter((s) => s.siteClass === "SfB").length;
   const upcomingCount = upcomingData.sites.filter((s) => s.siteClass === "SfB").length;
-  const bothCount = openCount + upcomingCount;
 
   const bothSites = useMemo(
     () => [
@@ -90,484 +154,203 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             phase: "both" as const,
             coverage: upcomingData.coverage ?? openData.coverage,
             generated:
-              upcomingData.generated > openData.generated ? upcomingData.generated : openData.generated,
+              upcomingData.generated > openData.generated
+                ? upcomingData.generated
+                : openData.generated,
             sourceLabel: openData.sourceLabel,
           }
         : openData;
 
-  const { sites, aggregates, pipeline, programme, source, generated, sourceLabel, regionLabel, areaNoun, coverage } =
+  const { sites, aggregates: _aggregates, pipeline: _pipeline, programme, source, areaNoun, coverage } =
     data;
   const isTesla = source === "tesla";
   const isUpcoming = phase === "upcoming";
   const isBoth = phase === "both";
-  const sfb = sites.filter((s) => s.siteClass === "SfB");
-  const coveredSfb = sfb.filter((s) => (s.articles?.length ?? 0) > 0).length;
-  const openSfb = sfb.filter((s) => s.pinStyle === "open" || (!s.pinStyle && s.status === "Operational"));
-  const upcomingSfb = sfb.filter((s) => s.pinStyle === "upcoming" || (!s.pinStyle && s.status !== "Operational"));
-  const stallSum = (isBoth ? openSfb : sfb).reduce((a, s) => a + (s.stalls ?? 0), 0);
-  const areas = new Set(sfb.map((s) => s.state)).size;
   const shapes = region === "europe" ? EUROPE_COUNTRIES : US_STATES;
   const viewW = region === "europe" ? EU_VIEW_W : VIEW_W;
   const viewH = region === "europe" ? EU_VIEW_H : VIEW_H;
-  const pulled = useMemo(() => pulledLabel(generated), [generated]);
+  const openPulled = useMemo(() => fmtTallinnStamp(openData.generated), [openData.generated]);
+  const dataAsOf = openPulled;
 
-  const underConstruction = (isBoth ? upcomingSfb : sfb).filter((s) => s.status === "Construction").length;
-  const inDevelopment = (isBoth ? upcomingSfb : sfb).filter((s) => s.status === "Planned").length;
+  const { h1 } = thesis(region, phase, openData.sites, openCount, upcomingCount);
+  const banner = isUpcoming || isBoth ? coverage?.honesty_banner ?? null : null;
+  const deltaInline =
+    region === "us" && phase === "open" ? openUsDeltaLabel(openHistory) : null;
+  const newOpenLabels = useMemo(() => {
+    if (!newOpenIds.length) return [] as string[];
+    const set = new Set(newOpenIds);
+    const hits = openData.sites.filter((s) => {
+      const key = (s.slug || "").replace(/\D/g, "") || s.slug;
+      return set.has(s.slug) || set.has(key) || (s.sourceUrl && [...set].some((id) => s.sourceUrl!.includes(id)));
+    });
+    // Prefer city, state for short names
+    const labels = hits.map((s) => {
+      if (s.city && s.state) return `${s.city}, ${s.state}`;
+      return s.name.replace(/, [A-Z]{2}$/, (m) => m); // keep
+    });
+    // Deduplicate while preserving order
+    return [...new Set(labels)];
+  }, [newOpenIds, openData.sites]);
 
-  const showCoverage = isUpcoming || isBoth;
-  const banner = showCoverage ? coverage?.honesty_banner ?? null : null;
-  const coverageComplete = showCoverage ? coverage?.complete === true : true;
+  const defaultHighlight = useMemo(() => {
+    const hasFrancis = sites.some((s) => /francis energy/i.test(s.operator ?? ""));
+    return hasFrancis ? "Francis Energy" : null;
+  }, [sites]);
 
-  const regionCoverage = useMemo(() => {
-    if (!coverage?.counts) return null;
-    if (region === "us") return coverage.counts.US ?? null;
-    const eu = coverage.counts.EU;
-    const gb = coverage.counts.GB;
-    if (!eu && !gb) return null;
-    return {
-      totalCS: (eu?.totalCS ?? 0) + (gb?.totalCS ?? 0),
-      classified: (eu?.classified ?? eu?.http200 ?? 0) + (gb?.classified ?? gb?.http200 ?? 0),
-      customerOwned: (eu?.customerOwned ?? 0) + (gb?.customerOwned ?? 0),
-      teslaOwned: (eu?.teslaOwned ?? 0) + (gb?.teslaOwned ?? 0),
-      gaps: (eu?.gaps ?? 0) + (gb?.gaps ?? 0),
-    };
-  }, [coverage, region]);
+  const francis = useMemo(() => {
+    const sfb = sites.filter((s) => s.siteClass === "SfB");
+    const rows = new Map<string, { sites: number; stalls: number }>();
+    for (const s of sfb) {
+      const k = s.operator ?? "Brand not stated";
+      const r = rows.get(k) ?? { sites: 0, stalls: 0 };
+      r.sites += 1;
+      r.stalls += s.stalls ?? 0;
+      rows.set(k, r);
+    }
+    return rows.get("Francis Energy") ?? null;
+  }, [sites]);
+
+  const totalStalls = sites
+    .filter((s) => s.siteClass === "SfB")
+    .reduce((a, s) => a + (s.stalls ?? 0), 0);
+  const francisSitePct =
+    francis && openCount > 0 ? Math.round((francis.sites / openCount) * 1000) / 10 : null;
+  const francisStallPct =
+    francis && totalStalls > 0 ? Math.round((francis.stalls / totalStalls) * 1000) / 10 : null;
 
   return (
     <>
-      <header className="topbar">
-        <div className="shell topbar-inner">
-          <a className="brand" href="https://evwire.com" aria-label="EVwire">
-            <img className="brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
-          </a>
-          <div className="topbar-actions">
-            <nav className="topnav">
-              <a href="#map">Map</a>
-              <a href="#dashboard">Rollout</a>
-              <a href="/size">Site size</a>
-              <a href="#compare">vs SCI</a>
-              <a href="#sites">All sites</a>
-              <a href="#news">News</a>
-            </nav>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <ShellChrome active="map" />
 
-      <main className="shell">
-        <section className="hero rise" style={{ marginTop: 40 }}>
-          <div className="eyebrow">Tesla Supercharger for Business</div>
-          <div className="region-toggle" role="tablist" aria-label="Region">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={region === "us"}
-              className={"region-btn" + (region === "us" ? " on" : "")}
-              onClick={() => setRegion("us")}
-            >
-              United States
-              <span className="mono region-count">
-                {phase === "open"
-                  ? us.sites.filter((s) => s.siteClass === "SfB").length
-                  : phase === "upcoming"
-                    ? usUpcoming.sites.filter((s) => s.siteClass === "SfB").length
-                    : us.sites.filter((s) => s.siteClass === "SfB").length +
-                      usUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
-              </span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={region === "europe"}
-              className={"region-btn" + (region === "europe" ? " on" : "")}
-              onClick={() => setRegion("europe")}
-            >
-              Europe
-              <span className="mono region-count">
-                {phase === "open"
-                  ? europe.sites.filter((s) => s.siteClass === "SfB").length
-                  : phase === "upcoming"
-                    ? europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length
-                    : europe.sites.filter((s) => s.siteClass === "SfB").length +
-                      europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
-              </span>
-            </button>
-          </div>
-
-          <div className="region-toggle phase-toggle" role="tablist" aria-label="Status">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={phase === "open"}
-              className={"region-btn" + (phase === "open" ? " on" : "")}
-              onClick={() => setPhase("open")}
-            >
-              Open
-              <span className="mono region-count">{openCount}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={phase === "upcoming"}
-              className={"region-btn" + (phase === "upcoming" ? " on" : "")}
-              onClick={() => setPhase("upcoming")}
-            >
-              Upcoming
-              <span className="mono region-count">{upcomingCount}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={phase === "both"}
-              className={"region-btn" + (phase === "both" ? " on" : "")}
-              onClick={() => setPhase("both")}
-            >
-              Both
-              <span className="mono region-count">{bothCount}</span>
-            </button>
-          </div>
-
-          {banner && (
-            <div className="coverage-banner" role="status">
-              <strong>Incomplete coverage.</strong> {banner}
-              {coverage?.totals && (
-                <span className="coverage-meta">
-                  {" "}
-                  · {coverage.totals.totalCS} coming-soon sites checked ·{" "}
-                  {coverage.totals.customerOwned} third-party owned ·{" "}
-                  {coverage.totals.teslaOwned} Tesla-owned
-                </span>
-              )}
-            </div>
-          )}
-          {showCoverage && coverageComplete && regionCoverage && (
-            <div className="coverage-banner ok" role="status">
-              Coverage complete for {regionLabel}: {regionCoverage.classified} of{" "}
-              {regionCoverage.totalCS} coming-soon sites classified ·{" "}
-              {regionCoverage.customerOwned} third-party owned
-              {regionCoverage.gaps ? ` · ${regionCoverage.gaps} still unclassified` : ""}
-            </div>
-          )}
-
-          <h1>
-            {isTesla ? (
-              isBoth ? (
-                <>
-                  Open and upcoming<br />
-                  <span className="hero-accent">third-party Superchargers.</span>
-                </>
-              ) : isUpcoming ? (
-                <>
-                  Third-party Superchargers<br />
-                  <span className="hero-accent">coming soon.</span>
-                </>
-              ) : (
-                <>
-                  Customer-owned Superchargers,<br />
-                  <span className="hero-accent">as Tesla lists them.</span>
-                </>
-              )
-            ) : (
-              <>
-                Anyone can buy a Supercharger now.<br />
-                <span className="hero-accent">Here is who actually did.</span>
-              </>
-            )}
-          </h1>
-          <p className="lede">
-            {isTesla ? (
-              isBoth ? (
-                <>
-                  {regionLabel} customer-owned Superchargers Tesla lists as open or coming soon.{" "}
-                  {openCount} open + {upcomingCount} upcoming
-                  {underConstruction > 0 || inDevelopment > 0
-                    ? ` (${underConstruction} under construction, ${inDevelopment} in development)`
-                    : ""}
-                  , across {areas} {areaNoun}.
-                </>
-              ) : isUpcoming ? (
-                <>
-                  Coming-soon Superchargers in {regionLabel} that Tesla marks as third-party
-                  owned. {sfb.length} sites
-                  {underConstruction > 0 || inDevelopment > 0
-                    ? ` (${underConstruction} under construction, ${inDevelopment} in development)`
-                    : ""}
-                  . Operator isn&rsquo;t shown until the site opens — we don&rsquo;t invent it.
-                </>
-              ) : (
-                <>
-                  Every {regionLabel} Supercharger Tesla lists as customer-owned and open.{" "}
-                  {sfb.length} sites, {fmtNum(stallSum)} stalls, across {areas} {areaNoun}.
-                  Operator names come from Tesla.
-                </>
-              )
-            ) : (
-              <>
-                Tesla opened its charging hardware to third parties in September 2025. This is
-                every US site EVwire has reported, what we know about each one, and what we do not.
-              </>
-            )}
-          </p>
-          <div className="hero-stats">
-            {isBoth ? (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--signal)" }} />
-                  <span className="num-moment">{openCount}</span> open
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{upcomingCount}</span> upcoming
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{bothCount}</span> total
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{areas}</span> {areaNoun}
-                </span>
-              </>
-            ) : isUpcoming ? (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{sfb.length}</span> upcoming third-party
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--blue)" }} />
-                  <span className="num-moment">{underConstruction}</span> under construction
-                </span>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--violet)" }} />
-                  <span className="num-moment">{inDevelopment}</span> in development
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="chip">
-                  <span className="swatch" style={{ background: "var(--signal)" }} />
-                  <span className="num-moment">{sfb.length}</span> open sites
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{fmtNum(stallSum)}</span> stalls
-                </span>
-                <span className="chip">
-                  <span className="num-moment">{areas}</span> {areaNoun}
-                </span>
-              </>
-            )}
-            <span className="chip">Source: {sourceLabel}</span>
-            {isTesla && <span className="chip">Pulled {pulled}</span>}
-          </div>
-        </section>
-
-        <section id="map">
-          <div className="section-head">
-            <h2>The map</h2>
-            <p className="section-note">
-              {isBoth
-                ? "Solid pins = open · ring pins = upcoming. Click a pin for details."
-                : isUpcoming
-                  ? "Hollow pins = upcoming third-party sites. Click a pin for details."
-                  : isTesla
-                    ? "Pins use Tesla’s published coordinates. Click a pin for details."
-                    : "Click a pin for the full record and its source"}
-              {newSince && sites.some((s) => newIds.has(s.slug)) && ` Ringed pins are new since ${newSince}.`}
+      <main className="pub-paper pub-front pub-lean">
+        <section id="map" className="g12 map-section map-front">
+          <div className="g12-span-full lead-compact">
+            <p className="meta-line mono lead-meta lead-asof">Data as of {dataAsOf}</p>
+            <h1 className="lead-h1 lead-h1-balance">{h1}</h1>
+            {deltaInline || newOpenLabels.length > 0 ? (
+              <p className="lead-delta-line">
+                {newOpenLabels.length > 0 ? (
+                  <span className="lead-delta-plain">
+                    {newOpenLabels.length} new since 25 Sep: {newOpenLabels.join("; ")}
+                  </span>
+                ) : (
+                  <span className="lead-delta-plain tnum">{deltaInline}</span>
+                )}
+              </p>
+            ) : null}
+            <p className="lead-standfirst">
+              Third-party-owned Supercharger for Business sites that Tesla lists as customer-owned on
+              its Find Us map. Operators are the businesses that bought them
+              {region === "us" && phase === "open" ? " (EVgo is not included)" : ""}.
             </p>
+            {region === "us" && phase === "open" && francis ? (
+              <div className="lead-visuals">
+                <SiteWaffle
+                  francis={francis.sites}
+                  otherSites={Math.max(0, openCount - francis.sites)}
+                  otherOperators={
+                    new Set(
+                      openData.sites
+                        .filter((s) => s.siteClass === "SfB" && !/francis energy/i.test(s.operator ?? ""))
+                        .map((s) => s.operator ?? "n/s")
+                    ).size
+                  }
+                />
+                <LongTailChart sites={openData.sites.filter((s) => s.siteClass === "SfB")} />
+              </div>
+            ) : null}
+            {banner ? (
+              <p className="coverage-banner" role="status">
+                <strong>Incomplete coverage.</strong> {banner}
+              </p>
+            ) : null}
           </div>
-          <MapExplorer
-            key={`${region}-${phase}`}
-            sites={sites}
-            shapes={shapes}
-            viewW={viewW}
-            viewH={viewH}
-            region={region}
-            areaNoun={areaNoun}
-            upcomingStyle={isUpcoming}
-            phase={phase}
-            onPhaseChange={setPhase}
-            openCount={openCount}
-            upcomingCount={upcomingCount}
-            newIds={newIds}
-            newSince={newSince}
-            focusSlug={focus?.slug ?? null}
-            focusNonce={focus?.nonce ?? 0}
-          />
-          {changes && <NewSinceFeed changes={changes} onPick={pickChange} nameOf={nameOf} />}
+          <div className="g12-span-full">
+            <MapExplorer
+              key={`${region}-${phase}`}
+              sites={sites}
+              shapes={shapes}
+              viewW={viewW}
+              viewH={viewH}
+              region={region}
+              areaNoun={areaNoun}
+              upcomingStyle={isUpcoming}
+              phase={phase}
+              onPhaseChange={setPhase}
+              onRegionChange={setRegion}
+              openCount={openCount}
+              upcomingCount={upcomingCount}
+              usOpenCount={us.sites.filter((s) => s.siteClass === "SfB").length}
+              usUpcomingCount={usUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
+              euOpenCount={europe.sites.filter((s) => s.siteClass === "SfB").length}
+              euUpcomingCount={europeUpcoming.sites.filter((s) => s.siteClass === "SfB").length}
+              defaultHighlightOperator={defaultHighlight}
+              showCoverage={showCoverage}
+              onShowCoverageChange={setShowCoverage}
+              splitOklahoma={region === "us"}
+              newOpenIds={newOpenIds}
+            />
+          </div>
         </section>
 
-        <section id="dashboard">
-          <div className="section-head">
-            <h2>
-              {isBoth
-                ? "Open + upcoming roster"
-                : isUpcoming
-                  ? "The upcoming roster"
-                  : isTesla
-                    ? "The open roster"
-                    : "The rollout, so far"}
-            </h2>
-            <p className="section-note">
-              {isBoth
-                ? `${openCount} open + ${upcomingCount} upcoming from Tesla`
-                : isUpcoming
-                  ? "Coming-soon third-party sites — no invented operators"
-                  : isTesla
-                    ? "Totals from Tesla’s customer-owned list"
-                    : "Counts describe our coverage, not the whole programme"}
-            </p>
-          </div>
-          <Dashboard
-            sites={sites}
-            aggregates={aggregates}
-            pipeline={pipeline}
-            source={source}
-            areaNoun={areaNoun}
-            regionLabel={regionLabel}
-            phase={phase}
-            coverage={coverage ?? null}
-          />
-        </section>
-
-        <SciComparePanel compare={sciCompare} region={region} />
-
-        {!isTesla && !isUpcoming && (
-          <section id="how">
-            <div className="section-head">
-              <h2>How the programme works</h2>
-              <p className="section-note">Tesla&rsquo;s own published terms, {programme.economics.as_of}</p>
+        {!isUpcoming && !(region === "us" && phase === "open") ? (
+          <section id="operators" className="g12 module">
+            <div className="g12-span-full module-head">
+              <h2 className="section-title">Operators</h2>
             </div>
-            <div className="how-grid">
-              <div className="dash-panel glass">
-                <ul className="how-list">
-                  {programme.how_it_works.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
-                <p className="panel-foot">
-                  <a className="link" href={programme.primer_url} target="_blank" rel="noopener">
-                    Our full breakdown of the pricing and the calculator
-                  </a>
-                </p>
-              </div>
-              <div className="dash-panel glass">
-                <div className="econ">
-                  <div>
-                    <span className="econ-v">{programme.economics.install_cost_per_post}</span>
-                    <span className="econ-l">turnkey install, per post</span>
-                  </div>
-                  <div>
-                    <span className="econ-v">{programme.economics.tesla_fee}</span>
-                    <span className="econ-l">Tesla&rsquo;s all-inclusive fee</span>
-                  </div>
-                  <div>
-                    <span className="econ-v">{programme.economics.uptime_guarantee}</span>
-                    <span className="econ-l">uptime guarantee</span>
-                  </div>
-                  <div>
-                    <span className="econ-v">{programme.economics.minimum_stalls}</span>
-                    <span className="econ-l">stall minimum per site</span>
-                  </div>
-                </div>
-                <p className="panel-foot">{programme.economics.note}</p>
-              </div>
+            <div className="g12-span-full">
+              <LongTailChart sites={sites.filter((s) => s.siteClass === "SfB")} />
             </div>
           </section>
-        )}
+        ) : null}
 
-        <section id="sites">
-          <div className="section-head">
-            <h2>Every site, in full</h2>
-            <p className="section-note">
-              {sites.length} records
-              {isTesla ? " · links open on Tesla Find Us" : ""}
-              {isUpcoming || isBoth ? " · operator not shown on upcoming until open" : ""}
-            </p>
+        {!isTesla && !isUpcoming && programme ? (
+          <section id="how" className="g12 module">
+            <div className="g12-span-full">
+              <h2 className="section-title">How the programme works</h2>
+              <ul className="how-list">
+                {programme.how_it_works.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ) : null}
+
+        <section id="sites" className="g12 module">
+          <div className="g12-span-full module-head">
+            <h2 className="section-title">Every site</h2>
+            <p className="section-note">{fmtNum(sites.length)} records</p>
           </div>
-          <SiteTable sites={sites} areaNoun={areaNoun} upcoming={isUpcoming || isBoth} newIds={newIds} newSince={newSince} />
+          <div className="g12-span-full">
+            <SiteTable
+              sites={sites}
+              areaNoun={areaNoun}
+              upcoming={isUpcoming || isBoth}
+              showStatus={phase !== "open"}
+              highlightCovered={showCoverage}
+              fullWidth
+              newOpenIds={newOpenIds}
+            />
+          </div>
         </section>
 
-        <section id="news">
-          <div className="section-head">
-            <h2>Latest coverage</h2>
-            <p className="section-note">
-              Everything we publish on the programme
-              {coverageNote ? (
-                <>
-                  {" "}
-                  · map pins: {coveredSfb} site{coveredSfb === 1 ? "" : "s"} linked from{" "}
-                  <a className="link" href={coverageNote.tagUrl} target="_blank" rel="noopener">
-                    Supercharger for Business
-                  </a>{" "}
-                  ({coverageNote.tagCount} tagged · {coverageNote.source}, {coverageNote.asOf})
-                </>
-              ) : null}
+        <footer className="g12 foot foot-paper">
+          <div className="g12-span-full">
+            <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
+              <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
+            </a>
+            <p className="foot-copy">
+              Sources: Tesla Find Us.{" "}
+              <a className="link" href="/sources">
+                Data notes
+              </a>
+              {" · "}
+              <a className="link" href="https://evwire.com">
+                evwire.com
+              </a>
             </p>
           </div>
-          <Feed items={feed.items} source={feed.source} asOf={feed.asOf} />
-        </section>
-
-        <footer className="foot">
-          <a className="foot-brand" href="https://evwire.com" aria-label="EVwire">
-            <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
-          </a>
-          <p>
-            {isTesla ? (
-              isBoth ? (
-                <>
-                  Open and upcoming customer-owned Superchargers from Tesla Find Us. Upcoming
-                  sites show no operator until they open. Spotted a mismatch?{" "}
-                  <a
-                    className="link"
-                    href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
-                  >
-                    Tell us
-                  </a>
-                  .
-                </>
-              ) : isUpcoming ? (
-                <>
-                  Upcoming sites are coming-soon Superchargers Tesla marks as third-party owned.
-                  Operator names appear only once a site opens. Spotted a mismatch?{" "}
-                  <a
-                    className="link"
-                    href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
-                  >
-                    Tell us
-                  </a>
-                  .
-                </>
-              ) : (
-                <>
-                  Open sites come from Tesla Find Us, limited to Superchargers listed as
-                  customer-owned. US and Europe are tracked separately. Spotted a mismatch?{" "}
-                  <a
-                    className="link"
-                    href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
-                  >
-                    Tell us
-                  </a>
-                  .
-                </>
-              )
-            ) : (
-              <>
-                Built from EVwire&rsquo;s own reporting. Every record links to the story it came
-                from. Spotted a site we have missed?{" "}
-                <a
-                  className="link"
-                  href="mailto:jaan@evuniverse.io?subject=Supercharger%20for%20Business%20map"
-                >
-                  Tell us
-                </a>
-                .
-              </>
-            )}
-          </p>
-          <p className="mono foot-meta">
-            {isTesla
-              ? `Map coordinates from Tesla. ${regionLabel} ${phase === "both" ? "open + upcoming" : phase === "upcoming" ? "upcoming" : "open"} list updated ${pulled}.`
-              : `Coordinates are city centroids. Last reviewed ${fmtDate("2026-08-13")}.`}
-          </p>
         </footer>
       </main>
     </>

@@ -2,8 +2,10 @@ import { getRegionalSiteData } from "@/lib/data";
 import { getFeed, getCoverageArticles } from "@/lib/feed";
 import { attachCoverage } from "@/lib/coverage";
 import RegionApp from "@/components/RegionApp";
-import type { LatestChanges, SiteData } from "@/lib/types";
-import latestChanges from "../../data/latest-changes.json";
+import { getSnapshotDelta } from "@/lib/snapshot-delta";
+import { getOpenUsHistory } from "@/lib/open-history";
+import { getNewOpenUsIds } from "@/lib/new-opens";
+import type { SiteData } from "@/lib/types";
 
 export const revalidate = 300;
 
@@ -14,6 +16,9 @@ function withCoverage(data: SiteData, articles: Awaited<ReturnType<typeof getCov
 
 export default async function Page() {
   const { us, europe, usUpcoming, europeUpcoming, sciCompare } = await getRegionalSiteData();
+  const snapshotDelta = getSnapshotDelta();
+  const openHistory = getOpenUsHistory();
+  const newOpenIds = getNewOpenUsIds();
   const feed = await getFeed(12);
   const coverage = await getCoverageArticles();
 
@@ -72,8 +77,10 @@ export default async function Page() {
         usUpcoming={usUpcomingCovered}
         europeUpcoming={europeUpcomingCovered}
         sciCompare={sciCompare}
+        snapshotDelta={snapshotDelta}
+        openHistory={openHistory}
+        newOpenIds={newOpenIds}
         feed={feed}
-        changes={latestChanges as unknown as LatestChanges}
         coverageNote={{
           source: coverage.source,
           asOf: coverage.asOf,
