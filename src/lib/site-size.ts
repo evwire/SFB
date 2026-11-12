@@ -156,7 +156,11 @@ function buildStory(
 
   const headline =
     four && eight
-      ? `Most sites are 4-stall. The 8-stall sites match them on total stalls.`
+      ? fourStalls === eightStalls
+        ? `Most sites are 4-stall. The 8-stall sites match them on total stalls.`
+        : eightStalls > fourStalls
+          ? `Most sites are 4-stall. The 8-stall sites hold more stalls in total, ${eightStalls} to ${fourStalls}.`
+          : `Most sites are 4-stall, and they hold the most stalls: ${fourStalls} to ${eightStalls} at 8-stall sites.`
       : dominant
         ? `${dominant.sites} of ${total} open sites have ${dominant.stalls} stalls.`
         : `${total} open US sites with a stall count.`;
