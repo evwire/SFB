@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { WallGroup } from "@/lib/wall";
+import Heroes from "./Heroes";
 
 const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -51,15 +52,16 @@ export default function Wall({
   groups,
   openSites,
   operators,
+  asOf,
 }: {
   groups: WallGroup[];
   openSites: number;
   operators: number;
+  asOf: string;
 }) {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const tileEls = useRef(new Map<number, HTMLAnchorElement>());
   const labEls = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -67,7 +69,6 @@ export default function Wall({
     const track = trackRef.current!;
     const stage = stageRef.current!;
     const world = worldRef.current!;
-    const card = cardRef.current!;
 
     const tiles: Tile[] = [];
     groups.forEach((g, gi) =>
@@ -211,7 +212,8 @@ export default function Wall({
       stage.style.setProperty("--cp", String(Math.min(1, p * 2.2)));
       stage.style.setProperty("--sp", String(eAll));
       stage.style.setProperty("--pn", String(Math.min(1, Math.max(0, (y - sortSpan) / (H * 0.1)))));
-      card.style.pointerEvents = p > 0.25 ? "none" : "auto";
+      stage.style.setProperty("--hp", String(Math.min(1, p * 1.8)));
+      stage.dataset.gone = p > 0.3 ? "1" : "0";
       stage.dataset.sorted = p > 0.9 ? "1" : "0";
     };
 
@@ -241,28 +243,26 @@ export default function Wall({
     };
   }, [groups]);
 
-  // Liquid Glass: build an edge-refraction map the size of the headline panel and feed it to an
-  // SVG displacement filter used as a backdrop filter. Chromium only; elsewhere the panel keeps
-  // its blur, saturation, rim and shadow (see the CSS fallback).
+  // Liquid Glass (hero d): build an edge-refraction map the size of the lens and feed it to an SVG
+  // displacement filter used as a backdrop filter on the bezel ring. Chromium only; elsewhere the lens
+  // keeps its frosted body, rim and shadows (see hero.css).
   useEffect(() => {
-    const stage = stageRef.current!;
-    const card = cardRef.current!;
-    const q = new URLSearchParams(location.search).get("hero");
-    stage.dataset.hero = q === "flat" ? "flat" : "glass";
+    if (document.documentElement.dataset.hero !== "d") return;
+    const lens = document.querySelector<HTMLElement>(".d-lens");
     const brands = (navigator as unknown as { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands;
     const chromium = Boolean(brands?.some((b) => /Chromium|Google Chrome/.test(b.brand)));
-    if (!chromium || q === "flat") return;
     const filter = document.getElementById("w-lg") as SVGFilterElement | null;
     const img = document.getElementById("w-lg-map") as SVGFEImageElement | null;
     const disp = document.getElementById("w-lg-disp") as SVGFEDisplacementMapElement | null;
-    if (!filter || !img || !disp) return;
+    if (!lens || !chromium || !filter || !img || !disp) return;
     let raf = 0;
     const build = () => {
-      const w = Math.round(card.offsetWidth);
-      const h = Math.round(card.offsetHeight);
+      const w = Math.round(lens.offsetWidth);
+      const h = Math.round(lens.offsetHeight);
       if (w < 40 || h < 40) return;
-      const r = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 26;
-      const bezel = Math.min(56, Math.min(w, h) * 0.22);
+      const cs = getComputedStyle(lens);
+      const r = parseFloat(cs.borderTopLeftRadius) || 40;
+      const bezel = parseFloat(cs.getPropertyValue("--bezel")) || 28;
       const cv = document.createElement("canvas");
       cv.width = w;
       cv.height = h;
@@ -278,8 +278,7 @@ export default function Wall({
           const qy = Math.abs(py) - hy;
           const ox = Math.max(qx, 0);
           const oy = Math.max(qy, 0);
-          const sd = Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r;
-          const d = -sd;
+          const d = -(Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r);
           let nx = 0;
           let ny = 0;
           if (ox > 0 || oy > 0) {
@@ -289,9 +288,10 @@ export default function Wall({
           } else if (qx > qy) nx = Math.sign(px);
           else ny = Math.sign(py);
           const t = Math.min(1, Math.max(0, d / bezel));
-          const m = Math.pow(1 - t, 2.4); // strongest at the very edge, none past the bezel
+          // convex-lens profile: steep at the rim, easing to nothing at the inner edge of the bezel
+          const m = Math.pow(1 - t, 1.3);
           const i = (y * w + x) * 4;
-          im.data[i] = 128 - nx * m * 127; // sample from the inside: content squeezes toward the rim
+          im.data[i] = 128 - nx * m * 127;
           im.data[i + 1] = 128 - ny * m * 127;
           im.data[i + 2] = 128;
           im.data[i + 3] = 255;
@@ -303,7 +303,7 @@ export default function Wall({
       img.setAttribute("width", String(w));
       img.setAttribute("height", String(h));
       img.setAttribute("href", cv.toDataURL("image/png"));
-      disp.setAttribute("scale", String(Math.round(bezel * 3)));
+      disp.setAttribute("scale", String(Math.round(bezel * 1.75)));
       document.documentElement.classList.add("lg-refract");
     };
     build();
@@ -311,12 +311,11 @@ export default function Wall({
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(build);
     });
-    ro.observe(card);
-    // a soft specular that follows the pointer
+    ro.observe(lens);
     const onMove = (e: PointerEvent) => {
-      const b = card.getBoundingClientRect();
-      card.style.setProperty("--mx", `${Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)) * 100}%`);
-      card.style.setProperty("--my", `${Math.max(0, Math.min(1, (e.clientY - b.top) / b.height)) * 100}%`);
+      const b = lens.getBoundingClientRect();
+      lens.style.setProperty("--mx", `${Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)) * 100}%`);
+      lens.style.setProperty("--my", `${Math.max(0, Math.min(1, (e.clientY - b.top) / b.height)) * 100}%`);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => {
@@ -394,25 +393,12 @@ export default function Wall({
           Anyone can own a Supercharger. Here is who did.
         </div>
 
-        <div className="w-card" ref={cardRef}>
-          <h1>
-            Anyone can own a Supercharger. <i>Here is who did.</i>
-          </h1>
-          <p>
-            Gas stations, a jeweller, a car dealer, a coffee truck, a city. {openSites} open sites and {operators}{" "}
-            operators on Tesla&apos;s map, and these are real photos from our reporting.
-          </p>
-          <div className="w-cta">
-            <a className="w-btn" href="/map">
-              See every site
-            </a>
-            <a className="w-link" href="#stories">
-              Read our stories
-            </a>
-          </div>
-        </div>
+        <Heroes openSites={openSites} operators={operators} asOf={asOf} />
 
-        <div className="w-hint">Scroll: the wall sorts itself</div>
+        <div className="w-hint">
+          <i aria-hidden="true" />
+          Scroll: the wall sorts itself
+        </div>
       </div>
     </section>
   );

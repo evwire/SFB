@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Wall from "@/components/wall/Wall";
+import { Arrow } from "@/components/wall/Heroes";
 import ThemeSwitch from "@/components/wall/ThemeSwitch";
 import { getWallData } from "@/lib/wall";
 import { builderEntries, hostEntries, strategyEntries, link } from "@/lib/wall-content";
@@ -67,7 +68,7 @@ export default async function Page() {
       </header>
 
       <main>
-        <Wall groups={d.groups} openSites={st.openSites} operators={st.operators} />
+        <Wall groups={d.groups} openSites={st.openSites} operators={st.operators} asOf={st.openAsOf} />
 
         <section className="w-sec w-numbers" aria-label="The map today">
           <div className="w-wrap">
@@ -275,8 +276,11 @@ export default async function Page() {
                 : `${nf(st.upcomingNamed)} name an operator or a host.`}
             </p>
             <p>
-              <a className="w-btn" href="/map">
-                See every site on the map
+              <a className="h-cta" href="/map">
+                <span>See every site on the map</span>
+                <i>
+                  <Arrow />
+                </i>
               </a>
             </p>
           </div>
