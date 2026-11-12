@@ -6,7 +6,15 @@ dashboard, and a live feed of our coverage. Intended home: `sfb.evwire.com`.
 Built on the EVwire stack (`EVwire-System/STACK.md`): Next.js 14 App Router, TypeScript,
 Airtable as CMS, Vercel, server rendered, with the SEO and AI-search layer wired from day one.
 
-## What is on the page
+## Routes
+
+- `/` is the wall lander (`src/app/(wall)`): a full-bleed wall of real site photos from our stories that
+  sorts itself by host type on scroll, then host types, builders, strategies and a card for every site we
+  have covered. Photo and story lists are in `data/wall/`; every number is computed from the Find Us
+  snapshots at build time (`src/lib/wall.ts`).
+- `/map` is the tracker described below (it used to be `/`). `/size` is unchanged.
+
+## What is on the page (`/map`)
 
 1. **The map.** An SVG albersUsa map, pre-projected at build time, so the browser ships no
    mapping library and no tile requests. Pins are coloured by status, sized by stall count,

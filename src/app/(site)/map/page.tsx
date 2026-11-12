@@ -3,7 +3,7 @@ import { getFeed, getCoverageArticles } from "@/lib/feed";
 import { attachCoverage } from "@/lib/coverage";
 import RegionApp from "@/components/RegionApp";
 import type { LatestChanges, SiteData } from "@/lib/types";
-import latestChanges from "../../data/latest-changes.json";
+import latestChanges from "../../../../data/latest-changes.json";
 
 export const revalidate = 300;
 

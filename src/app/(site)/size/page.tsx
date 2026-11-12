@@ -53,13 +53,13 @@ export default async function SizePage() {
           </a>
           <div className="topbar-actions">
             <nav className="topnav">
-              <Link href="/">Map</Link>
-              <Link href="/#dashboard">Rollout</Link>
+              <Link href="/map">Map</Link>
+              <Link href="/map#dashboard">Rollout</Link>
               <Link href="/size" aria-current="page">
                 Site size
               </Link>
-              <Link href="/#sites">All sites</Link>
-              <Link href="/#news">News</Link>
+              <Link href="/map#sites">All sites</Link>
+              <Link href="/map#news">News</Link>
             </nav>
             <ThemeToggle />
           </div>
@@ -96,7 +96,7 @@ export default async function SizePage() {
         <SiteSizeOverview data={overview} />
 
         <p className="size-back">
-          <Link className="link" href="/">
+          <Link className="link" href="/map">
             ← Back to the map
           </Link>
         </p>

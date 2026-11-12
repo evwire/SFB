@@ -1,0 +1,593 @@
+{
+ "photos": {
+  "107": {
+   "w": 600,
+   "h": 800,
+   "focus": "40% 50%",
+   "alt": "EV Auto stall wrapped with a sunburst Telecaster-style guitar and a QR code, two installers working",
+   "credit": "Alex Lawrence on LinkedIn, @diywrapclub on X",
+   "wrap": true,
+   "url": "https://evwire.com/p/ev-auto-nashville-supercharger-guitar-wraps-legendary-artists",
+   "name": "EV Auto"
+  },
+  "108": {
+   "w": 600,
+   "h": 800,
+   "focus": "40% 50%",
+   "alt": "Installers applying a wrap to a stall in a landscaped lot",
+   "credit": "Alex Lawrence on LinkedIn, @diywrapclub on X",
+   "wrap": true,
+   "url": "https://evwire.com/p/ev-auto-nashville-supercharger-guitar-wraps-legendary-artists",
+   "name": "EV Auto"
+  },
+  "68": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "EV Auto dealership facade with big 'EV' sign and a Model 3 in front",
+   "credit": "Alex Lawrence on LinkedIn, EV Auto",
+   "wrap": false,
+   "url": "https://evwire.com/p/ev-auto-nashville-supercharger-guitar-wraps-legendary-artists",
+   "name": "EV Auto"
+  },
+  "89": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 60%",
+   "alt": "Four Island Center stalls in a row, each wrapped in a different painted scene, palms behind",
+   "credit": "Scott Runyon via LinkedIn and comments to EVwire",
+   "wrap": true,
+   "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+   "name": "Island Center"
+  },
+  "91": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 46%",
+   "alt": "Isle of Palms stall 1D: sunlit beach scene with sailboat",
+   "credit": "Scott Runyon via LinkedIn and comments to EVwire",
+   "wrap": true,
+   "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+   "name": "Island Center"
+  },
+  "92": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 46%",
+   "alt": "Isle of Palms stall 1C: painted surfboard in teal, orange and pink",
+   "credit": "Scott Runyon via LinkedIn and comments to EVwire",
+   "wrap": true,
+   "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+   "name": "Island Center"
+  },
+  "93": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 46%",
+   "alt": "Isle of Palms stall 1B: painted striped beach chair facing the sea",
+   "credit": "Scott Runyon via LinkedIn and comments to EVwire",
+   "wrap": true,
+   "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+   "name": "Island Center"
+  },
+  "94": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 46%",
+   "alt": "Isle of Palms stall 1A: painted palm frond in green, yellow and blue",
+   "credit": "Scott Runyon via LinkedIn and comments to EVwire",
+   "wrap": true,
+   "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+   "name": "Island Center"
+  },
+  "142": {
+   "w": 800,
+   "h": 450,
+   "focus": "50% 50%",
+   "alt": "EVgo Superchargers beside a Mariano's sign, Chicago: stalls along a fence",
+   "credit": "EVgo",
+   "wrap": false,
+   "url": "https://evwire.com/p/evgo-first-supercharger-site-launched-chicago",
+   "name": "EVgo, Riverside Square"
+  },
+  "143": {
+   "w": 800,
+   "h": 418,
+   "focus": "50% 50%",
+   "alt": "EVgo's 12 stalls under an overpass in Chicago",
+   "credit": "EVgo",
+   "wrap": false,
+   "url": "https://evwire.com/p/evgo-first-supercharger-site-launched-chicago",
+   "name": "EVgo, Riverside Square"
+  },
+  "145": {
+   "w": 800,
+   "h": 418,
+   "focus": "30% 50%",
+   "alt": "EVgo-branded stall in close-up with an overpass behind",
+   "credit": "EVgo",
+   "wrap": false,
+   "url": "https://evwire.com/p/evgo-first-supercharger-site-launched-chicago",
+   "name": "EVgo, Riverside Square"
+  },
+  "121": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Coffee Fellows all-electric coffee truck beside the Electric Son stalls",
+   "credit": "Matt Simpson",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "115": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Electric Son stalls in a new lot with lightning-bolt logos and yellow bollards",
+   "credit": "Matt Simpson",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "117": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Electric Son stall with logo, accessible bay and yellow bollards",
+   "credit": "Matt Simpson",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "118": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Wide view of the Electric Son lot, stalls along a wooden fence",
+   "credit": "Matt Simpson",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "120": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Electric Son stall close-up with the Coffee Fellows truck behind",
+   "credit": "Matt Simpson in comments to EVwire, Electric Son, Culture Map Houston",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "116": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Electric Son sign board: 'Thank you for charging with Electric Son'",
+   "credit": "Matt Simpson",
+   "wrap": false,
+   "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+   "name": "Electric Son"
+  },
+  "154": {
+   "w": 800,
+   "h": 450,
+   "focus": "50% 50%",
+   "alt": "Aerial of the Redmond site beside the overpass",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "149": {
+   "w": 800,
+   "h": 533,
+   "focus": "50% 50%",
+   "alt": "Redmond stalls lining a sidewalk under autumn trees",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "150": {
+   "w": 800,
+   "h": 533,
+   "focus": "50% 50%",
+   "alt": "Teslas charging under the light rail overpass at Redmond Town Center",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "151": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Fresh striping, a Resound truck on site",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "152": {
+   "w": 533,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Construction underway at Redmond Town Center",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "153": {
+   "w": 533,
+   "h": 800,
+   "focus": "50% 40%",
+   "alt": "A Tesla charging at one of the six V4 posts, Redmond",
+   "credit": "Resound Energy",
+   "wrap": false,
+   "url": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location",
+   "name": "Redmond Town Center"
+  },
+  "48": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Row of EVIO stalls in a freshly striped Nanuet lot, blue sky",
+   "credit": "PowerUp EV Solutions",
+   "wrap": false,
+   "url": "https://evwire.com/p/tesla-evio-nanuet-supercharger-fsd-demo-drive",
+   "name": "Nanuet Town Centre"
+  },
+  "134": {
+   "w": 800,
+   "h": 602,
+   "focus": "50% 50%",
+   "alt": "Cybertruck at the ChargedEV site beside an A-frame sign",
+   "credit": "Energea on Business Wire",
+   "wrap": false,
+   "url": "https://evwire.com/p/chargedev-hubs-debuts-thirdparty-supercharger-site-georgia",
+   "name": "ChargedEV Hubs"
+  },
+  "135": {
+   "w": 800,
+   "h": 450,
+   "focus": "50% 50%",
+   "alt": "Row of Teslas at EV-marked bays under trees at a ChargedEV site",
+   "credit": "Energea on Business Wire",
+   "wrap": false,
+   "url": "https://evwire.com/p/chargedev-hubs-debuts-thirdparty-supercharger-site-georgia",
+   "name": "ChargedEV Hubs"
+  },
+  "136": {
+   "w": 776,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Cybertruck close-up at the ChargedEV site",
+   "credit": "Energea on Business Wire",
+   "wrap": false,
+   "url": "https://evwire.com/p/chargedev-hubs-debuts-thirdparty-supercharger-site-georgia",
+   "name": "ChargedEV Hubs"
+  },
+  "86": {
+   "w": 602,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Shell-branded forecourt with a line of red-topped Tesla stalls beside the pump island",
+   "credit": "Tesla Charging on X, Tesla Motors Club, and supercharge.info",
+   "wrap": false,
+   "url": "https://evwire.com/p/victron-energy-midlothian-tesla-supercharger-launch-details",
+   "name": "Texas Best Roadhouse, Henrietta"
+  },
+  "84": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Row of white-label V4 stalls with blue bollards, Midlothian",
+   "credit": "Tesla Charging on X, Tesla Motors Club, and supercharge.info",
+   "wrap": false,
+   "url": "https://evwire.com/p/victron-energy-midlothian-tesla-supercharger-launch-details",
+   "name": "Texas Best Smokehouse"
+  },
+  "85": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "Tesla-style sign: 'Tesla Supercharger #1, power supplied from EV-LITE #1, 2220 Plainview Rd, Midlothian'",
+   "credit": "Tesla Charging on X, Tesla Motors Club, and supercharge.info",
+   "wrap": false,
+   "url": "https://evwire.com/p/victron-energy-midlothian-tesla-supercharger-launch-details",
+   "name": "Texas Best Smokehouse"
+  },
+  "26": {
+   "w": 800,
+   "h": 392,
+   "focus": "50% 50%",
+   "alt": "Diamonds by Raymond Lee building exterior with palms",
+   "credit": "Envirospark Energy Solutions on LinkedIn",
+   "wrap": false,
+   "url": "https://evwire.com/p/tesla-superchargers-diamond-shop-florida",
+   "name": "Diamonds by Raymond Lee"
+  },
+  "138": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 55%",
+   "alt": "EVODS stall wrapped with a single tree illustration, mountains behind",
+   "credit": "EVODS",
+   "wrap": true,
+   "url": "https://evwire.com/p/evods-first-tesla-supercharger-for-business-east-wenatchee-washington",
+   "name": "EVODS"
+  },
+  "70": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "PPR's Grand Island lot: row of V4 stalls, wires overhead",
+   "credit": "PPR Energy Solutions on LinkedIn",
+   "wrap": false,
+   "url": "https://evwire.com/p/ppr-energy-solutions-tesla-v4-supercharger-grand-island-ny",
+   "name": "PPR Energy Solutions"
+  },
+  "72": {
+   "w": 800,
+   "h": 533,
+   "focus": "50% 50%",
+   "alt": "PPR crew standing in front of its branded work vans",
+   "credit": "PPR Energy Solutions on LinkedIn",
+   "wrap": false,
+   "url": "https://evwire.com/p/ppr-energy-solutions-tesla-v4-supercharger-grand-island-ny",
+   "name": "PPR Energy Solutions"
+  },
+  "28": {
+   "w": 608,
+   "h": 787,
+   "focus": "50% 50%",
+   "alt": "Alpharetta city-branded stalls in a row",
+   "credit": "Original source not stated in our article",
+   "wrap": false,
+   "url": "https://evwire.com/p/alpharetta-city-superchargers-police-fleet-charging",
+   "name": "Alpharetta"
+  },
+  "157": {
+   "w": 800,
+   "h": 438,
+   "focus": "50% 50%",
+   "alt": "Collage of the first Suncoast stalls, animal wraps, site shots",
+   "credit": "Tesla",
+   "wrap": true,
+   "url": "https://evwire.com/p/us-the-first-third-party-tesla-supercharger-in-north-america-installed-by-suncoast-charging",
+   "name": "Suncoast, Land O' Lakes"
+  },
+  "103": {
+   "w": 800,
+   "h": 761,
+   "focus": "50% 50%",
+   "alt": "UCN EV Charging Lounge exterior: wood-clad prefab with glass door and UCN sign",
+   "credit": "Anthony Tracey and United Chargers Network on LinkedIn",
+   "wrap": false,
+   "url": "https://evwire.com/p/ucn-ev-charging-lounges-supercharger-for-business-images",
+   "name": "UCN EV Charging Lounge"
+  },
+  "33": {
+   "w": 800,
+   "h": 600,
+   "focus": "50% 50%",
+   "alt": "AC Customs' V3 Supercharger site in Belleville KS, wintry lot, red stalls",
+   "credit": "Tesla Charging, AC Customs Solar",
+   "wrap": false,
+   "url": "https://evwire.com/p/tesla-supercharger-for-business-rare-v3-site-belleville-kansas",
+   "name": "AC Customs, Belleville"
+  },
+  "62": {
+   "w": 600,
+   "h": 800,
+   "focus": "50% 50%",
+   "alt": "Francis-branded V4 stalls with 'Tesla Supercharger' header",
+   "credit": "Seth Christ on LinkedIn",
+   "wrap": false,
+   "url": "https://evwire.com/p/francis-energy-100-tesla-supercharger-stalls-oklahoma",
+   "name": "Francis Energy"
+  }
+ },
+ "groups": [
+  {
+   "key": "dealer",
+   "label": "A car dealer",
+   "where": "EV Auto, Brentwood, TN",
+   "photos": [
+    107,
+    108,
+    68
+   ],
+   "articles": [
+    14,
+    25
+   ],
+   "findusId": "490806"
+  },
+  {
+   "key": "beach",
+   "label": "A beach shopping center",
+   "where": "Island Center, Isle of Palms, SC",
+   "photos": [
+    89,
+    91,
+    92,
+    93,
+    94
+   ],
+   "articles": [
+    21
+   ],
+   "findusId": "499203"
+  },
+  {
+   "key": "grocery",
+   "label": "A grocery center",
+   "where": "EVgo at Riverside Square, Chicago",
+   "photos": [
+    142,
+    143,
+    145
+   ],
+   "articles": [
+    35
+   ],
+   "findusId": "58992"
+  },
+  {
+   "key": "founder",
+   "label": "A one-founder start-up",
+   "where": "Electric Son, Houston, TX",
+   "photos": [
+    121,
+    115,
+    117,
+    118,
+    120,
+    116
+   ],
+   "articles": [
+    28
+   ],
+   "findusId": "490457"
+  },
+  {
+   "key": "centers",
+   "label": "Town centers and malls",
+   "where": "Redmond, WA, Nanuet, NY and Norcross, GA",
+   "photos": [
+    154,
+    149,
+    150,
+    151,
+    152,
+    153,
+    48,
+    134,
+    135,
+    136
+   ],
+   "articles": [
+    36,
+    8,
+    9
+   ],
+   "findusId": "490529"
+  },
+  {
+   "key": "fuel",
+   "label": "A smokehouse and a gas station",
+   "where": "Texas Best, Midlothian and Henrietta, TX",
+   "photos": [
+    86,
+    84,
+    85
+   ],
+   "articles": [
+    19
+   ],
+   "findusId": "495547"
+  },
+  {
+   "key": "jeweller",
+   "label": "A jeweller",
+   "where": "Diamonds by Raymond Lee, Boca Raton, FL",
+   "photos": [
+    26
+   ],
+   "articles": [
+    4
+   ],
+   "findusId": "484317"
+  },
+  {
+   "key": "fleet",
+   "label": "A fleet company",
+   "where": "EVODS, East Wenatchee, WA",
+   "photos": [
+    138
+   ],
+   "articles": [
+    34
+   ],
+   "findusId": "499626"
+  },
+  {
+   "key": "installer",
+   "label": "An electrical contractor",
+   "where": "PPR Energy Solutions, Grand Island, NY",
+   "photos": [
+    70,
+    72
+   ],
+   "articles": [
+    15
+   ],
+   "findusId": "488570"
+  },
+  {
+   "key": "city",
+   "label": "A city",
+   "where": "Alpharetta, GA",
+   "photos": [
+    28
+   ],
+   "articles": [
+    2
+   ],
+   "findusId": "481260"
+  },
+  {
+   "key": "nature",
+   "label": "A nature-themed hub",
+   "where": "Suncoast, Land O' Lakes, FL",
+   "photos": [
+    157
+   ],
+   "articles": [
+    13
+   ],
+   "findusId": "472503"
+  },
+  {
+   "key": "lounge",
+   "label": "A charging lounge",
+   "where": "United Chargers Network",
+   "photos": [
+    103
+   ],
+   "articles": [
+    24
+   ],
+   "findusId": null
+  },
+  {
+   "key": "local",
+   "label": "A Kansas business",
+   "where": "AC Customs, Belleville, KS",
+   "photos": [
+    33
+   ],
+   "articles": [
+    5
+   ],
+   "findusId": null
+  },
+  {
+   "key": "network",
+   "label": "A regional network",
+   "where": "Francis Energy, Oklahoma",
+   "photos": [
+    62
+   ],
+   "articles": [
+    1,
+    12
+   ],
+   "findusId": "484160"
+  }
+ ]
+}

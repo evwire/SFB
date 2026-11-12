@@ -1,8 +1,4 @@
 import type { Metadata } from "next";
-import "@fontsource/fraunces/400.css";
-import "@fontsource/fraunces/600.css";
-import "@fontsource/fraunces/600-italic.css";
-import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sfb.evwire.com"),
@@ -51,7 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body>
-        <div className="aura" aria-hidden="true" />
         {children}
       </body>
     </html>

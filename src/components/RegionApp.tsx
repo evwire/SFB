@@ -142,6 +142,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
           </a>
           <div className="topbar-actions">
             <nav className="topnav">
+              <a href="/">Overview</a>
               <a href="#map">Map</a>
               <a href="#dashboard">Rollout</a>
               <a href="/size">Site size</a>

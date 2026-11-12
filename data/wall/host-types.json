@@ -1,0 +1,739 @@
+{
+ "_note": "Classified only where the host name or an EVwire article makes the type obvious. Everything else is 'unclassified'. Counts on screen must come from this file.",
+ "sites": {
+  "496877": {
+   "host_type": "fuel",
+   "basis": "Texaco",
+   "operator": "Lakh Enterprises",
+   "host": "Texaco",
+   "city": "Prattville",
+   "state": "AL",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "490203": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Charge & Go",
+   "host": null,
+   "city": "El Cajon",
+   "state": "CA",
+   "stalls": 12,
+   "operator_model": "not stated"
+  },
+  "472652": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "5420 Sunset",
+   "host": null,
+   "city": "Los Angeles",
+   "state": "CA",
+   "stalls": 6,
+   "operator_model": "not stated"
+  },
+  "489204": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Huff Energy",
+   "host": "JS West",
+   "city": "Modesto",
+   "state": "CA",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "416952": {
+   "host_type": "retail",
+   "basis": "Manolo Farmers Market",
+   "operator": "Manolo Market",
+   "host": "Manolo Farmers Market",
+   "city": "San Diego",
+   "state": "CA",
+   "stalls": 20,
+   "operator_model": "not stated"
+  },
+  "481259": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "HiON EV",
+   "host": "Denver Tech Center",
+   "city": "Greenwood Village",
+   "state": "CO",
+   "stalls": 4,
+   "operator_model": "franchise or developer"
+  },
+  "472503": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Suncoast",
+   "host": "The Hub at Bexley",
+   "city": "Land O' Lakes",
+   "state": "FL",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "490113": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Suncoast",
+   "host": "The Hub at Lexington",
+   "city": "Wesley Chapel",
+   "state": "FL",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "481260": {
+   "host_type": "municipal",
+   "basis": "Alpharetta Department of Public Safety",
+   "operator": "Alpharetta City",
+   "host": "Alpharetta Department of Public Safety",
+   "city": "Alpharetta",
+   "state": "GA",
+   "stalls": 4,
+   "operator_model": "city"
+  },
+  "490708": {
+   "host_type": "food",
+   "basis": "Starbucks",
+   "operator": "U.S. Charging",
+   "host": "Starbucks",
+   "city": "Fairburn",
+   "state": "GA",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "487103": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "ChargedEV",
+   "host": null,
+   "city": "Norcross",
+   "state": "GA",
+   "stalls": 8,
+   "operator_model": "investor-funded developer"
+  },
+  "481210": {
+   "host_type": "food",
+   "basis": "Gathered, by The Pie Safe (EVwire image caption: The Pie Safe Bakery)",
+   "operator": "The Pie Safe",
+   "host": "Gathered",
+   "city": "Deary",
+   "state": "ID",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "485163": {
+   "host_type": "retail",
+   "basis": "Mount Prospect Center",
+   "operator": "BA Solutions",
+   "host": "Mount Prospect Center",
+   "city": "Mt Prospect",
+   "state": "IL",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "481358": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "BA Solutions",
+   "host": "BA Solutions",
+   "city": "Spring Grove",
+   "state": "IL",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "496565": {
+   "host_type": "fuel",
+   "basis": "Mobil",
+   "operator": "M-59 Enterprises",
+   "host": "Mobil",
+   "city": "Macomb",
+   "state": "MI",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "462768": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Medina Ventures",
+   "host": null,
+   "city": "Medina",
+   "state": "MN",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "489205": {
+   "host_type": "fuel",
+   "basis": "Little General (EVwire: travel center)",
+   "operator": "Little General",
+   "host": null,
+   "city": "Columbia",
+   "state": "MO",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "496829": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "ChargedEV",
+   "host": "Morrisville Square",
+   "city": "Morrisville",
+   "state": "NC",
+   "stalls": 4,
+   "operator_model": "investor-funded developer"
+  },
+  "491102": {
+   "host_type": "hotel",
+   "basis": "Sonesta Select Hotel",
+   "operator": "Roam Energy",
+   "host": "Sonesta Select Hotel",
+   "city": "Statesville",
+   "state": "NC",
+   "stalls": 8,
+   "operator_model": "installer turned owner"
+  },
+  "486853": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Gorham Citgo",
+   "host": "Eastern Depot Restaurant",
+   "city": "Gorham",
+   "state": "NH",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "463680": {
+   "host_type": "golf",
+   "basis": "Genoa Golf Club",
+   "operator": "Genoa Golf Club",
+   "host": "Genoa Golf Club",
+   "city": "Carson City",
+   "state": "NV",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "488570": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Pure Charge",
+   "host": null,
+   "city": "Grand Island",
+   "state": "NY",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "487202": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "EVIO",
+   "host": "Nanuet Town Centre",
+   "city": "Nanuet",
+   "state": "NY",
+   "stalls": 8,
+   "operator_model": "franchise or developer"
+  },
+  "495704": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "EVIO",
+   "host": "Indian Rock",
+   "city": "Suffern",
+   "state": "NY",
+   "stalls": 8,
+   "operator_model": "franchise or developer"
+  },
+  "493954": {
+   "host_type": "food",
+   "basis": "Pioneer Coffee Roasters",
+   "operator": "Pioneer Coffee",
+   "host": "Pioneer Coffee Roasters",
+   "city": "Dalton",
+   "state": "OH",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "492964": {
+   "host_type": "retail",
+   "basis": "Gardner Grocery",
+   "operator": "Francis Energy",
+   "host": "Gardner Grocery",
+   "city": "Antlers",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "485807": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Stonegate Plaza",
+   "city": "Bartlesville",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "487054": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Cherokee Trading Post",
+   "city": "Calumet",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "493014": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": null,
+   "city": "Chickasha",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "487153": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "A&W",
+   "city": "Davis",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "484459": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Francis Energy",
+   "city": "Durant",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "494962": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Hutch's",
+   "city": "Elk City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "493069": {
+   "host_type": "food",
+   "basis": "Colton's Steak House & Grill",
+   "operator": "Francis Energy",
+   "host": "Colton's Steak House & Grill",
+   "city": "Enid",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "496854": {
+   "host_type": "fuel",
+   "basis": "Casey's",
+   "operator": "Francis Energy",
+   "host": "Casey's",
+   "city": "Henryetta",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "487104": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Riverwalk Crossing",
+   "city": "Jenks",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "421525": {
+   "host_type": "hotel",
+   "basis": "Hilton Garden Inn Lawton-Fort Sill",
+   "operator": "Francis Energy",
+   "host": "Hilton Garden Inn Lawton-Fort Sill",
+   "city": "Lawton",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "499853": {
+   "host_type": "retail",
+   "basis": "Crest Foods",
+   "operator": "Francis Energy",
+   "host": "Crest Foods",
+   "city": "Midwest City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "499656": {
+   "host_type": "retail",
+   "basis": "Crest Foods",
+   "operator": "Francis Energy",
+   "host": "Crest Foods",
+   "city": "Midwest City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "495487": {
+   "host_type": "retail",
+   "basis": "Crest Foods",
+   "operator": "Francis Energy",
+   "host": "Crest Foods",
+   "city": "Moore",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "484460": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": null,
+   "city": "Muskogee",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "484160": {
+   "host_type": "retail",
+   "basis": "Crest Fresh Market",
+   "operator": "Francis Energy",
+   "host": "Crest Fresh Market",
+   "city": "Norman",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "492864": {
+   "host_type": "food",
+   "basis": "Rudy's Country Store and Bar-B-Q",
+   "operator": "Francis Energy",
+   "host": "Rudy's \"Country Store\" and Bar-B-Q",
+   "city": "Norman",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "484061": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "The Last Drop",
+   "city": "Oklahoma City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "412611": {
+   "host_type": "food",
+   "basis": "JINYA Ramen Bar",
+   "operator": "JINYA Ramen Bar",
+   "host": null,
+   "city": "Oklahoma City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "495390": {
+   "host_type": "retail",
+   "basis": "Crest Foods",
+   "operator": "Francis Energy",
+   "host": "Crest Foods",
+   "city": "Oklahoma City",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "493160": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Owasso Land Building",
+   "city": "Owasso",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "491011": {
+   "host_type": "food",
+   "basis": "Colton's Steak House & Grill",
+   "operator": "Francis Energy",
+   "host": "Colton's Steak House & Grill",
+   "city": "Sand Springs",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "484366": {
+   "host_type": "fuel",
+   "basis": "Gore's Travel Plaza",
+   "operator": "Francis Energy",
+   "host": "Gore's Travel Plaza",
+   "city": "Seiling",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "490805": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": "Shawnee Marketplace",
+   "city": "Shawnee",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "492816": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Francis Energy",
+   "host": null,
+   "city": "Stillwater",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "486854": {
+   "host_type": "fuel",
+   "basis": "Fuel and Fly Mart",
+   "operator": "Solsource",
+   "host": "Fuel and Fly Mart",
+   "city": "Tulsa",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "487152": {
+   "host_type": "retail",
+   "basis": "Target",
+   "operator": "Francis Energy",
+   "host": "Target",
+   "city": "Tulsa",
+   "state": "OK",
+   "stalls": 8,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "499203": {
+   "host_type": "retail",
+   "basis": "Island Center (EVwire: shopping center)",
+   "operator": "Island Center",
+   "host": null,
+   "city": "Isle of Palms",
+   "state": "SC",
+   "stalls": 4,
+   "operator_model": "utility-built for host"
+  },
+  "494780": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Quick Pantry",
+   "host": "Quick Pantry",
+   "city": "Orangeburg",
+   "state": "SC",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "490806": {
+   "host_type": "dealer",
+   "basis": "EV Auto (EVwire: dealership)",
+   "operator": "EV Auto",
+   "host": null,
+   "city": "Brentwood",
+   "state": "TN",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "495401": {
+   "host_type": "fuel",
+   "basis": "Star Travel Center",
+   "operator": "Victron Energy",
+   "host": "Star Travel Center",
+   "city": "Bowie",
+   "state": "TX",
+   "stalls": 8,
+   "operator_model": "travel-center chain"
+  },
+  "495681": {
+   "host_type": "fuel",
+   "basis": "Texas Best Smokehouse",
+   "operator": "Victron Energy",
+   "host": "Texas Best Smokehouse",
+   "city": "Cleburne",
+   "state": "TX",
+   "stalls": 8,
+   "operator_model": "travel-center chain"
+  },
+  "33923": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "The EV Thing",
+   "host": null,
+   "city": "Cuero",
+   "state": "TX",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "481359": {
+   "host_type": "courtyard",
+   "basis": "Courtyard (EVwire: boutique grocer, champagne lounge, events venue, wine bar)",
+   "operator": "FBGTX",
+   "host": null,
+   "city": "Fredericksburg",
+   "state": "TX",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "490555": {
+   "host_type": "fuel",
+   "basis": "C-Store",
+   "operator": "Stealth Group",
+   "host": "C-Store",
+   "city": "Houston",
+   "state": "TX",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "490457": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "Electric Son",
+   "host": null,
+   "city": "Houston",
+   "state": "TX",
+   "stalls": 4,
+   "operator_model": "solo founder"
+  },
+  "495547": {
+   "host_type": "fuel",
+   "basis": "Texas Best Smokehouse (EVwire: Victron travel-center operator)",
+   "operator": "Victron Energy",
+   "host": "Texas Best Smokehouse",
+   "city": "Midlothian",
+   "state": "TX",
+   "stalls": 8,
+   "operator_model": "travel-center chain"
+  },
+  "498706": {
+   "host_type": "fuel",
+   "basis": "Texas Best Smokehouse",
+   "operator": "Victron Energy",
+   "host": "Texas Best Smokehouse",
+   "city": "Valley View",
+   "state": "TX",
+   "stalls": 8,
+   "operator_model": "travel-center chain"
+  },
+  "496254": {
+   "host_type": "fuel",
+   "basis": "Gateway Pilot Travel Center",
+   "operator": "Victron Energy",
+   "host": "Gateway Pilot Travel Center",
+   "city": "Van",
+   "state": "TX",
+   "stalls": 12,
+   "operator_model": "travel-center chain"
+  },
+  "486904": {
+   "host_type": "fuel",
+   "basis": "Eagle Travel Plaza",
+   "operator": "Eagle Travel Ctr.",
+   "host": "Eagle Travel Plaza",
+   "city": "West",
+   "state": "TX",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "462510": {
+   "host_type": "fuel",
+   "basis": "C-Store",
+   "operator": "Saini Charge",
+   "host": "C-Store",
+   "city": "Sandy",
+   "state": "UT",
+   "stalls": 8,
+   "operator_model": "not stated"
+  },
+  "490529": {
+   "host_type": "retail",
+   "basis": "Redmond Town Center (EVwire: busy retail lot)",
+   "operator": "Resound Energy",
+   "host": "Redmond Town Center",
+   "city": "Redmond",
+   "state": "WA",
+   "stalls": 6,
+   "operator_model": "installer turned owner"
+  },
+  "484317": {
+   "host_type": "retail",
+   "basis": "Diamonds By Raymond Lee (EVwire: luxury jeweller)",
+   "operator": "DBRL",
+   "host": "Diamonds By Raymond Lee",
+   "city": "Boca Raton",
+   "state": "FL",
+   "stalls": 4,
+   "operator_model": "not stated"
+  },
+  "499626": {
+   "host_type": "unclassified",
+   "basis": null,
+   "operator": "EVODS",
+   "host": null,
+   "city": "East Wenatchee",
+   "state": "WA",
+   "stalls": 6,
+   "operator_model": "fleet company with public side"
+  },
+  "507321": {
+   "host_type": "retail",
+   "basis": "Crest Foods",
+   "operator": "Francis Energy",
+   "host": "Crest Foods",
+   "city": "Tulsa",
+   "state": "OK",
+   "stalls": 4,
+   "operator_model": "regional network retrofitting its own sites"
+  },
+  "58992": {
+   "host_type": "retail",
+   "basis": "Riverside Square & River's Edge (EVwire: grocery-anchored center)",
+   "operator": "EVgo",
+   "host": "Riverside Square & River's Edge",
+   "city": "Chicago",
+   "state": "IL",
+   "stalls": 12,
+   "operator_model": "national network"
+  }
+ },
+ "counts": {
+  "fuel": 14,
+  "unclassified": 30,
+  "retail": 14,
+  "municipal": 1,
+  "food": 7,
+  "hotel": 2,
+  "golf": 1,
+  "dealer": 1,
+  "courtyard": 1
+ },
+ "operator_model_counts": {
+  "not stated": 28,
+  "franchise or developer": 3,
+  "city": 1,
+  "investor-funded developer": 2,
+  "installer turned owner": 2,
+  "regional network retrofitting its own sites": 26,
+  "utility-built for host": 1,
+  "travel-center chain": 5,
+  "solo founder": 1,
+  "fleet company with public side": 1,
+  "national network": 1
+ }
+}
