@@ -337,10 +337,7 @@ function Stories() {
           Show all {list.length} stories
         </button>
       )}
-      <p className="dz-fine">
-        {siteCount} sites on the map have a story. Host type is only shown where we have classified the site, so that filter lists fewer
-        stories than the state filter.
-      </p>
+      <p className="dz-fine">{siteCount} sites on the map have a story.</p>
     </section>
   );
 }

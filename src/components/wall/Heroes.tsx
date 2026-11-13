@@ -177,8 +177,13 @@ export default function Heroes({
                   <b />
                 </span>
                 <span className="e-cue-t">
-                  Scroll down
-                  <small>Watch every photo find its site</small>
+                  <span>
+                    Scroll down
+                    <svg className="e-chev" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M3 5.5l5 5 5-5" />
+                    </svg>
+                  </span>
+                  <small>Every photo flies to its place on the map</small>
                 </span>
               </a>
               <a className="e-mini" href="#dashboard">

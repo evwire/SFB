@@ -256,7 +256,15 @@ html.lg-refract .e-glass { filter: url(#e-lens) saturate(1.2) contrast(1.04); }
 .e-mini svg { width: 12px; height: 12px; transition: transform 0.3s var(--enter); }
 .e-mini:hover { background: rgba(246, 249, 248, 0.26); }
 .e-mini:hover svg { transform: translateX(2px); }
+/* first-look hint: a soft ring breathes round the cue three times, and a chevron nudges down until the scroll starts */
+.e-cue { position: relative; }
+.e-cue::after { content: ""; position: absolute; inset: -5px; border-radius: 26px; border: 1.5px solid var(--signal-bright); opacity: 0; pointer-events: none; animation: e-ring 2.6s ease-out 1.2s 3; }
+@keyframes e-ring { 0% { opacity: 0.7; transform: scale(0.97); } 70%, 100% { opacity: 0; transform: scale(1.06); } }
+.e-chev { display: inline-block; width: 15px; height: 15px; margin-left: 8px; vertical-align: -1px; stroke: var(--signal-bright); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; animation: e-nudge 1.8s ease-in-out infinite; }
+@keyframes e-nudge { 0%, 100% { transform: translateY(-1px); opacity: 0.6; } 50% { transform: translateY(3px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
+  .e-cue::after, .e-chev { animation: none; }
+  .e-cue::after { opacity: 0; }
   .e-mouse b { animation: none; opacity: 1; transform: translateY(5px); }
   .e-cue:hover .e-mouse { transform: none; }
 }

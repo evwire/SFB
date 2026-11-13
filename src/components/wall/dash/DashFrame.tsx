@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import MapView from "./MapView";
+import { Coach } from "./Coach";
 import { useDash } from "./DashContext";
 import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
 import { US_STATES } from "@/lib/us-states.generated";
@@ -164,7 +165,6 @@ function Rail({ onClose }: { onClose?: () => void }) {
               </option>
             ))}
           </select>
-          <p className="dz-fine">Only open sites our stories or the host name classify.</p>
         </>
       )}
 
@@ -301,8 +301,8 @@ function Panel({ s }: { s: DSite }) {
           ))}
         </dl>
         {missing.length > 0 && <p className="dz-fine">Not stated on Find Us: {missing.join(", ")}.</p>}
-        {s.wrapKind === "art" && <p className="dz-note">✦ Wrapped stalls: custom artwork on the stalls, shown in our photos and stories.</p>}
-        {s.wrapKind === "brand" && <p className="dz-note">✦ Branded stalls: the host&apos;s own logo is on the stalls, shown in our photos and stories.</p>}
+        {s.wrapKind === "art" && <p className="dz-note"><b>Wrapped stalls</b> · custom artwork on the stalls, shown in our photos and stories.</p>}
+        {s.wrapKind === "brand" && <p className="dz-note"><b>Branded stalls</b> · the host&apos;s own logo is on the stalls, shown in our photos and stories.</p>}
         {s.operator === FRANCIS && <p className="dz-note">One of the Francis Energy sites, a single network with many sites on the map.</p>}
 
         <h4 className="dz-sec">Read on EVwire</h4>
@@ -361,9 +361,6 @@ function Legend() {
     const top = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     return { top: top.slice(0, 6), other: other + top.slice(6).reduce((a, x) => a + x[1], 0), none };
   }, [visible, color]);
-  const hasCov = visible.some((s) => s.articles.length);
-  const hasWrap = visible.some((s) => s.wrapped);
-  const hasNew = visible.some((s) => s.change);
   return (
     <div className="dz-legend" aria-label="Legend">
       <div className="lg-by" role="group" aria-label="Colour the pins by">
@@ -399,11 +396,8 @@ function Legend() {
         </p>
       )}
       <p className="lg-sym">
-        {showOpen && <span className={`lg-size${byOp ? "" : " brand"}`}><em className="dz-sw sm2" /><em className="dz-sw lg2" /> Open site, sized by stalls</span>}
+        {showOpen && <span className={`lg-size${byOp ? "" : " brand"}`}><em className="dz-sw sm2" /><em className="dz-sw lg2" /> Open, sized by stalls</span>}
         {showUp && <span><em className={`dz-ring${byOp ? "" : " brand"}`} /> Upcoming</span>}
-        {hasCov && <span><em className="dz-dia" /> Stories covered by EVwire</span>}
-        {hasWrap && <span><em className="dz-star">✦</em> Wrapped or branded stalls</span>}
-        {hasNew && <span><em className="dz-newdot" /> New since last check</span>}
       </p>
     </div>
   );
@@ -455,6 +449,7 @@ export function DashFrame() {
           )}
         </aside>
       </div>
+      <Coach />
     </div>
   );
 }

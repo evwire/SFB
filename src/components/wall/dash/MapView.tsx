@@ -260,24 +260,6 @@ export default function MapView() {
                   ) : (
                     <circle r={rv} fill={up ? (byOp ? "var(--card)" : "var(--pin-brand)") : col} fillOpacity={up ? (byOp ? 0.55 : 0.14) : 1} className="pin-dot" strokeWidth={px(up ? 1.5 : 1.6)} />
                   )}
-                  {site.articles.length > 0 && (
-                    <rect
-                      className="pin-cov"
-                      x={px(r * 0.55)}
-                      y={-px(r * 0.55 + 9)}
-                      width={px(8.5)}
-                      height={px(8.5)}
-                      rx={px(1)}
-                      transform={`rotate(45 ${px(r * 0.55 + 4.25)} ${-px(r * 0.55 + 4.75)})`}
-                      strokeWidth={px(1.5)}
-                    />
-                  )}
-                  {site.change && <circle className="pin-new" cx={-px(r * 0.75)} cy={-px(r * 0.75)} r={px(4)} strokeWidth={px(1.4)} />}
-                  {site.wrapped && (
-                    <text className="pin-wrap" x={px(r * 0.6)} y={px(r * 0.6 + 8)} fontSize={px(11)} strokeWidth={px(2.4)}>
-                      ✦
-                    </text>
-                  )}
                 </g>
               );
             })}
