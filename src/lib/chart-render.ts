@@ -139,7 +139,7 @@ function track(spec: Track, b: Box, k: number, p: Pal, theme: Theme): string {
   const stacked = b.w < 460;
   const rh = Math.min(b.h / n, (stacked ? 60 : 52) * k);
   const top = b.y + Math.max(0, (b.h - rh * n) / 2) * 0.3;
-  const fs = Math.min((stacked ? 15 : 18) * k, rh * 0.44);
+  const fs = Math.min((stacked ? 14 : 18) * k, rh * 0.44);
   const max = Math.max(1, ...spec.rows.map((r) => r.value));
   const pfs = Math.max(fs * 0.9, 12);
   const valW = textW("00", fs, CW.sansBold) + textW("100%", pfs, CW.sans) + 26 * k;
@@ -362,7 +362,12 @@ function tiles(spec: Tiles, b: Box, k: number, p: Pal, theme: Theme): string {
       s += t(x + tw * 0.1, y + th * 0.38, abbr, afs, p.seqText[lv], { w: 700, op: 0.95 });
       s += t(x + tw / 2, y + th * 0.86, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
     }
-    if (row && row.open > 0) s += `<circle cx="${n1(x + tw - Math.min(tw, th) * 0.17)}" cy="${n1(y + Math.min(tw, th) * 0.19)}" r="${n1(Math.max(2.2 * k, Math.min(tw, th) * 0.06))}" fill="${p.seqText[lv]}"/>`;
+    if (row && row.open > 0) {
+      const dm = Math.min(tw, th);
+      s += wide
+        ? `<circle cx="${n1(x + tw - dm * 0.17)}" cy="${n1(y + dm * 0.19)}" r="${n1(Math.max(2.2 * k, dm * 0.06))}" fill="${p.seqText[lv]}"/>`
+        : `<circle cx="${n1(x + tw - 3.2)}" cy="${n1(y + 3.6)}" r="1.9" fill="${p.seqText[lv]}"/>`;
+    }
   }
   // key: the scale and what the dot means
   const ky = gy + gh + 22 * k;

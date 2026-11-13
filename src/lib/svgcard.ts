@@ -154,7 +154,7 @@ export function frame(o: FrameOpts): { svg: string; body: Box; footerTop: number
   const p = PAL[o.theme];
   const k = o.k;
   const narrow = o.W < 520;
-  const pad = 48 * k;
+  const pad = (narrow ? 28 : 48) * k;
   let y = 40 * k;
   let head = "";
   // eyebrow
