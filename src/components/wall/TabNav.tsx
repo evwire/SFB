@@ -2,23 +2,24 @@
 
 import { useEffect, useState } from "react";
 import ThemeSwitch from "./ThemeSwitch";
+import type { Tab } from "./dash/DashContext";
 
 const HOST_HASHES = ["hosts", "builders", "strategies", "stories", "coming"];
 
-/** Two views on one page: the map dashboard, and the host-type stories. The choice lives on <html data-tab>. */
+/** Three views on one page: the map dashboard, the charts, and the host-type stories. The choice lives on <html data-tab>. */
 export default function TabNav() {
-  const [tab, setTab] = useState<"dash" | "hosts">("dash");
+  const [tab, setTab] = useState<Tab>("dash");
 
   useEffect(() => {
     const apply = (scroll: boolean) => {
       const h = location.hash.replace("#", "");
-      const t = HOST_HASHES.includes(h) ? "hosts" : "dash";
+      const t: Tab = HOST_HASHES.includes(h) ? "hosts" : h === "charts" ? "charts" : "dash";
       document.documentElement.dataset.tab = t;
       setTab(t);
       window.dispatchEvent(new Event("dz-tab"));
-      if (scroll && t === "hosts") {
+      if (scroll && t !== "dash") {
         requestAnimationFrame(() => {
-          const el = h === "hosts" ? null : document.getElementById(h);
+          const el = h === "hosts" || h === "charts" ? null : document.getElementById(h);
           if (el) el.scrollIntoView();
           else window.scrollTo(0, 0);
         });
@@ -30,9 +31,9 @@ export default function TabNav() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const go = (t: "dash" | "hosts") => {
+  const go = (t: Tab) => {
     document.documentElement.dataset.tab = t;
-    history.replaceState(null, "", t === "hosts" ? "#hosts" : location.pathname + location.search);
+    history.replaceState(null, "", t === "hosts" ? "#hosts" : t === "charts" ? "#charts" : location.pathname + location.search);
     setTab(t);
     window.dispatchEvent(new Event("dz-tab"));
     window.scrollTo(0, 0);
@@ -44,8 +45,12 @@ export default function TabNav() {
         <button type="button" className="w-tab" aria-pressed={tab === "dash"} onClick={() => go("dash")}>
           Dashboard
         </button>
+        <button type="button" className="w-tab" aria-pressed={tab === "charts"} onClick={() => go("charts")}>
+          Charts
+        </button>
         <button type="button" className="w-tab" aria-pressed={tab === "hosts"} onClick={() => go("hosts")}>
-          Hosts &amp; stories
+          <span className="tl">Hosts &amp; stories</span>
+          <span className="ts">Hosts</span>
         </button>
       </nav>
       <ThemeSwitch />

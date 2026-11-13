@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import MapView from "./MapView";
 import { Coach } from "./Coach";
+import { DownloadButton } from "./DownloadButton";
 import { useDash } from "./DashContext";
+import { kpiItems } from "./kpi";
 import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
 import { US_STATES } from "@/lib/us-states.generated";
 import type { DSite } from "@/lib/mapdata";
 
 const nf = (n: number) => n.toLocaleString("en-US");
-const sym = (c: string | null) => (c === "GBP" ? "£" : c === "EUR" ? "€" : "$");
 const NS = "not stated";
 
 function Seg<T extends string | number>({ value, opts, onChange, label }: { value: T; opts: [T, string][]; onChange: (v: T) => void; label: string }) {
@@ -28,61 +29,40 @@ function Toggle({ on, onClick, children, swatch }: { on: boolean; onClick: () =>
   return (
     <button type="button" className="dz-tog" aria-pressed={on} onClick={onClick}>
       <i aria-hidden="true">{on ? "✓" : ""}</i>
-      <span>{children}</span>
       {swatch}
+      <span>{children}</span>
     </button>
   );
 }
 
 export function Kpis() {
   const { kpi, f } = useDash();
-  const cur = sym(kpi.rateCur);
-  const up = f.phase === "upcoming";
-  const rate = up ? "n/a" : kpi.rateLow == null ? NS : kpi.rateLow === kpi.rateHigh ? `${cur}${kpi.rateLow.toFixed(2)}` : `${cur}${kpi.rateLow.toFixed(2)} to ${cur}${kpi.rateHigh!.toFixed(2)}`;
-  const phaseWord = f.phase === "open" ? "open " : up ? "upcoming " : "";
+  const items = kpiItems(kpi, f);
   return (
     <div className="dz-kpi" role="list" aria-label={`Totals for the ${f.phase === "both" ? "open and upcoming" : f.phase} sites and current filters`} aria-live="polite">
-      <div role="listitem">
-        <b>{nf(kpi.sites)}</b>
-        <span>
-          {phaseWord}sites{f.phase === "both" ? ` (${nf(kpi.open)} open, ${nf(kpi.upcoming)} upcoming)` : ""}
-        </span>
-      </div>
-      <div role="listitem">
-        <b>{up ? "n/a" : nf(kpi.stalls)}</b>
-        <span>{up ? "stalls: not stated for upcoming sites" : `stalls${f.phase === "both" ? " at open sites" : ""}${kpi.stallsUnknown && f.phase !== "both" ? `, ${nf(kpi.stallsUnknown)} sites not stated` : ""}`}</span>
-      </div>
-      <div role="listitem">
-        <b>{up ? "n/a" : nf(kpi.operators)}</b>
-        <span>{up ? "operators: not stated for upcoming sites" : `operators${f.phase === "both" ? ", open sites" : ""}`}</span>
-      </div>
-      <div role="listitem">
-        <b>{nf(kpi.areas)}</b>
-        <span>{f.region === "eu" ? (kpi.areas === 1 ? "country" : "countries") : kpi.areas === 1 ? "state" : "states"}</span>
-      </div>
-      <div role="listitem" className="rate">
-        <b>{rate}</b>
-        <span>{up ? "Tesla rate per kWh: open sites only" : "Tesla rate per kWh, open sites"}</span>
-      </div>
-      <div role="listitem" className="cov">
-        <b>{nf(kpi.covered)}</b>
-        <span>sites in Stories covered by EVwire{kpi.isNew ? `, ${kpi.isNew} new` : ""}</span>
-      </div>
+      {items.map((k) => (
+        <div role="listitem" key={k.key} className={k.cls}>
+          <p className="k">{k.label}</p>
+          <b>{k.value}</b>
+          <span>{k.note}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
 /** The one master switch for which sites exist on the page: it drives the map, the totals and every list. */
 export function PhaseBar() {
-  const { f, set, regionSites } = useDash();
-  const open = regionSites.filter((s) => s.phase === "open").length;
-  const upc = regionSites.length - open;
+  const { f, set, phaseCounts, regionSites, active, visible } = useDash();
   const opts: ["open" | "upcoming" | "both", string, number][] = [
-    ["open", "Open", open],
-    ["upcoming", "Upcoming", upc],
-    ["both", "Both", open + upc],
+    ["open", "Open", phaseCounts.open],
+    ["upcoming", "Upcoming", phaseCounts.upcoming],
+    ["both", "Both", phaseCounts.both],
   ];
-  const showing = f.phase === "open" ? `Showing ${nf(open)} open sites` : f.phase === "upcoming" ? `Showing ${nf(upc)} upcoming sites` : `Showing ${nf(open + upc)} sites: ${nf(open)} open, ${nf(upc)} upcoming`;
+  // "Showing" always equals the Sites total in the strip beside it: both count the same filtered list
+  const total = f.phase === "both" ? regionSites.length : regionSites.filter((s) => s.phase === f.phase).length;
+  const what = f.phase === "both" ? "sites" : `${f.phase} sites`;
+  const showing = active > 0 ? `Showing ${nf(visible.length)} of ${nf(total)} ${what}` : `Showing ${nf(visible.length)} ${what}`;
   return (
     <div className="dz-master" role="group" aria-label="Which sites to show: open, upcoming or both">
       <div className="dz-mseg">
@@ -93,7 +73,7 @@ export function PhaseBar() {
           </button>
         ))}
       </div>
-      <p aria-live="polite">{showing}</p>
+      <p aria-live="polite" data-showing={visible.length}>{showing}</p>
     </div>
   );
 }
@@ -101,7 +81,7 @@ export function PhaseBar() {
 function Rail({ onClose }: { onClose?: () => void }) {
   const { f, set, reset, active, data, regionSites, color } = useDash();
   const ops = data.operatorOrder.filter((o) => regionSites.some((s) => s.operator === o && s.phase === "open"));
-  const top = ops.slice(0, 7);
+  const top = ops.slice(0, 5);
   const count = (o: string) => regionSites.filter((s) => s.operator === o && s.phase === "open").length;
   const states = [...new Set(regionSites.map((s) => s.state))].sort();
   const stateName = (a: string) => a === "US" ? "State not stated" : US_STATES.find((x) => x.abbr === a)?.name ?? a;
@@ -123,13 +103,12 @@ function Rail({ onClose }: { onClose?: () => void }) {
         )}
       </div>
 
-      <label className="dz-l">Where</label>
       <Seg label="Region" value={f.region} opts={[["us", "United States"], ["eu", "Europe"]]} onChange={(v) => set({ region: v, state: null, operators: [], host: null })} />
 
       <label className="dz-l">Operator</label>
       <div className="dz-ops">
         {top.map((o) => (
-          <Toggle key={o} on={f.operators.includes(o)} onClick={() => toggleOp(o)} swatch={<em className="dz-sw" style={{ background: color(o) }} />}>
+          <Toggle key={o} on={f.operators.includes(o)} onClick={() => toggleOp(o)} swatch={f.colorBy === "operator" ? <em className="dz-sw" style={{ background: color(o) }} /> : undefined}>
             {o} <small>{count(o)}</small>
           </Toggle>
         ))}
@@ -431,9 +410,12 @@ export function DashFrame() {
         <div className="dz-center">
           <MapView />
           <Legend />
-          <p className="dz-asof">
-            Tesla Find Us, open sites as of {asOf}; upcoming as of {data.asOf.upcoming}.
-          </p>
+          <div className="dz-foot">
+            <p className="dz-asof">
+              Tesla Find Us, open sites as of {asOf}; upcoming as of {data.asOf.upcoming}.
+            </p>
+            <DownloadButton />
+          </div>
           <button type="button" className="dz-filterbtn" onClick={() => setSheet(true)}>
             Filters{active ? ` (${active})` : ""}
           </button>

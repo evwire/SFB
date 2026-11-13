@@ -5,6 +5,9 @@ import TabNav from "@/components/wall/TabNav";
 import { DashProvider } from "@/components/wall/dash/DashContext";
 import { DashFrame } from "@/components/wall/dash/DashFrame";
 import DashSections from "@/components/wall/dash/DashSections";
+import ChartsTab from "@/components/wall/ChartsTab";
+import { buildCharts } from "@/lib/charts";
+import { getChecks } from "@/lib/chart-history";
 import { getDashData, PHOTO_SITE } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
 import { getWallData } from "@/lib/wall";
@@ -50,6 +53,7 @@ export default async function Page() {
   const d = await getWallData();
   const dash = await getDashData();
   const color = makeOpColor(dash.operatorOrder);
+  const charts = buildCharts(dash, getChecks());
   const siteById = new Map(dash.sites.filter((x) => x.region === "us" && x.phase === "open").map((x) => [x.id, x]));
   const flights = Object.entries(PHOTO_SITE).flatMap(([pid, sid]) => {
     const site = siteById.get(sid);
@@ -78,6 +82,10 @@ export default async function Page() {
             <DashFrame />
           </Wall>
           <DashSections />
+        </div>
+
+        <div className="tab-charts">
+          <ChartsTab charts={charts} host="sfb.evwire.com" />
         </div>
 
         <div className="tab-hosts">

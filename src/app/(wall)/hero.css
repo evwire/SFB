@@ -169,7 +169,7 @@ html.dark .d-spec { background: radial-gradient(55% 45% at var(--mx, 18%) var(--
    the wall (see Wall.tsx) that the SVG filter #e-lens bends at the rim, one pass per colour channel. */
 .hero-e { --fg: #f2f5f4; --bg: #06080b; }
 .e-lens {
-  --bezel: 44px; --reach: 26px; --mag: 1.12; --r: 64px;
+  --bezel: 26px; --reach: 9px; --mag: 1.12; --r: 64px;
   --lx: 0px; --ly: 0px; --ang: -45deg; --mx: 22%; --my: 8%;
   position: absolute; left: 50%; top: 50%; width: min(620px, calc(100% - 32px)); border-radius: var(--r);
   --pt: 50px; --px: 54px; --pb: 44px; padding: var(--pt) var(--px) var(--pb); color: #f2f5f4;
@@ -275,7 +275,7 @@ html.lg-refract .e-glass { filter: url(#e-lens) saturate(1.2) contrast(1.04); }
 html:not(.lg-refract) .e-lens { --mag: 1.1; }
 @media (prefers-reduced-transparency: reduce) { .e-tint { background: rgba(6, 8, 11, 0.7); } }
 @media (max-width: 760px) {
-  .e-lens { --bezel: 28px; --reach: 15px; --mag: 1.1; --r: 48px; top: auto; bottom: 56px; width: calc(100% - 24px); --pt: 36px; --px: 30px; --pb: 30px;
+  .e-lens { --bezel: 20px; --reach: 7px; --mag: 1.1; --r: 48px; top: auto; bottom: 56px; width: calc(100% - 24px); --pt: 36px; --px: 30px; --pb: 30px;
     transform: translate(-50%, 0) translate(var(--lx), var(--ly)) translateY(calc(var(--lp, 0) * -12vh)); }
   .e-copy h1 { font-size: 32px; }
   .e-copy p { font-size: 14.5px; line-height: 21px; margin-top: 10px; }

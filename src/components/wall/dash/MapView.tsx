@@ -11,7 +11,7 @@ type View = { k: number; x: number; y: number };
 export const PHOTO_PIN = 26; // px, also the size the flying photos shrink to
 
 // Open pins are filled dots sized by stalls; upcoming pins are small hollow rings (see dash.css).
-const pinPx = (s: DSite) => {
+export const pinPx = (s: DSite) => {
   if (s.phase === "upcoming") return 3.6;
   if (s.stalls == null) return 5;
   return Math.max(4.5, Math.min(9, 3.4 + Math.sqrt(s.stalls) * 1.5));
@@ -29,7 +29,7 @@ const ease = (t: number) => {
  * scroll: it zooms only with ctrl+wheel (a trackpad pinch) or the buttons, and pans by dragging once zoomed.
  */
 export default function MapView() {
-  const { f, visible, color, selected, select, data } = useDash();
+  const { f, visible, color, selected, select, data, viewRef: ctxView } = useDash();
   const eu = f.region === "eu";
   const vw = eu ? EU_VIEW_W : VIEW_W;
   const vh = eu ? EU_VIEW_H : VIEW_H;
@@ -43,6 +43,7 @@ export default function MapView() {
 
   const viewRef = useRef(view);
   viewRef.current = view;
+  ctxView.current = view;
   const anim = useRef(0);
   const goto = useRef<string | null>(null);
 

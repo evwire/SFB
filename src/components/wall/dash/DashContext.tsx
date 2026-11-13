@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DashData, DSite } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
 
@@ -59,7 +59,18 @@ type Dash = {
   selected: DSite | null;
   select: (id: string | null) => void;
   byId: Map<string, DSite>;
-  tab: "dash" | "hosts";
+  tab: Tab;
+  /** how many sites each Open / Upcoming / Both choice would show with the other filters as they are now */
+  phaseCounts: { open: number; upcoming: number; both: number };
+  /** the map's current zoom and pan, written by MapView, read by the image download */
+  viewRef: React.MutableRefObject<MapViewState>;
+};
+
+export type Tab = "dash" | "charts" | "hosts";
+export type MapViewState = { k: number; x: number; y: number };
+export const readTab = (): Tab => {
+  const t = typeof document === "undefined" ? "dash" : document.documentElement.dataset.tab;
+  return t === "hosts" || t === "charts" ? t : "dash";
 };
 
 const Ctx = createContext<Dash | null>(null);
@@ -78,7 +89,8 @@ function rateNum(s: string | null): number | null {
 export function DashProvider({ data, children }: { data: DashData; children: React.ReactNode }) {
   const [f, setF] = useState<Filters>(DEFAULTS);
   const [sel, setSel] = useState<string | null>(null);
-  const [tab, setTab] = useState<"dash" | "hosts">("dash");
+  const [tab, setTab] = useState<Tab>("dash");
+  const viewRef = useRef<MapViewState>({ k: 1, x: 0, y: 0 });
   const color = useMemo(() => makeOpColor(data.operatorOrder), [data.operatorOrder]);
   const byId = useMemo(() => new Map(data.sites.map((s) => [s.id + s.phase + s.region, s])), [data.sites]);
   const byKey = useMemo(() => new Map(data.sites.map((s) => [s.id, s])), [data.sites]);
@@ -93,7 +105,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
 
   // The tab lives on <html data-tab> so the CSS can swap the two views before React hydrates.
   useEffect(() => {
-    const read = () => setTab(document.documentElement.dataset.tab === "hosts" ? "hosts" : "dash");
+    const read = () => setTab(readTab());
     read();
     window.addEventListener("dz-tab", read);
     // Scrolling back above the landed map puts the map back where the photos fly to.
@@ -110,10 +122,10 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
 
   const regionSites = useMemo(() => data.sites.filter((s) => s.region === f.region), [data.sites, f.region]);
 
-  const visible = useMemo(
+  // every filter except the Open / Upcoming / Both switch, so the switch can say what each choice would show
+  const matching = useMemo(
     () =>
       regionSites.filter((s) => {
-        if (f.phase !== "both" && s.phase !== f.phase) return false;
         if (f.operators.length && !(s.operator && f.operators.includes(s.operator))) return false;
         if (f.host && s.hostType !== f.host) return false;
         if (f.state && s.state !== f.state) return false;
@@ -123,8 +135,13 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
         if (f.isNew && !s.change) return false;
         return true;
       }),
-    [regionSites, f]
+    [regionSites, f.operators, f.host, f.state, f.minStalls, f.covered, f.wrapped, f.isNew]
   );
+  const phaseCounts = useMemo(() => {
+    const open = matching.filter((s) => s.phase === "open").length;
+    return { open, upcoming: matching.length - open, both: matching.length };
+  }, [matching]);
+  const visible = useMemo(() => (f.phase === "both" ? matching : matching.filter((s) => s.phase === f.phase)), [matching, f.phase]);
 
   const kpi = useMemo<Kpis>(() => {
     const open = visible.filter((s) => s.phase === "open");
@@ -152,6 +169,6 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   const selected = sel ? byKey.get(sel) ?? null : null;
   const select = useCallback((id: string | null) => setSel(id), []);
 
-  const value: Dash = { data, f, set, reset, active, visible, regionSites, kpi, color, selected, select, byId, tab };
+  const value: Dash = { data, f, set, reset, active, visible, regionSites, kpi, color, selected, select, byId, tab, phaseCounts, viewRef };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

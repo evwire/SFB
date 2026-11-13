@@ -332,7 +332,7 @@ export default function Wall({
       relayout();
     };
     const goDash = (smooth = true) => {
-      if (document.documentElement.dataset.tab === "hosts") {
+      if (document.documentElement.dataset.tab !== "dash") {
         document.documentElement.dataset.tab = "dash";
         window.dispatchEvent(new Event("dz-tab"));
         layout();
@@ -534,8 +534,8 @@ export default function Wall({
           } else if (qx > qy) nx = Math.sign(px);
           else ny = Math.sign(py);
           const t = Math.min(1, Math.max(0, dd / bezel));
-          // convex dome: the shift is largest at the rim and fades smoothly to nothing, so the fold stays monotonic
-          const m = Math.pow(1 - t, 1.0);
+          // gentle convex rim: a small shift at the very edge that falls away quickly, so edge photos bend but stay readable
+          const m = Math.pow(1 - t, 1.7);
           const i = (y * cw + x) * 4;
           im.data[i] = 128 - nx * m * 127;
           im.data[i + 1] = 128 - ny * m * 127;
@@ -549,9 +549,9 @@ export default function Wall({
         el.setAttribute("height", String(h));
       }
       img.setAttribute("href", cv.toDataURL("image/png"));
-      // channel scales: shift_max = scale / 2. Red bends least, blue most: that spread is the colour fringe.
+      // channel scales: shift_max = scale / 2. Red bends least, blue most; the spread is kept tiny so the fringe is barely there.
       const g = reach * 2;
-      [g * 0.95, g, g * 1.07].forEach((v, i) => scales[i]?.setAttribute("scale", String(Math.round(v * 10) / 10)));
+      [g * 0.985, g, g * 1.03].forEach((v, i) => scales[i]?.setAttribute("scale", String(Math.round(v * 10) / 10)));
       document.documentElement.classList.add("lg-refract");
     };
 

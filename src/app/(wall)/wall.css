@@ -66,7 +66,7 @@ body { margin: 0; }
 .w-brand { display: inline-flex; align-items: center; gap: 9px; font: 700 17px/1 var(--sans); letter-spacing: -0.03em; text-decoration: none; }
 .w-brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 12px rgba(27, 145, 82, 0.55); }
 html.dark .w-brand i { background: var(--signal-bright); box-shadow: 0 0 12px rgba(47, 209, 122, 0.6); }
-.w-brand-sub { font: 500 12px/1 var(--mono); color: var(--mut); letter-spacing: 0.02em; }
+.w-brand-sub { font: 500 13px/1 var(--sans); color: var(--mut); }
 .w-top nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .w-top nav a { font: 500 14px/1 var(--sans); text-decoration: none; padding: 10px 12px; border-radius: 999px; color: var(--mut); transition: color 0.2s, background 0.2s; }
 .w-top nav a:hover { color: var(--fg); background: var(--hair); }
