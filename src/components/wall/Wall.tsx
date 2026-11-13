@@ -12,6 +12,10 @@ type Box = { x: number; y: number; w: number; h: number };
 type Tile = { id: number; g: number; ar: number };
 
 const GAP = 3;
+/** real photos of clearly wrapped stalls: Island Center, Isle of Palms SC (the four stalls 1D..1A), in a row behind the glass card */
+const HERO_STRIP = [91, 92, 93, 94];
+/** more wrapped stalls, kept near the strip: EV Auto guitar wrap, EVODS tree, Island Center row, Suncoast animals, EV Auto wrapping */
+const NEXT_TO_STRIP = [107, 138, 89, 157, 108];
 const clampAr = (ar: number) => Math.min(2.2, Math.max(0.62, ar));
 const ease = (t: number) => {
   t = Math.min(1, Math.max(0, t));
@@ -29,6 +33,8 @@ export type Flight = { photoId: number; siteId: string; x: number; y: number; co
 export default function Wall({
   groups,
   openSites,
+  stalls,
+  upcoming,
   operators,
   asOf,
   flights,
@@ -36,6 +42,8 @@ export default function Wall({
 }: {
   groups: WallGroup[];
   openSites: number;
+  stalls: number;
+  upcoming: number;
   operators: number;
   asOf: string;
   flights: Flight[];
@@ -87,45 +95,99 @@ export default function Wall({
       if (!W || !H) return;
       const mob = W < 900;
 
-      // The wall: choose the row count whose total height is closest to the viewport.
-      let best: { score: number; pos: Map<number, Box>; th: number } | null = null;
-      const ars = order.map((id) => clampAr(byId.get(id)!.ar));
-      const tot = ars.reduce((a, b) => a + b, 0);
-      for (let R = 3; R <= 14; R++) {
-        const rows: [number, number][][] = [];
-        let cur: [number, number][] = [];
-        let cs = 0;
-        let k = 1;
-        order.forEach((id, i) => {
-          cur.push([id, ars[i]]);
-          cs += ars[i];
-          if (cs >= (tot * k) / R - 0.0001 && rows.length < R - 1) {
-            rows.push(cur);
-            cur = [];
-            k++;
-          }
-        });
-        if (cur.length) rows.push(cur);
-        let y = 0;
-        const pos = new Map<number, Box>();
-        for (const r of rows) {
-          const s2 = r.reduce((a, c) => a + c[1], 0);
-          const h = (W - (r.length - 1) * GAP) / s2;
-          let x = 0;
+      // The wall, art-directed. A strip of four real wrapped stalls (Island Center, SC) sits exactly behind the glass
+      // card, so the lens magnifies the best photos we have. The other photos fill the space around it in justified rows,
+      // with the other wrapped stalls placed next to the strip.
+      startPos = new Map();
+      const lens = stage.querySelector<HTMLElement>(".e-lens");
+      const sr0 = stage.getBoundingClientRect();
+      const lr0 = lens?.getBoundingClientRect();
+      const lensBox =
+        lr0 && lr0.width > 40
+          ? { x: lr0.left - sr0.left, y: lr0.top - sr0.top, w: lr0.width, h: lr0.height }
+          : { x: W * 0.25, y: H * 0.25, w: W * 0.5, h: H * 0.5 };
+      const padX = mob ? 6 : Math.max(24, W * 0.04);
+      const padY = mob ? 14 : Math.max(18, H * 0.045);
+      const fx = Math.max(0, Math.round(lensBox.x - padX));
+      const fy = Math.max(0, Math.round(lensBox.y - padY));
+      const fw = Math.min(W, Math.round(lensBox.x + lensBox.w + padX)) - fx;
+      const fh = Math.min(H, Math.round(lensBox.y + lensBox.h + padY)) - fy;
+      const hero = HERO_STRIP.filter((id) => byId.has(id));
+      const tw = (fw - GAP * (hero.length - 1)) / hero.length;
+      hero.forEach((id, i) => startPos.set(id, { x: fx + i * (tw + GAP), y: fy, w: tw, h: fh }));
+
+      const rest = order.filter((id) => !hero.includes(id) && !NEXT_TO_STRIP.includes(id));
+      // justified rows that exactly fill a rectangle (row count chosen to need the least stretch)
+      const fill = (ids: number[], bx: number, by: number, bw: number, bh: number) => {
+        if (!ids.length || bw < 40 || bh < 40) return;
+        const ars = ids.map((id) => clampAr(byId.get(id)!.ar));
+        const tot = ars.reduce((x, y) => x + y, 0);
+        let best: { score: number; rows: [number, number][][]; hs: number[]; sum: number } | null = null;
+        for (let R = 1; R <= Math.min(ids.length, 12); R++) {
+          const rows: [number, number][][] = [];
+          let cur: [number, number][] = [];
+          let cs = 0;
+          let k = 1;
+          ids.forEach((id, i) => {
+            cur.push([id, ars[i]]);
+            cs += ars[i];
+            if (cs >= (tot * k) / R - 0.0001 && rows.length < R - 1) {
+              rows.push(cur);
+              cur = [];
+              k++;
+            }
+          });
+          if (cur.length) rows.push(cur);
+          const hs = rows.map((r) => (bw - (r.length - 1) * GAP) / r.reduce((x, c) => x + c[1], 0));
+          const sum = hs.reduce((x, y) => x + y, 0);
+          const avail = bh - GAP * (rows.length - 1);
+          const score = Math.abs(Math.log(avail / sum));
+          if (!best || score < best.score) best = { score, rows, hs, sum };
+        }
+        const { rows, hs, sum } = best!;
+        const sy = (bh - GAP * (rows.length - 1)) / sum;
+        let y = by;
+        rows.forEach((r, ri) => {
+          const h = hs[ri] * sy;
+          const sw = r.reduce((x, c) => x + c[1], 0);
+          let x = bx;
           for (const [id, a] of r) {
-            pos.set(id, { x, y, w: a * h, h });
-            x += a * h + GAP;
+            const w = (a / sw) * (bw - (r.length - 1) * GAP);
+            startPos.set(id, { x, y, w, h });
+            x += w + GAP;
           }
           y += h + GAP;
+        });
+      };
+      // the four areas around the strip, and how many photos each should take (by area)
+      const regions = [
+        { k: "top", x: 0, y: 0, w: W, h: fy - GAP },
+        { k: "bottom", x: 0, y: fy + fh + GAP, w: W, h: H - (fy + fh + GAP) },
+        { k: "left", x: 0, y: fy, w: fx - GAP, h: fh },
+        { k: "right", x: fx + fw + GAP, y: fy, w: W - (fx + fw + GAP), h: fh },
+      ].filter((r) => r.w >= 70 && r.h >= 70);
+      const areaSum = regions.reduce((x, r) => x + r.w * r.h, 0);
+      const arSum = rest.reduce((x, id) => x + clampAr(byId.get(id)!.ar), 0);
+      const lists = new Map<string, number[]>(regions.map((r) => [r.k, []]));
+      let qi = 0;
+      regions.forEach((r, ri) => {
+        const want = (arSum * r.w * r.h) / areaSum;
+        const list = lists.get(r.k)!;
+        let got = 0;
+        while (qi < rest.length && (ri === regions.length - 1 || got + clampAr(byId.get(rest[qi])!.ar) / 2 <= want || list.length === 0)) {
+          got += clampAr(byId.get(rest[qi])!.ar);
+          list.push(rest[qi++]);
         }
-        const th = y - GAP;
-        const score = Math.abs(th - H);
-        if (!best || score < best.score) best = { score, pos, th };
-      }
-      const sy = H / best!.th;
-      startPos = new Map();
-      best!.pos.forEach((b, id) => startPos.set(id, { x: b.x, y: b.y * sy, w: b.w, h: b.h * sy }));
-
+      });
+      // the other wrapped stalls sit beside the strip: the guitar wrap top-left, the tree bottom-right, and so on
+      const put = (k: string, id: number, atStart: boolean) => {
+        if (!byId.has(id)) return;
+        const l = lists.get(k) ?? lists.get(regions[0].k)!;
+        if (atStart) l.unshift(id);
+        else l.push(id);
+      };
+      NEXT_TO_STRIP.forEach((id, i) => put(["top", "bottom", "top", "bottom", "left"][i] ?? "top", id, i % 2 === 0));
+      regions.forEach((r) => fill(lists.get(r.k)!, r.x, r.y, r.w, r.h));
       // Where each photo lands: the real position of its site on the map that sits under the wall.
       endPos = new Map();
       const svg = stage.querySelector<SVGSVGElement>(".dz-svg");
@@ -598,6 +660,8 @@ export default function Wall({
 
         <Heroes
           openSites={openSites}
+          stalls={stalls}
+          upcoming={upcoming}
           operators={operators}
           asOf={asOf}
           lensWorld={groups.map((g) =>

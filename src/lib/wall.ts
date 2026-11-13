@@ -92,6 +92,8 @@ function rateText(s: Site): string | null {
 export type WallStats = {
   openSites: number;
   stalls: number;
+  /** open sites whose Find Us listing gives no stall count */
+  stallsUnknown: number;
   operators: number;
   states: number;
   upcoming: number;
@@ -282,6 +284,7 @@ export async function getWallData(): Promise<WallData> {
   const stats: WallStats = {
     openSites: open.length,
     stalls: open.reduce((a, s) => a + (s.stalls ?? 0), 0),
+    stallsUnknown: open.filter((s) => s.stalls == null).length,
     operators: new Set(open.map((s) => s.operator).filter(Boolean)).size,
     states: new Set(open.map((s) => s.state)).size,
     upcoming: usUpcoming.sites.length,

@@ -7,7 +7,7 @@ import type { SiteStatus, EvidenceGrade } from "./types";
  */
 
 /** Sites EVwire has written about. Amber is BRAND extended accent; always pair with the word. */
-export const COVERED_STYLE = { color: "var(--amber)", hex: "#D97706", glyph: "◆", label: "Covered by EVwire" } as const;
+export const COVERED_STYLE = { color: "var(--amber)", hex: "#D97706", glyph: "◆", label: "Stories covered by EVwire" } as const;
 
 export const STATUS_STYLE: Record<SiteStatus, { color: string; glyph: string; label: string }> = {
   Operational: { color: "var(--signal)", glyph: "●", label: "Open" },

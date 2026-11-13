@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import MapView from "./MapView";
 import { useDash } from "./DashContext";
-import { FRANCIS } from "@/lib/opcolor";
+import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
 import { US_STATES } from "@/lib/us-states.generated";
 import type { DSite } from "@/lib/mapdata";
 
@@ -36,22 +36,24 @@ function Toggle({ on, onClick, children, swatch }: { on: boolean; onClick: () =>
 export function Kpis() {
   const { kpi, f } = useDash();
   const cur = sym(kpi.rateCur);
-  const rate = kpi.rateLow == null ? NS : kpi.rateLow === kpi.rateHigh ? `${cur}${kpi.rateLow.toFixed(2)}` : `${cur}${kpi.rateLow.toFixed(2)} to ${cur}${kpi.rateHigh!.toFixed(2)}`;
+  const up = f.phase === "upcoming";
+  const rate = up ? "n/a" : kpi.rateLow == null ? NS : kpi.rateLow === kpi.rateHigh ? `${cur}${kpi.rateLow.toFixed(2)}` : `${cur}${kpi.rateLow.toFixed(2)} to ${cur}${kpi.rateHigh!.toFixed(2)}`;
+  const phaseWord = f.phase === "open" ? "open " : up ? "upcoming " : "";
   return (
-    <div className="dz-kpi" role="list" aria-label="Totals for the current filters" aria-live="polite">
+    <div className="dz-kpi" role="list" aria-label={`Totals for the ${f.phase === "both" ? "open and upcoming" : f.phase} sites and current filters`} aria-live="polite">
       <div role="listitem">
         <b>{nf(kpi.sites)}</b>
         <span>
-          sites{f.phase === "both" ? ` (${nf(kpi.open)} open, ${nf(kpi.upcoming)} coming)` : ""}
+          {phaseWord}sites{f.phase === "both" ? ` (${nf(kpi.open)} open, ${nf(kpi.upcoming)} upcoming)` : ""}
         </span>
       </div>
       <div role="listitem">
-        <b>{nf(kpi.stalls)}</b>
-        <span>stalls{kpi.stallsUnknown ? `, ${nf(kpi.stallsUnknown)} sites not stated` : ""}</span>
+        <b>{up ? "n/a" : nf(kpi.stalls)}</b>
+        <span>{up ? "stalls: not stated for upcoming sites" : `stalls${f.phase === "both" ? " at open sites" : ""}${kpi.stallsUnknown && f.phase !== "both" ? `, ${nf(kpi.stallsUnknown)} sites not stated` : ""}`}</span>
       </div>
       <div role="listitem">
-        <b>{nf(kpi.operators)}</b>
-        <span>operators</span>
+        <b>{up ? "n/a" : nf(kpi.operators)}</b>
+        <span>{up ? "operators: not stated for upcoming sites" : `operators${f.phase === "both" ? ", open sites" : ""}`}</span>
       </div>
       <div role="listitem">
         <b>{nf(kpi.areas)}</b>
@@ -59,12 +61,38 @@ export function Kpis() {
       </div>
       <div role="listitem" className="rate">
         <b>{rate}</b>
-        <span>Tesla rate per kWh, open sites</span>
+        <span>{up ? "Tesla rate per kWh: open sites only" : "Tesla rate per kWh, open sites"}</span>
       </div>
       <div role="listitem" className="cov">
         <b>{nf(kpi.covered)}</b>
-        <span>covered by EVwire{kpi.isNew ? `, ${kpi.isNew} new` : ""}</span>
+        <span>sites in Stories covered by EVwire{kpi.isNew ? `, ${kpi.isNew} new` : ""}</span>
       </div>
+    </div>
+  );
+}
+
+/** The one master switch for which sites exist on the page: it drives the map, the totals and every list. */
+export function PhaseBar() {
+  const { f, set, regionSites } = useDash();
+  const open = regionSites.filter((s) => s.phase === "open").length;
+  const upc = regionSites.length - open;
+  const opts: ["open" | "upcoming" | "both", string, number][] = [
+    ["open", "Open", open],
+    ["upcoming", "Upcoming", upc],
+    ["both", "Both", open + upc],
+  ];
+  const showing = f.phase === "open" ? `Showing ${nf(open)} open sites` : f.phase === "upcoming" ? `Showing ${nf(upc)} upcoming sites` : `Showing all ${nf(open + upc)}: ${nf(open)} open, ${nf(upc)} upcoming`;
+  return (
+    <div className="dz-master" role="group" aria-label="Which sites to show: open, upcoming or both">
+      <div className="dz-mseg">
+        {opts.map(([v, t, n]) => (
+          <button key={v} type="button" aria-pressed={f.phase === v} data-phase={v} onClick={() => set({ phase: v })}>
+            <span>{t}</span>
+            <small>{nf(n)}</small>
+          </button>
+        ))}
+      </div>
+      <p aria-live="polite">{showing}</p>
     </div>
   );
 }
@@ -96,9 +124,6 @@ function Rail({ onClose }: { onClose?: () => void }) {
 
       <label className="dz-l">Where</label>
       <Seg label="Region" value={f.region} opts={[["us", "United States"], ["eu", "Europe"]]} onChange={(v) => set({ region: v, state: null, operators: [], host: null })} />
-
-      <label className="dz-l">Status</label>
-      <Seg label="Open or coming soon" value={f.phase} opts={[["both", "Both"], ["open", "Open"], ["upcoming", "Coming"]]} onChange={(v) => set({ phase: v })} />
 
       <label className="dz-l">Operator</label>
       <div className="dz-ops">
@@ -163,7 +188,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
 
       <label className="dz-l">Show only</label>
       <Toggle on={f.covered} onClick={() => set({ covered: !f.covered })} swatch={<em className="dz-dia" />}>
-        Covered by EVwire
+        Stories covered by EVwire
       </Toggle>
       <Toggle on={f.wrapped} onClick={() => set({ wrapped: !f.wrapped })} swatch={<em className="dz-star">✦</em>}>
         Wrapped stalls
@@ -193,9 +218,9 @@ function Panel({ s }: { s: DSite }) {
   const changeText: Record<string, string> = {
     opened: "Opened since the last check",
     new_open: "New on the map since the last check",
-    new_upcoming: "New coming-soon site since the last check",
+    new_upcoming: "New upcoming site since the last check",
     reappeared: "Back on the map",
-    back_to_upcoming: "Back to coming soon",
+    back_to_upcoming: "Back to upcoming",
     ownership_changed: "Ownership changed",
   };
   return (
@@ -226,7 +251,7 @@ function Panel({ s }: { s: DSite }) {
         <span className="dz-tag" style={{ ["--c" as string]: color(s.operator) }}>
           {s.operator ?? "Operator not stated"}
         </span>
-        <span className="dz-tag plain">{s.phase === "open" ? "Open" : s.badge ?? "Coming soon"}</span>
+        <span className="dz-tag plain">{s.phase === "open" ? "Open" : s.badge ?? "Upcoming"}</span>
         {s.change && <span className="dz-tag new">{changeText[s.change] ?? "New"}</span>}
       </div>
       <h3>{s.name}</h3>
@@ -265,6 +290,61 @@ function Panel({ s }: { s: DSite }) {
   );
 }
 
+function Legend() {
+  const { visible, color, f } = useDash();
+  const showOpen = f.phase !== "upcoming";
+  const showUp = f.phase !== "open";
+  const ops = useMemo(() => {
+    const m = new Map<string, number>();
+    let other = 0;
+    let none = 0;
+    for (const s of visible) {
+      if (s.phase !== "open") continue;
+      if (!s.operator) none++;
+      else if (color(s.operator) === OTHER_COLOR) other++;
+      else m.set(s.operator, (m.get(s.operator) ?? 0) + 1);
+    }
+    const top = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return { top: top.slice(0, 6), other: other + top.slice(6).reduce((a, x) => a + x[1], 0), none };
+  }, [visible, color]);
+  const hasCov = visible.some((s) => s.articles.length);
+  const hasWrap = visible.some((s) => s.wrapped);
+  const hasNew = visible.some((s) => s.change);
+  return (
+    <div className="dz-legend" aria-label="Legend">
+      {showOpen && (ops.top.length > 0 || ops.other > 0) && (
+        <p className="lg-ops">
+          {ops.top.map(([o, n]) => (
+            <span key={o}>
+              <em className="dz-sw" style={{ background: color(o) }} />
+              {o} <small>{n}</small>
+            </span>
+          ))}
+          {ops.other > 0 && (
+            <span>
+              <em className="dz-sw" style={{ background: OTHER_COLOR }} />
+              Other <small>{ops.other}</small>
+            </span>
+          )}
+          {ops.none > 0 && (
+            <span>
+              <em className="dz-sw" style={{ background: UNKNOWN_COLOR }} />
+              Operator not stated <small>{ops.none}</small>
+            </span>
+          )}
+        </p>
+      )}
+      <p className="lg-sym">
+        {showOpen && <span className="lg-size"><em className="dz-sw sm2" /><em className="dz-sw lg2" /> Open site, sized by stalls</span>}
+        {showUp && <span><em className="dz-ring" /> Upcoming</span>}
+        {hasCov && <span><em className="dz-dia" /> Stories covered by EVwire</span>}
+        {hasWrap && <span><em className="dz-star">✦</em> Wrapped stalls</span>}
+        {hasNew && <span><em className="dz-newdot" /> New since last check</span>}
+      </p>
+    </div>
+  );
+}
+
 export function DashFrame() {
   const { selected, f, set, active, data } = useDash();
   const [sheet, setSheet] = useState(false);
@@ -273,6 +353,7 @@ export function DashFrame() {
     <div className="dz" data-landed="0" data-panel={selected ? "1" : "0"}>
       <div className="dz-grid">
         <div className="dz-top">
+          <PhaseBar />
           <Kpis />
         </div>
         <aside className="dz-rail" data-open={sheet ? "1" : "0"} aria-label="Filters">
@@ -280,22 +361,13 @@ export function DashFrame() {
         </aside>
         <div className="dz-center">
           <MapView />
-          <div className="dz-legend" aria-label="Legend">
-            <span><em className="dz-sw lg" /> open site, sized by stalls</span>
-            <span><em className="dz-sw sm" /> coming soon</span>
-            <span><em className="dz-dia" /> covered by EVwire</span>
-            <span><em className="dz-star">✦</em> wrapped stalls</span>
-            <span><em className="dz-newdot" /> new</span>
-          </div>
+          <Legend />
           <p className="dz-asof">
-            Tesla Find Us, open sites as of {asOf}; coming soon as of {data.asOf.upcoming}.
+            Tesla Find Us, open sites as of {asOf}; upcoming as of {data.asOf.upcoming}.
           </p>
           <button type="button" className="dz-filterbtn" onClick={() => setSheet(true)}>
             Filters{active ? ` (${active})` : ""}
           </button>
-          <div className="dz-phase">
-            <Seg label="Open or coming soon" value={f.phase} opts={[["both", "Both"], ["open", "Open"], ["upcoming", "Coming"]]} onChange={(v) => set({ phase: v })} />
-          </div>
         </div>
         <aside className="dz-panel" aria-label="Site details" aria-live="polite">
           {selected ? (

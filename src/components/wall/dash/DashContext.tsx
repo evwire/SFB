@@ -83,7 +83,8 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   const byKey = useMemo(() => new Map(data.sites.map((s) => [s.id, s])), [data.sites]);
 
   const set = useCallback((p: Partial<Filters>) => setF((o) => ({ ...o, ...p })), []);
-  const reset = useCallback(() => setF((o) => ({ ...DEFAULTS, region: o.region })), []);
+  // the Open / Upcoming / Both switch is not a filter, so Clear keeps it
+  const reset = useCallback(() => setF((o) => ({ ...DEFAULTS, region: o.region, phase: o.phase })), []);
 
   // The tab lives on <html data-tab> so the CSS can swap the two views before React hydrates.
   useEffect(() => {
@@ -93,7 +94,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
     // Scrolling back above the landed map puts the map back where the photos fly to.
     const un = () => {
       setSel(null);
-      setF((o) => ({ ...o, region: "us" }));
+      setF(DEFAULTS); // above the landed map the pins are the photos' landing spots again, so no filter or zoom may linger
     };
     window.addEventListener("dz-unland", un);
     return () => {
@@ -141,7 +142,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   }, [visible]);
 
   const active =
-    (f.phase !== "both" ? 1 : 0) + f.operators.length + (f.host ? 1 : 0) + (f.state ? 1 : 0) + (f.minStalls ? 1 : 0) +
+    f.operators.length + (f.host ? 1 : 0) + (f.state ? 1 : 0) + (f.minStalls ? 1 : 0) +
     (f.covered ? 1 : 0) + (f.wrapped ? 1 : 0) + (f.isNew ? 1 : 0) + (f.noFrancis ? 1 : 0);
 
   const selected = sel ? byKey.get(sel) ?? null : null;

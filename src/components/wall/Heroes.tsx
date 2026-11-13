@@ -29,13 +29,19 @@ function More() {
   );
 }
 
+const nfm = (n: number) => n.toLocaleString("en-US");
+
 export default function Heroes({
   openSites,
+  stalls,
+  upcoming,
   operators,
   asOf,
   lensWorld,
 }: {
   openSites: number;
+  stalls: number;
+  upcoming: number;
   operators: number;
   asOf: string;
   lensWorld: ReactNode;
@@ -62,7 +68,7 @@ export default function Heroes({
 
       {/* B: headline knocked out of a paper field, the field splits into the wall on scroll */}
       <div className="hero hero-b">
-        <h1 className="sr-only">Anyone can own a Supercharger. Here is who did.</h1>
+        <h1 className="sr-only">Anyone can now own a Supercharger. Here is who already started.</h1>
         <div className="b-dim" aria-hidden="true" />
         <div className="b-half b-top" aria-hidden="true">
           <p className="b-ko">
@@ -133,10 +139,10 @@ export default function Heroes({
           <span className="d-spec" aria-hidden="true" />
           <div className="d-copy">
             <h1>
-              Anyone can own a Supercharger. <em>Here is who did.</em>
+              Anyone can now own a Supercharger. <em>Here is who already started.</em>
             </h1>
-            <p>
-              {openSites} open sites, {operators} operators. Real photos from our reporting.
+            <p className="e-stats">
+              {nfm(openSites)} open sites · {nfm(stalls)} stalls · {nfm(operators)} operators · {nfm(upcoming)} sites upcoming
             </p>
             <div className="d-links">
               <Cta />
@@ -160,10 +166,10 @@ export default function Heroes({
           <span className="e-rim" aria-hidden="true" />
           <div className="e-copy">
             <h1>
-              Anyone can own a Supercharger. <em>Here is who did.</em>
+              Anyone can now own a Supercharger. <em>Here is who already started.</em>
             </h1>
-            <p>
-              {openSites} open sites, {operators} operators. Real photos from our reporting.
+            <p className="e-stats">
+              {nfm(openSites)} open sites · {nfm(stalls)} stalls · {nfm(operators)} operators · {nfm(upcoming)} sites upcoming
             </p>
             <div className="e-links">
               <a className="e-cue" href="#dashboard" aria-label="Scroll down to the map of every site">

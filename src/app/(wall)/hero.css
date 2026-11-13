@@ -225,6 +225,7 @@ html.lg-refract .e-glass { filter: url(#e-lens) saturate(1.2) contrast(1.04); }
 }
 .e-copy h1 { font: 800 clamp(34px, 3.8vw, 52px) / 0.98 var(--disp); letter-spacing: -0.05em; text-wrap: balance; color: #f6f9f8; }
 .e-copy h1 em { font-style: normal; color: var(--signal-bright); }
+.e-copy p.e-stats { font: 600 15px/22px var(--sans); letter-spacing: 0.005em; }
 .e-copy p { margin-top: 14px; font: 500 17px/25px var(--sans); color: #f6f9f8; }
 .e-links { margin-top: 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; }
 /* primary call to action: the scroll cue. Fades out the moment the scroll starts. */

@@ -22,7 +22,7 @@ import type { FeedItem, Site } from "./types";
  */
 
 export const COVERED_COLOR = "#D97706"; // BRAND amber
-export const COVERED_LABEL = "Covered by EVwire";
+export const COVERED_LABEL = "Stories covered by EVwire";
 
 /** Newer SfB-tag posts → Find Us id, only when the piece clearly names that site. */
 const EXTRA_ARTICLE_TO_FINDUS: { articleSlug: string; findusId: string }[] = [

@@ -109,7 +109,7 @@ function StateBars() {
         ))}
       </ol>
       <p className="dz-fine">
-        {m === "sites" ? "Solid: open. Light: coming soon." : "Stalls are counted where Tesla states them; coming-soon sites do not state a count."} {rows.length > 12 ? `${rows.length - 12} more shown on the map.` : ""}
+        {m === "sites" ? "Solid: open. Light: upcoming." : "Stalls are counted where Tesla states them; upcoming sites do not state a count."} {rows.length > 12 ? `${rows.length - 12} more shown on the map.` : ""}
       </p>
     </section>
   );
@@ -120,9 +120,9 @@ function Changes() {
   const kinds: Record<string, string> = {
     opened: "Opened",
     new_open: "New on the map",
-    new_upcoming: "New, coming soon",
+    new_upcoming: "New, upcoming",
     reappeared: "Back on the map",
-    back_to_upcoming: "Back to coming soon",
+    back_to_upcoming: "Back to upcoming",
     ownership_changed: "Ownership changed",
   };
   const ok = (id: string) => data.sites.some((s) => s.id === id);
@@ -146,7 +146,7 @@ function Changes() {
               </span>
             </div>
             {ok(c.id) && (
-              <button type="button" className="dz-link" onClick={() => { select(c.id); window.dispatchEvent(new CustomEvent("dz-goto")); }}>
+              <button type="button" className="dz-link" onClick={() => { select(c.id); window.dispatchEvent(new CustomEvent("dz-goto", { detail: { id: c.id } })); }}>
                 Show
               </button>
             )}
@@ -223,10 +223,10 @@ function Stories() {
     // Map filters could be hiding this pin; clear them first so the click always lands on it.
     if (!visible.some((v) => v.id === id)) {
       reset();
-      set({ region: x.region });
+      set({ region: x.region, phase: "both" });
     }
     select(id);
-    window.dispatchEvent(new CustomEvent("dz-goto"));
+    window.dispatchEvent(new CustomEvent("dz-goto", { detail: { id } }));
   };
 
   return (
@@ -397,10 +397,10 @@ function Table() {
             {rows.slice(0, n).map((s) => (
               <tr key={s.id}>
                 <td>
-                  <button type="button" className="dz-link" onClick={() => { select(s.id); window.dispatchEvent(new CustomEvent("dz-goto")); }}>
+                  <button type="button" className="dz-link" onClick={() => { select(s.id); window.dispatchEvent(new CustomEvent("dz-goto", { detail: { id: s.id } })); }}>
                     {s.name}
                   </button>
-                  {s.phase === "upcoming" && <small> {s.badge ?? "coming soon"}</small>}
+                  {s.phase === "upcoming" && <small> {s.badge ?? "upcoming"}</small>}
                 </td>
                 <td>{s.operator ?? NS}</td>
                 <td>{s.host ?? NS}</td>
@@ -454,10 +454,10 @@ export default function DashSections() {
               <h3>What you are looking at</h3>
             </header>
             <p>
-              Every pin is one customer-owned Supercharger on Tesla&apos;s public Find Us map: a business or a network owns the site, Tesla supplies the hardware and the network. Open sites and coming-soon sites come from two weekly pulls.
+              Every pin is one customer-owned Supercharger on Tesla&apos;s public Find Us map: a business or a network owns the site, Tesla supplies the hardware and the network. Open sites and upcoming sites come from two weekly pulls.
             </p>
             <p>
-              Photos come from our own stories. Where a field is missing on Tesla&apos;s map we say &quot;not stated&quot; and never guess: no opening dates on any open site, and no operator or stall count on the coming-soon sites.
+              Photos come from our own stories. Where a field is missing on Tesla&apos;s map we say &quot;not stated&quot; and never guess: no opening dates on any open site, and no operator or stall count on the upcoming sites.
             </p>
             <p className="dz-fine">Ctrl + scroll (or a trackpad pinch) zooms the map. A plain scroll moves the page.</p>
           </section>

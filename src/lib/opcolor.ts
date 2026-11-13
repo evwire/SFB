@@ -1,7 +1,7 @@
-/** One colour per operator for the map pins. Francis Energy is one network with 26 sites, so it gets a muted slate. */
+/** One colour per operator for the map pins. Francis Energy is one network with 26 sites, so it gets a calm steel blue. */
 const PALETTE = ["#E4572E", "#0E9F9F", "#7C3AED", "#D6246E", "#2563EB", "#B8860B", "#0891B2", "#C2410C", "#9333EA", "#4D7C0F"];
 export const FRANCIS = "Francis Energy";
-export const FRANCIS_COLOR = "#7F8E9B";
+export const FRANCIS_COLOR = "#4F86B5";
 export const OTHER_COLOR = "#4F6B5E";
 export const UNKNOWN_COLOR = "#9AA7A2";
 

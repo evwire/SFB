@@ -14,7 +14,7 @@ import type { Entry } from "@/lib/wall-content";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Anyone can own a Supercharger. Here is who did.",
+  title: "Anyone can now own a Supercharger. Here is who already started.",
   description:
     "Gas stations, a jeweller, a car dealer, a coffee truck, a city. Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.",
 };
@@ -74,7 +74,7 @@ export default async function Page() {
 
       <main>
         <div className="tab-dash" id="dashboard">
-          <Wall groups={d.groups} openSites={st.openSites} operators={st.operators} asOf={st.openAsOf} flights={flights}>
+          <Wall groups={d.groups} openSites={st.openSites} stalls={st.stalls} upcoming={st.upcoming} operators={st.operators} asOf={st.openAsOf} flights={flights}>
             <DashFrame />
           </Wall>
           <DashSections />
@@ -84,7 +84,7 @@ export default async function Page() {
         <div className="w-tabhead">
           <div className="w-wrap">
             <p className="w-eyebrow">Hosts &amp; stories</p>
-            <h1 className="w-h2">Anyone can own a Supercharger<span>.</span> Here is who did<span>.</span></h1>
+            <h1 className="w-h2">Anyone can now own a Supercharger<span>.</span> Here is who already started<span>.</span></h1>
             <p className="w-lede">Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.</p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default async function Page() {
               </li>
               <li>
                 <b>{nf(st.upcoming)}</b>
-                <span>coming soon</span>
+                <span>upcoming</span>
               </li>
             </ul>
             <p className="w-note">
@@ -296,7 +296,7 @@ export default async function Page() {
               {nf(st.upcoming)} more are coming<span>.</span>
             </h2>
             <p className="w-lede">
-              Tesla&apos;s map lists {nf(st.upcoming)} customer-owned Superchargers as coming soon, in {st.upcomingStates}{" "}
+              Tesla&apos;s map lists {nf(st.upcoming)} customer-owned Superchargers as upcoming, in {st.upcomingStates}{" "}
               states.{" "}
               {st.upcomingNamed === 0
                 ? "None of them names an operator or a host yet."

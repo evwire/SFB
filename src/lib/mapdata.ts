@@ -221,7 +221,7 @@ export async function getDashData(): Promise<DashData> {
     ...euUp.map((s) => mk(s, "eu", "upcoming")),
   ].filter((s): s is DSite => s !== null);
 
-  // Newest first. A story lists only the open sites that carry it; a coming-soon pin that matched on city alone is not named.
+  // Newest first. A story lists only the open sites that carry it; an upcoming pin that matched on city alone is not named.
   const stories: DStory[] = [...allArticles()]
     .sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n)
     .map((a) => ({
