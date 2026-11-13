@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { WallGroup } from "@/lib/wall";
 import Heroes from "./Heroes";
+import { VIEW_W, VIEW_H } from "@/lib/us-states.generated";
+import { PHOTO_PIN } from "./dash/MapView";
 
 const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -16,54 +18,27 @@ const ease = (t: number) => {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 };
 
-/** Justified rows: tiles keep their aspect, rows stretch to fill the width. */
-function justify(tiles: Tile[], W: number, rowH: number, x0: number, y0: number) {
-  const pos = new Map<number, Box>();
-  const rows: Tile[][] = [];
-  let cur: Tile[] = [];
-  let sum = 0;
-  for (const t of tiles) {
-    cur.push(t);
-    sum += clampAr(t.ar);
-    if (sum * rowH + (cur.length - 1) * GAP >= W) {
-      rows.push(cur);
-      cur = [];
-      sum = 0;
-    }
-  }
-  if (cur.length) rows.push(cur);
-  let y = y0;
-  rows.forEach((r, ri) => {
-    const s = r.reduce((a, t) => a + clampAr(t.ar), 0);
-    const last = ri === rows.length - 1 && s * rowH + (r.length - 1) * GAP < W * 0.85;
-    const h = last ? rowH : (W - (r.length - 1) * GAP) / s;
-    let x = x0;
-    for (const t of r) {
-      const w = clampAr(t.ar) * h;
-      pos.set(t.id, { x, y, w, h });
-      x += w + GAP;
-    }
-    y += h + GAP;
-  });
-  return { pos, h: y - y0 - GAP };
-}
+export type Flight = { photoId: number; siteId: string; x: number; y: number; color: string; cover: boolean };
 
 export default function Wall({
   groups,
   openSites,
   operators,
   asOf,
+  flights,
+  children,
 }: {
   groups: WallGroup[];
   openSites: number;
   operators: number;
   asOf: string;
+  flights: Flight[];
+  children: React.ReactNode;
 }) {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const tileEls = useRef(new Map<number, HTMLAnchorElement>());
-  const labEls = useRef<(HTMLDivElement | null)[]>([]);
   const cloneEls = useRef(new Map<number, HTMLSpanElement>());
   const cloneWorld = useRef<HTMLDivElement | null>(null);
 
@@ -71,12 +46,12 @@ export default function Wall({
     const track = trackRef.current!;
     const stage = stageRef.current!;
     const world = worldRef.current!;
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const tiles: Tile[] = [];
-    groups.forEach((g, gi) =>
-      g.photos.forEach((p) => tiles.push({ id: p.id, g: gi, ar: p.w / p.h }))
-    );
+    groups.forEach((g, gi) => g.photos.forEach((p) => tiles.push({ id: p.id, g: gi, ar: p.w / p.h })));
     const byId = new Map(tiles.map((t) => [t.id, t]));
+    const flightOf = new Map(flights.map((f) => [f.photoId, f]));
 
     // Interleave the groups so neighbours differ in the unsorted wall.
     const queues = groups.map((g) => g.photos.map((p) => p.id));
@@ -96,18 +71,17 @@ export default function Wall({
     let W = 0;
     let startPos = new Map<number, Box>();
     let endPos = new Map<number, Box>();
-    let labPos: { x: number; y: number; w: number }[] = [];
-    let endH = 0;
-    let sortSpan = 0;
-    let panSpan = 0;
+    let flySpan = 0;
     let lastW = 0;
+    let landedY = 0;
 
     const layout = () => {
       W = stage.clientWidth;
       H = stage.clientHeight;
-      const mob = W < 760;
+      if (!W || !H) return;
+      const mob = W < 900;
 
-      // Unsorted wall: choose the row count whose total height is closest to the viewport.
+      // The wall: choose the row count whose total height is closest to the viewport.
       let best: { score: number; pos: Map<number, Box>; th: number } | null = null;
       const ars = order.map((id) => clampAr(byId.get(id)!.ar));
       const tot = ars.reduce((a, b) => a + b, 0);
@@ -146,86 +120,87 @@ export default function Wall({
       startPos = new Map();
       best!.pos.forEach((b, id) => startPos.set(id, { x: b.x, y: b.y * sy, w: b.w, h: b.h * sy }));
 
-      // Sorted wall: a label column on the left, each group's photos in justified rows beside it.
+      // Where each photo lands: the real position of its site on the map that sits under the wall.
       endPos = new Map();
-      labPos = [];
-      const top = mob ? 100 : 196;
-      const lw = mob ? W - 40 : Math.min(380, W * 0.27);
-      const lx = mob ? 20 : 56;
-      const tx = mob ? 0 : lx + lw + 40;
-      const tw = W - tx - (mob ? 0 : 56);
-      const rowH = mob ? W * 0.34 : H * 0.2;
-      let y = top;
-      groups.forEach((g) => {
-        const r = justify(
-          g.photos.map((p) => byId.get(p.id)!),
-          tw,
-          rowH,
-          tx,
-          y + (mob ? 128 : 0)
-        );
-        r.pos.forEach((b, id) => endPos.set(id, b));
-        labPos.push({ x: lx, y: y + 4, w: lw });
-        y += r.h + (mob ? 128 : 0) + (mob ? 28 : 40);
-      });
-      endH = y + 60;
-      sortSpan = H * 1.1;
-      panSpan = Math.max(0, endH - H);
-      track.style.height = `${sortSpan + panSpan + H}px`;
-      world.style.height = `${endH}px`;
-      const lf = mob ? 30 : Math.min(46, W * 0.032);
-      labEls.current.forEach((el, i) => {
-        if (!el || !labPos[i]) return;
-        el.style.left = `${labPos[i].x}px`;
-        el.style.top = `${labPos[i].y}px`;
-        el.style.width = `${labPos[i].w}px`;
-        el.style.setProperty("--lf", `${lf}px`);
-      });
+      const svg = stage.querySelector<SVGSVGElement>(".dz-svg");
+      if (svg) {
+        const r = svg.getBoundingClientRect();
+        const sr = stage.getBoundingClientRect();
+        const fit = Math.min(r.width / VIEW_W, r.height / VIEW_H);
+        const ox = r.left - sr.left + (r.width - VIEW_W * fit) / 2;
+        const oy = r.top - sr.top + (r.height - VIEW_H * fit) / 2;
+        const d = PHOTO_PIN;
+        for (const f of flights) {
+          endPos.set(f.photoId, { x: ox + f.x * fit - d / 2, y: oy + f.y * fit - d / 2, w: d, h: d });
+        }
+      }
+      flySpan = H * 2.1;
+      // flight, then a short hold on the landed dashboard before the page scrolls on
+      track.style.height = `${flySpan + H * 0.45 + H}px`;
+      landedY = flySpan;
       lastW = W;
     };
 
+    let landed = false;
     const render = () => {
+      if (!W || !H) return;
       const y = Math.max(0, -track.getBoundingClientRect().top);
-      const p = Math.min(1, y / sortSpan);
-      const pan = Math.min(1, Math.max(0, (y - sortSpan) / Math.max(1, panSpan)));
-      const eAll = ease(p);
+      const p = Math.min(1, y / flySpan);
+      const hp = Math.min(1, y / (H * 0.6));
+      const mp = ease((p - 0.1) / 0.45);
+      const pp = Math.min(1, Math.max(0, (p - 0.5) / 0.4));
+      const cr = Math.min(1, Math.max(0, (p - 0.8) / 0.17));
+      const lensVisible = y < H * 0.8;
 
       tiles.forEach((t) => {
         const a = startPos.get(t.id);
         const b = endPos.get(t.id);
         const el = tileEls.current.get(t.id);
-        if (!a || !b || !el) return;
-        const delay = (t.g / Math.max(1, groups.length - 1)) * 0.4 + ((t.id * 7) % 5) * 0.008;
-        const e = ease((p - delay) / 0.56);
-        const x = a.x + (b.x - a.x) * e;
-        const yy = a.y + (b.y - a.y) * e;
-        el.style.transform = `translate3d(${x}px,${yy}px,0)`;
-        el.style.width = `${a.w + (b.w - a.w) * e}px`;
-        el.style.height = `${a.h + (b.h - a.h) * e}px`;
-        el.style.setProperty("--ln", String(1 - e));
-        // keep the glass lens' copy of the wall in step while the hero is on screen
-        const ce = p < 0.45 ? cloneEls.current.get(t.id) : undefined;
-        if (ce) {
-          ce.style.transform = el.style.transform;
-          ce.style.width = el.style.width;
-          ce.style.height = el.style.height;
-          ce.style.setProperty("--ln", String(1 - e));
+        if (!a || !el) return;
+        const f = flightOf.get(t.id);
+        const delay = 0.14 + ((t.id * 7) % 11) * 0.012;
+        const e = ease((p - delay) / 0.62);
+        if (rm || !f || !b) {
+          // reduced motion, or a photo whose site is not on the map: it only fades
+          el.style.transform = `translate3d(${a.x}px,${a.y}px,0)`;
+          el.style.width = `${a.w}px`;
+          el.style.height = `${a.h}px`;
+          el.style.borderRadius = "0px";
+          el.style.boxShadow = "none";
+          el.style.opacity = String(1 - ease((p - (rm ? 0.3 : delay)) / 0.3));
+          el.style.setProperty("--ln", "1");
+        } else {
+          const x = a.x + (b.x - a.x) * e;
+          const yy = a.y + (b.y - a.y) * e - Math.sin(Math.PI * e) * H * 0.05;
+          const w = a.w + (b.w - a.w) * e;
+          const h = a.h + (b.h - a.h) * e;
+          el.style.transform = `translate3d(${x}px,${yy}px,0)`;
+          el.style.width = `${w}px`;
+          el.style.height = `${h}px`;
+          el.style.borderRadius = `${e * Math.min(w, h) * 0.5}px`;
+          el.style.boxShadow = f.cover && e > 0.02 ? `0 0 0 ${3 * e}px ${f.color}, 0 ${8 * e}px ${16 * e}px rgba(0,0,0,${0.3 * e})` : "none";
+          // extra photos of the same site melt into its pin as they arrive
+          el.style.opacity = f.cover ? "1" : String(1 - ease((e - 0.8) / 0.2));
+          el.style.setProperty("--ln", String(Math.max(0, 1 - e * 4)));
         }
+        // keep the glass lens' copy of the wall in step while the hero is on screen
+        const ce = lensVisible ? cloneEls.current.get(t.id) : undefined;
+        if (ce) ce.style.cssText = el.style.cssText;
       });
-      if (p < 0.45 && cloneWorld.current) cloneWorld.current.style.transform = world.style.transform;
-      labEls.current.forEach((el, i) => {
-        if (!el) return;
-        const o = Math.max(0, Math.min(1, (eAll - 0.55 - i * 0.0) * 2.2));
-        el.style.opacity = String(o);
-        el.style.visibility = o > 0.05 ? "visible" : "hidden";
-      });
-      world.style.transform = `translate3d(0,${-pan * panSpan}px,0)`;
-      stage.style.setProperty("--cp", String(Math.min(1, p * 2.2)));
-      stage.style.setProperty("--sp", String(eAll));
-      stage.style.setProperty("--pn", String(Math.min(1, Math.max(0, (y - sortSpan) / (H * 0.1)))));
-      stage.style.setProperty("--hp", String(Math.min(1, p * 1.8)));
-      stage.dataset.gone = p > 0.3 ? "1" : "0";
-      stage.dataset.sorted = p > 0.9 ? "1" : "0";
+      if (lensVisible && cloneWorld.current) cloneWorld.current.style.transform = "";
+
+      stage.style.setProperty("--hp", String(hp));
+      stage.style.setProperty("--mp", String(mp));
+      stage.style.setProperty("--pp", String(pp));
+      stage.style.setProperty("--cr", String(cr));
+      stage.style.setProperty("--p", String(p));
+      stage.dataset.gone = hp >= 1 ? "1" : "0";
+      const now = p >= 0.985;
+      if (now !== landed) {
+        landed = now;
+        stage.dataset.landed = now ? "1" : "0";
+        if (!now) window.dispatchEvent(new CustomEvent("dz-unland"));
+      }
     };
 
     let raf = 0;
@@ -236,8 +211,31 @@ export default function Wall({
         render();
       });
     };
+    const relayout = () => {
+      layout();
+      render();
+    };
     const onResize = () => {
       if (stage.clientWidth === lastW) return; // ignore mobile toolbar height changes
+      relayout();
+    };
+    const goDash = (smooth = true) => {
+      if (document.documentElement.dataset.tab === "hosts") {
+        document.documentElement.dataset.tab = "dash";
+        window.dispatchEvent(new Event("dz-tab"));
+        layout();
+      }
+      const top = track.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: top + landedY + 2, behavior: smooth && !rm ? "smooth" : "auto" });
+    };
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element).closest?.('a[href="#dashboard"]');
+      if (!a) return;
+      e.preventDefault();
+      goDash();
+    };
+    const onGoto = () => goDash();
+    const onTab = () => {
       layout();
       render();
     };
@@ -245,14 +243,29 @@ export default function Wall({
     layout();
     render();
     stage.dataset.ready = "1";
+    // the map and the wall settle a moment after first paint (fonts, svg size)
+    const ro = new ResizeObserver(() => {
+      if (stage.querySelector(".dz-svg")) relayout();
+    });
+    const svgEl = stage.querySelector(".dz-svg");
+    if (svgEl) ro.observe(svgEl);
+    const settle = window.setTimeout(relayout, 400);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
+    window.addEventListener("dz-goto", onGoto);
+    window.addEventListener("dz-tab", onTab);
+    document.addEventListener("click", onClick);
     return () => {
+      ro.disconnect();
+      window.clearTimeout(settle);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("dz-goto", onGoto);
+      window.removeEventListener("dz-tab", onTab);
+      document.removeEventListener("click", onClick);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [groups]);
+  }, [groups, flights]);
 
   // Liquid Glass (hero d): build an edge-refraction map the size of the lens and feed it to an SVG
   // displacement filter used as a backdrop filter on the bezel ring. Chromium only; elsewhere the lens
@@ -492,7 +505,7 @@ export default function Wall({
   }, []);
 
   return (
-    <section className="w-track" ref={trackRef} aria-label="Photos from our Supercharger reporting, sorted by who hosts them">
+    <section className="w-track" ref={trackRef} aria-label="Photos from our Supercharger reporting, flying to their places on the map">
       <svg className="w-lg-defs" width="0" height="0" aria-hidden="true" focusable="false">
         <defs>
           <filter id="w-lg" filterUnits="userSpaceOnUse" x="0" y="0" width="560" height="320" colorInterpolationFilters="sRGB">
@@ -514,6 +527,8 @@ export default function Wall({
         </defs>
       </svg>
       <div className="w-stage" ref={stageRef}>
+        {/* the dashboard sits under the wall: the map the photos fly onto, and the controls that appear around it */}
+        {children}
         <div className="w-world" ref={worldRef}>
           {groups.map((g) =>
             g.photos.map((p) => (
@@ -542,32 +557,6 @@ export default function Wall({
               </a>
             ))
           )}
-          {groups.map((g, i) => (
-            <div
-              key={g.key}
-              className="w-lab"
-              ref={(el) => {
-                labEls.current[i] = el;
-              }}
-            >
-              <h2>{g.label}</h2>
-              <p className="w-lab-where">{g.where}</p>
-              {g.facts.length > 0 && <p className="w-lab-facts">{g.facts.join("  /  ")}</p>}
-              <p className="w-lab-credit">Photos: {[...new Set(g.photos.map((p) => p.credit))].join("; ")}</p>
-              <p className="w-lab-links">
-                {g.links.map((l) => (
-                  <a key={l.url} href={l.url} target="_blank" rel="noopener">
-                    {l.text}
-                  </a>
-                ))}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="w-title2" aria-hidden="true">
-          <span>Sorted by who hosts it</span>
-          Anyone can own a Supercharger. Here is who did.
         </div>
 
         <Heroes
@@ -593,7 +582,7 @@ export default function Wall({
 
         <div className="w-hint">
           <i aria-hidden="true" />
-          Scroll: the wall sorts itself
+          Scroll: the photos fly to the map
         </div>
       </div>
     </section>

@@ -12,7 +12,7 @@ export function Arrow() {
 
 function Cta({ className = "" }: { className?: string }) {
   return (
-    <a className={`h-cta ${className}`} href="/map">
+    <a className={`h-cta ${className}`} href="#dashboard">
       <span>See every site</span>
       <i>
         <Arrow />
@@ -103,7 +103,7 @@ export default function Heroes({
                 by who hosts them as you scroll.
               </p>
               <div className="c-links">
-                <a className="c-btn" href="/map">
+                <a className="c-btn" href="#dashboard">
                   See every site <Arrow />
                 </a>
                 <a className="c-btn ghost" href="#stories">

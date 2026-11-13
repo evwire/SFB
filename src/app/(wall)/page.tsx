@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Wall from "@/components/wall/Wall";
 import { Arrow } from "@/components/wall/Heroes";
-import ThemeSwitch from "@/components/wall/ThemeSwitch";
+import TabNav from "@/components/wall/TabNav";
+import { DashProvider } from "@/components/wall/dash/DashContext";
+import { DashFrame } from "@/components/wall/dash/DashFrame";
+import DashSections from "@/components/wall/dash/DashSections";
+import { getDashData, PHOTO_SITE } from "@/lib/mapdata";
+import { makeOpColor } from "@/lib/opcolor";
 import { getWallData } from "@/lib/wall";
 import { builderEntries, hostEntries, strategyEntries, link } from "@/lib/wall-content";
 import type { Entry } from "@/lib/wall-content";
@@ -43,32 +48,46 @@ function EntryList({ entries, cols }: { entries: Entry[]; cols: 2 | 4 }) {
 
 export default async function Page() {
   const d = await getWallData();
+  const dash = await getDashData();
+  const color = makeOpColor(dash.operatorOrder);
+  const siteById = new Map(dash.sites.filter((x) => x.region === "us" && x.phase === "open").map((x) => [x.id, x]));
+  const flights = Object.entries(PHOTO_SITE).flatMap(([pid, sid]) => {
+    const site = siteById.get(sid);
+    if (!site) return [];
+    return [{ photoId: Number(pid), siteId: sid, x: site.x, y: site.y, color: color(site.operator), cover: site.photos[0]?.id === Number(pid) }];
+  });
   const st = d.stats;
   const notClassified = st.openSites - d.hostClassified;
   const maxCount = Math.max(...d.hostTypes.map((r) => r.count), notClassified);
   const nf = (n: number) => n.toLocaleString("en-US");
 
   return (
-    <>
+    <DashProvider data={dash}>
       <header className="w-top">
         <a className="w-brand" href="https://evwire.com" aria-label="EVwire">
           <i aria-hidden="true" />
           EVwire
         </a>
         <span className="w-brand-sub">Supercharger for Business</span>
-        <nav aria-label="Primary">
-          <a href="#hosts">Hosts</a>
-          <a href="#builders">Builders</a>
-          <a href="#stories">Stories</a>
-          <a href="/map" className="w-nav-map">
-            See every site
-          </a>
-        </nav>
-        <ThemeSwitch />
+        <TabNav />
       </header>
 
       <main>
-        <Wall groups={d.groups} openSites={st.openSites} operators={st.operators} asOf={st.openAsOf} />
+        <div className="tab-dash" id="dashboard">
+          <Wall groups={d.groups} openSites={st.openSites} operators={st.operators} asOf={st.openAsOf} flights={flights}>
+            <DashFrame />
+          </Wall>
+          <DashSections />
+        </div>
+
+        <div className="tab-hosts">
+        <div className="w-tabhead">
+          <div className="w-wrap">
+            <p className="w-eyebrow">Hosts &amp; stories</p>
+            <h1 className="w-h2">Anyone can own a Supercharger<span>.</span> Here is who did<span>.</span></h1>
+            <p className="w-lede">Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.</p>
+          </div>
+        </div>
 
         <section className="w-sec w-numbers" aria-label="The map today">
           <div className="w-wrap">
@@ -276,7 +295,7 @@ export default async function Page() {
                 : `${nf(st.upcomingNamed)} name an operator or a host.`}
             </p>
             <p>
-              <a className="h-cta" href="/map">
+              <a className="h-cta" href="#dashboard">
                 <span>See every site on the map</span>
                 <i>
                   <Arrow />
@@ -285,6 +304,7 @@ export default async function Page() {
             </p>
           </div>
         </section>
+        </div>
       </main>
 
       <footer className="w-foot">
@@ -308,6 +328,6 @@ export default async function Page() {
           </p>
         </div>
       </footer>
-    </>
+    </DashProvider>
   );
 }
