@@ -166,7 +166,19 @@ export default function Heroes({
               {openSites} open sites, {operators} operators. Real photos from our reporting.
             </p>
             <div className="e-links">
-              <Cta />
+              <a className="e-cue" href="#dashboard" aria-label="Scroll down to the map of every site">
+                <span className="e-mouse" aria-hidden="true">
+                  <b />
+                </span>
+                <span className="e-cue-t">
+                  Scroll down
+                  <small>Watch every photo find its site</small>
+                </span>
+              </a>
+              <a className="e-mini" href="#dashboard">
+                See every site
+                <Arrow />
+              </a>
             </div>
           </div>
         </div>

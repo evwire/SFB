@@ -580,10 +580,6 @@ export default function Wall({
           )}
         />
 
-        <div className="w-hint">
-          <i aria-hidden="true" />
-          Scroll: the photos fly to the map
-        </div>
       </div>
     </section>
   );
