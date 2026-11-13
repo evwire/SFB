@@ -259,6 +259,8 @@ export default function Wall({
       // card holds fully visible to 0.36 and is gone by 0.58.
       const mp = soft((p - 0.01) / 0.42);
       const lp = ease((p - 0.36) / 0.22);
+      // the glass card rides the scroll from the first pixel (a smooth glide up and a slight shrink); it only fades late (lp)
+      const cp = Math.min(1, p / 0.58);
       const pp = Math.min(1, Math.max(0, (p - 0.45) / 0.4));
       const cr = Math.min(1, Math.max(0, (p - 0.8) / 0.17));
       const lensVisible = lp < 1;
@@ -302,6 +304,7 @@ export default function Wall({
 
       stage.style.setProperty("--hp", String(hp));
       stage.style.setProperty("--lp", String(lp));
+      stage.style.setProperty("--cp", String(cp));
       stage.style.setProperty("--mp", String(mp));
       stage.style.setProperty("--pp", String(pp));
       stage.style.setProperty("--cr", String(cr));
@@ -577,8 +580,8 @@ export default function Wall({
       }
       mag.style.transform = `translate(${(lw / 2 - ccx * M).toFixed(2)}px,${(lh / 2 - ccy * M).toFixed(2)}px) scale(${M.toFixed(4)})`;
       const moving = Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05;
-      const hp = parseFloat(stage.style.getPropertyValue("--hp")) || 0;
-      if ((moving || hp > 0.001) && hp < 1) raf = requestAnimationFrame(tick);
+      const cp = parseFloat(stage.style.getPropertyValue("--cp")) || 0;
+      if ((moving || cp > 0.001) && cp < 1) raf = requestAnimationFrame(tick);
     };
     const kick = () => {
       if (!raf) raf = requestAnimationFrame(tick);

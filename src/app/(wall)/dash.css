@@ -298,7 +298,9 @@ html:not([data-tab="charts"]) .tab-charts { display: none; }
 .dz-wide .dz-fine { margin-top: 14px; }
 
 @media (prefers-reduced-motion: reduce) {
+  /* reduced motion: the card stays where it is and only fades; keep each layout's own anchor (centred, or bottom on phones) */
   .hero-e .e-lens { transform: translate(-50%, -50%) !important; opacity: calc(1 - var(--lp, 0)); }
+  @media (max-width: 760px) { .hero-e .e-lens { transform: translate(-50%, 0) !important; } }
   .dz-grid, .dz-bars .t i { transition: none; }
 }
 
