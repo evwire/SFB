@@ -46,6 +46,9 @@ export type DSite = {
 
 export type DHostType = { key: string; label: string };
 
+/** One published EVwire story (data/wall/articles.json). siteIds: open sites the story clearly covers, none when it is about the programme or the market. */
+export type DStory = { n: number; title: string; url: string; date: string; image: string | null; siteIds: string[] };
+
 export type DChange = {
   kind: string;
   id: string;
@@ -62,6 +65,7 @@ export type DChange = {
 export type DashData = {
   sites: DSite[];
   hostTypes: DHostType[];
+  stories: DStory[];
   operatorOrder: string[]; // operators by open-site count, most first
   changes: DChange[];
   changesFrom: string | null;
@@ -165,7 +169,9 @@ export async function getDashData(): Promise<DashData> {
     list.sort((a, b) => (a.id === cover ? -1 : b.id === cover ? 1 : a.id - b.id));
   }
 
-  const imgByUrl = new Map(allArticles().map((a) => [a.url, a.image]));
+  // Only stories we have verified as live on evwire.com (articles.json) are linked. A matched URL that is not in
+  // that list (for example a seed row whose source post is still an unpublished draft) is dropped, never shown.
+  const known = new Map(allArticles().map((a) => [a.url, a]));
   const mk = (s: Site, region: "us" | "eu", phase: "open" | "upcoming"): DSite | null => {
     if (s.x == null || s.y == null) return null;
     const arts = new Map<string, { title: string; url: string; image: string | null }>();
@@ -173,7 +179,10 @@ export async function getDashData(): Promise<DashData> {
       const a: WallArticle = article(n);
       arts.set(a.url, { title: a.title, url: a.url, image: a.image });
     }
-    for (const a of s.articles ?? []) if (!arts.has(a.url)) arts.set(a.url, { title: a.title, url: a.url, image: imgByUrl.get(a.url) ?? null });
+    for (const a of s.articles ?? []) {
+      const k = known.get(a.url);
+      if (k && !arts.has(k.url)) arts.set(k.url, { title: k.title, url: k.url, image: k.image });
+    }
     const photos = photosBySite.get(s.slug) ?? [];
     const ht = phase === "open" && region === "us" ? hostFile[s.slug]?.host_type : null;
     return {
@@ -212,6 +221,18 @@ export async function getDashData(): Promise<DashData> {
     ...euUp.map((s) => mk(s, "eu", "upcoming")),
   ].filter((s): s is DSite => s !== null);
 
+  // Newest first. A story lists only the open sites that carry it; a coming-soon pin that matched on city alone is not named.
+  const stories: DStory[] = [...allArticles()]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n)
+    .map((a) => ({
+      n: a.n,
+      title: a.title,
+      url: a.url,
+      date: a.date,
+      image: a.image,
+      siteIds: sites.filter((s) => s.phase === "open" && s.articles.some((x) => x.url === a.url)).map((s) => s.id),
+    }));
+
   const counts = new Map<string, number>();
   for (const s of sites) if (s.phase === "open" && s.operator) counts.set(s.operator, (counts.get(s.operator) ?? 0) + 1);
   const operatorOrder = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([k]) => k);
@@ -229,6 +250,7 @@ export async function getDashData(): Promise<DashData> {
   return {
     sites,
     hostTypes,
+    stories,
     operatorOrder,
     changes: changes.items.map((c) => ({
       kind: c.kind,

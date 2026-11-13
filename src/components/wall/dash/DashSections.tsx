@@ -159,40 +159,188 @@ function Changes() {
   );
 }
 
-function Covered() {
-  const { visible, select } = useDash();
-  const list = visible.filter((s) => s.articles.length).sort((a, b) => (b.photos.length ? 1 : 0) - (a.photos.length ? 1 : 0) || (b.stalls ?? 0) - (a.stalls ?? 0));
-  if (!list.length) return null;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const day = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+};
+const FIRST = 15;
+const STATE_NAME = new Map(US_STATES.map((x) => [x.abbr, x.name]));
+const stateName = (c: string) => STATE_NAME.get(c) ?? c;
+
+/** One card per EVwire story. The headline is the link (to evwire.com, new tab); the site chips fly the map to that pin. */
+function Stories() {
+  const { data, select, reset, set, visible } = useDash();
+  const [state, setState] = useState("");
+  const [host, setHost] = useState("");
+  const [sort, setSort] = useState<"new" | "state">("new");
+  const [all, setAll] = useState(false);
+
+  const siteById = useMemo(() => new Map(data.sites.map((x) => [x.id, x])), [data.sites]);
+  const hostLabel = useMemo(() => new Map(data.hostTypes.map((h) => [h.key, h.label])), [data.hostTypes]);
+
+  const cards = useMemo(
+    () =>
+      data.stories.map((st) => {
+        const sites = st.siteIds.map((id) => siteById.get(id)).filter((x): x is NonNullable<typeof x> => Boolean(x));
+        const ops = [...new Set(sites.map((x) => x.operator).filter((x): x is string => Boolean(x)))];
+        return {
+          st,
+          sites,
+          states: [...new Set(sites.map((x) => x.state))],
+          hosts: [...new Set(sites.map((x) => x.hostType).filter((x): x is string => Boolean(x)))],
+          ops,
+        };
+      }),
+    [data.stories, siteById]
+  );
+
+  const states = useMemo(() => [...new Set(cards.flatMap((c) => c.states))].sort(), [cards]);
+  const hosts = useMemo(() => data.hostTypes.filter((h) => cards.some((c) => c.hosts.includes(h.key))), [cards, data.hostTypes]);
+  const siteCount = useMemo(() => new Set(cards.flatMap((c) => c.st.siteIds)).size, [cards]);
+
+  const list = useMemo(() => {
+    const out = cards.filter((c) => (!state || c.states.includes(state)) && (!host || c.hosts.includes(host)));
+    if (sort === "state")
+      out.sort((a, b) => {
+        const x = a.states[0] ?? "~";
+        const y = b.states[0] ?? "~";
+        return x.localeCompare(y) || b.st.date.localeCompare(a.st.date);
+      });
+    return out;
+  }, [cards, state, host, sort]);
+
+  const filtered = Boolean(state || host);
+  const shown = filtered || all ? list : list.slice(0, FIRST);
+  const clear = () => {
+    setState("");
+    setHost("");
+  };
+
+  const goto = (id: string) => {
+    const x = siteById.get(id);
+    if (!x) return;
+    // Map filters could be hiding this pin; clear them first so the click always lands on it.
+    if (!visible.some((v) => v.id === id)) {
+      reset();
+      set({ region: x.region });
+    }
+    select(id);
+    window.dispatchEvent(new CustomEvent("dz-goto"));
+  };
+
   return (
-    <section className="dz-wide" aria-label="Sites EVwire has covered">
+    <section className="dz-wide dz-stories" aria-label="EVwire stories">
       <header>
-        <h3>Sites we have written about</h3>
-        <span className="dz-pill">{list.length}</span>
+        <h3>Stories we have written about</h3>
+        <span className="dz-pill">{filtered ? `${list.length} of ${cards.length}` : cards.length}</span>
       </header>
-      <ul className="dz-covered">
-        {list.map((s) => (
-          <li key={s.id}>
-            <button type="button" onClick={() => { select(s.id); window.dispatchEvent(new CustomEvent("dz-goto")); }}>
-              {s.articles[0]?.image ? (
-                // our own EVwire story cover (the beehiiv post thumbnail)
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={s.articles[0].image} alt="" width={720} height={378} loading="lazy" />
-              ) : s.photos[0] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img className="fb" src={s.photos[0].src} alt="" loading="lazy" />
-              ) : (
-                <span className="ph" aria-hidden="true" />
-              )}
-              <b>{s.name}</b>
-              <span>
-                {s.operator ?? "Operator not stated"}
-                {s.stalls != null ? `, ${s.stalls} stalls` : ""}
-                {s.wrapped ? " ✦" : ""}
-              </span>
+      <p className="dz-fine dz-stories-lede">
+        Every EVwire story on Supercharger for Business, newest first. Pick a site under a story to find it on the map.
+      </p>
+      <div className="dz-sbar">
+        <label>
+          <span>State</span>
+          <select value={state} onChange={(e) => setState(e.target.value)}>
+            <option value="">All states</option>
+            {states.map((c) => (
+              <option key={c} value={c}>
+                {stateName(c)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Host type</span>
+          <select value={host} onChange={(e) => setHost(e.target.value)}>
+            <option value="">All host types</option>
+            {hosts.map((h) => (
+              <option key={h.key} value={h.key}>
+                {h.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Sort</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value as "new" | "state")}>
+            <option value="new">Newest first</option>
+            <option value="state">By state</option>
+          </select>
+        </label>
+      </div>
+      {list.length ? (
+        <ul className="dz-stlist">
+          {shown.map(({ st, sites, ops }) => (
+            <li key={st.n}>
+              <article className="dz-st">
+                {st.image && (
+                  // our own EVwire story cover (the beehiiv post thumbnail)
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={st.image} alt="" width={720} height={378} loading="lazy" />
+                )}
+                <div className="dz-st-body">
+                  <p className="dz-st-meta">
+                    <time dateTime={st.date}>{day(st.date)}</time>
+                    {ops.length === 1 && <span>{ops[0]}</span>}
+                  </p>
+                  <h4>
+                    <a href={st.url} target="_blank" rel="noopener">
+                      {st.title}
+                      <span className="sr-only"> (opens evwire.com in a new tab)</span>
+                    </a>
+                  </h4>
+                  {sites.length ? (
+                    <div className="dz-st-sites">
+                      <p>
+                        {sites.length === 1
+                          ? "Covers 1 site"
+                          : `Covers ${sites.length}${ops.length === 1 ? ` ${ops[0]}` : ""} sites`}
+                      </p>
+                      <ul>
+                        {sites.map((x) => (
+                          <li key={x.id}>
+                            <button type="button" className="dz-chip" onClick={() => goto(x.id)} title={`Show ${x.name} on the map`}>
+                              {x.city ? `${x.city}, ${x.state}` : x.state}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="dz-st-none">About the programme or the market, not one site</p>
+                  )}
+                </div>
+              </article>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="dz-stempty" role="status">
+          <b>No story on that yet</b>
+          <p>
+            We have not written about {host ? `a ${hostLabel.get(host)?.toLowerCase() ?? "site of that type"}` : "a site"}
+            {state ? ` in ${stateName(state)}` : ""} yet. Try another filter, or browse everything.
+          </p>
+          <div>
+            <button type="button" className="dz-more" onClick={clear}>
+              Clear filters
             </button>
-          </li>
-        ))}
-      </ul>
+            <a className="dz-link" href="https://evwire.com/t/tesla-third-party-superchargers" target="_blank" rel="noopener">
+              All third-party Supercharger stories on evwire.com
+            </a>
+          </div>
+        </div>
+      )}
+      {!filtered && !all && list.length > FIRST && (
+        <button type="button" className="dz-more" onClick={() => setAll(true)}>
+          Show all {list.length} stories
+        </button>
+      )}
+      <p className="dz-fine">
+        {siteCount} sites on the map have a story. Host type is only shown where we have classified the site, so that filter lists fewer
+        stories than the state filter.
+      </p>
     </section>
   );
 }
@@ -314,7 +462,7 @@ export default function DashSections() {
             <p className="dz-fine">Ctrl + scroll (or a trackpad pinch) zooms the map. A plain scroll moves the page.</p>
           </section>
         </div>
-        <Covered />
+        <Stories />
         <Table />
       </div>
     </div>
