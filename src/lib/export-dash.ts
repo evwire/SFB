@@ -180,11 +180,11 @@ export function renderDash(d: DashImage): string {
   };
   const label = (yy: number, l: string) => txt(ax + 18, yy, l.toUpperCase(), 11, p.faint, { w: 700, ls: 0.08 });
   s += seg(ax + 14, ry, railW - 28, ["United States", "Europe"], eu ? 1 : 0);
-  ry += 34 + 26;
+  ry += 34 + 20;
   s += label(ry, "Operator");
   ry += 8;
   for (const o of d.rail.ops) {
-    ry += 30;
+    ry += 26;
     const cy = ry - 11;
     if (o.on) s += `<rect x="${ax + 18}" y="${cy - 8}" width="16" height="16" rx="5" fill="${brand}"/><path d="M${ax + 21.5} ${cy}l3 3 5.5-6" fill="none" stroke="${onFg}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
     else s += `<rect x="${ax + 18.5}" y="${cy - 7.5}" width="15" height="15" rx="4.5" fill="none" stroke="${p.faint}" stroke-width="1.3"/>`;
@@ -196,30 +196,30 @@ export function renderDash(d: DashImage): string {
     s += txt(nx, cy + 4.5, fit(o.name, railW - 44 - (nx - ax - 44) - 52, 13.5, CW.sans), 13.5, p.fg, { w: o.on ? 600 : 500 });
     s += txt(ax + railW - 18, cy + 4.5, String(o.count), 12.5, p.faint, { a: "end" });
   }
-  ry += 12;
-  const field2 = (yy: number, l: string) => `<rect x="${ax + 14}" y="${yy}" width="${railW - 28}" height="36" rx="12" fill="${field}"/>` + txt(ax + 28, yy + 23, l, 13.5, p.fg) + chev(ax + railW - 30, yy + 18);
+  ry += 8;
+  const field2 = (yy: number, l: string) => `<rect x="${ax + 14}" y="${yy}" width="${railW - 28}" height="34" rx="12" fill="${field}"/>` + txt(ax + 28, yy + 22, l, 13.5, p.fg) + chev(ax + railW - 30, yy + 17);
   if (d.rail.moreOps > 0) {
     s += field2(ry, `${d.rail.moreOps} more operators...`);
-    ry += 36 + 24;
+    ry += 34 + 18;
   }
   if (!eu) {
     s += label(ry, "Host type");
     ry += 10;
     s += field2(ry, d.rail.host);
-    ry += 36 + 24;
+    ry += 34 + 18;
   }
   s += label(ry, eu ? "Region" : "State");
   ry += 10;
   s += field2(ry, d.rail.state);
-  ry += 36 + 24;
+  ry += 34 + 18;
   s += label(ry, "Stalls");
   ry += 10;
   const stallOpts = [0, 4, 8, 12, 20];
   s += seg(ax + 14, ry, railW - 28, ["Any", "4+", "8+", "12+", "20+"], Math.max(0, stallOpts.indexOf(d.rail.minStalls)), 34, 12);
-  ry += 34 + 24;
+  ry += 34 + 18;
   s += label(ry, "Show only");
   d.rail.toggles.forEach((t) => {
-    ry += 30;
+    ry += 28;
     const cy = ry - 8;
     if (t.on) s += `<rect x="${ax + 18}" y="${cy - 8}" width="16" height="16" rx="5" fill="${brand}"/><path d="M${ax + 21.5} ${cy}l3 3 5.5-6" fill="none" stroke="${onFg}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
     else s += `<rect x="${ax + 18.5}" y="${cy - 7.5}" width="15" height="15" rx="4.5" fill="none" stroke="${p.faint}" stroke-width="1.3"/>`;
@@ -297,9 +297,10 @@ export function renderDash(d: DashImage): string {
     if (rest) opsList.push(["Other", OTHER_COLOR, rest]);
     if (none) opsList.push(["Operator not stated", UNKNOWN_COLOR, none]);
   }
-  const lgw = 244;
+  const lgw = opsList.length ? 340 : 244;
+  const opRows = Math.ceil(opsList.length / 2);
   const symRows = (hasOpen ? 1 : 0) + (hasUp ? 1 : 0);
-  const lgh = 50 + (opsList.length ? 10 + opsList.length * 21 : 0) + 14 + symRows * 22;
+  const lgh = 50 + (opRows ? 10 + opRows * 21 : 0) + 14 + symRows * 22;
   const lgy = mfy + areaH - 14 - lgh;
   s += `<rect x="${lgx}" y="${lgy}" width="${lgw}" height="${lgh}" rx="16" fill="${p.card}"/><rect x="${lgx + 0.5}" y="${lgy + 0.5}" width="${lgw - 1}" height="${lgh - 1}" rx="15.5" fill="none" stroke="${p.hair}"/>`;
   s += txt(lgx + 16, lgy + 31, "COLOR BY", 11, p.mut, { w: 700, ls: 0.08 });
@@ -308,11 +309,13 @@ export function renderDash(d: DashImage): string {
   s += `<line x1="${lgx + 14}" x2="${lgx + lgw - 14}" y1="${ly}" y2="${ly}" stroke="${p.hair}"/>`;
   if (opsList.length) {
     ly += 4;
-    for (const [name, c, n] of opsList) {
-      ly += 21;
-      s += `<circle cx="${lgx + 20}" cy="${ly - 4}" r="4.5" fill="${c}"/>` + txt(lgx + 34, ly, fit(name, 150, 12.5, CW.sans), 12.5, p.fg) + txt(lgx + lgw - 16, ly, String(n), 12, p.faint, { a: "end" });
-    }
-    ly += 4;
+    const cwid = (lgw - 32) / 2;
+    opsList.forEach(([name, c, n], i) => {
+      const x0 = lgx + 16 + (i % 2) * cwid + (i % 2) * 0;
+      const yy = ly + 21 * (Math.floor(i / 2) + 1);
+      s += `<circle cx="${n1(x0 + 5)}" cy="${n1(yy - 4)}" r="5" fill="${c}"/>` + txt(x0 + 17, yy, fit(name, cwid - 66, 12.5, CW.sans), 12.5, p.fg) + txt(x0 + cwid - 14, yy, String(n), 12, p.faint, { a: "end" });
+    });
+    ly += 21 * opRows + 4;
   }
   ly += 4;
   const sx = lgx + 16;
