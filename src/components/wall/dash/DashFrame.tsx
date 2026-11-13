@@ -186,7 +186,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
         Stories covered by EVwire
       </Toggle>
       <Toggle on={f.wrapped} onClick={() => set({ wrapped: !f.wrapped })} swatch={<em className="dz-star">✦</em>}>
-        Wrapped or branded stalls
+        Wrapped stalls
       </Toggle>
       <Toggle on={f.isNew} onClick={() => set({ isNew: !f.isNew })} swatch={<em className="dz-newdot" />}>
         New since last check
@@ -292,6 +292,8 @@ function Panel({ s }: { s: DSite }) {
           </span>
           <span className={`dz-tag status ${open ? "open" : "up"}`}>{open ? "Open" : s.badge ?? "Upcoming"}</span>
           {s.change && <span className="dz-tag new">{changeText[s.change] ?? "New"}</span>}
+          {s.wrapKind === "art" && <span className="dz-tag plain">Art wrap</span>}
+          {s.wrapKind === "brand" && <span className="dz-tag plain">Logo wrap</span>}
         </div>
         <h3>{s.name}</h3>
         <p className="dz-place">{place || NS}</p>
@@ -301,8 +303,6 @@ function Panel({ s }: { s: DSite }) {
           ))}
         </dl>
         {missing.length > 0 && <p className="dz-fine">Not stated on Find Us: {missing.join(", ")}.</p>}
-        {s.wrapKind === "art" && <p className="dz-note"><b>Wrapped stalls</b> · custom artwork on the stalls, shown in our photos and stories.</p>}
-        {s.wrapKind === "brand" && <p className="dz-note"><b>Branded stalls</b> · the host&apos;s own logo is on the stalls, shown in our photos and stories.</p>}
         {s.operator === FRANCIS && <p className="dz-note">One of the Francis Energy sites, a single network with many sites on the map.</p>}
 
         <h4 className="dz-sec">Read on EVwire</h4>

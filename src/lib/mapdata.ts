@@ -41,7 +41,7 @@ export type DSite = {
   url: string;
   articles: { title: string; url: string; image: string | null; date: string | null }[];
   photos: DPhoto[];
-  wrapped: boolean;
+  wrapped: boolean; // true only for custom artwork wraps (kind "art" in wraps.json); logo/brand wraps are not counted
   wrapKind: "art" | "brand" | null; // art = custom artwork wrap, brand = the host's logo on the stall; proof is in data/wall/wraps.json
   address: string | null;
   change: string | null; // kind from latest-changes.json when this site is in the "new since last check" feed
@@ -108,7 +108,7 @@ const CARD_ARTICLES: Record<string, number[]> = {
   "495547": [19], "499203": [21], "496877": [27], "491102": [27], "490457": [28], "499626": [34], "58992": [35], "490529": [36],
 };
 
-/** Sites whose stalls are wrapped or branded, each with its proof (a photo, an article cover or a quote). */
+/** Sites with stall wraps in wraps.json, each with its proof (a photo, an article cover or a quote). The Wrapped filter uses only kind "art". */
 const wrapSites = wrapsJson.sites as Record<string, { kind: string }>;
 
 const HOST_LABEL: Record<string, string> = {
@@ -216,7 +216,7 @@ export async function getDashData(): Promise<DashData> {
       url: s.sourceUrl,
       articles: [...arts.values()],
       photos,
-      wrapped: wrapKind !== null,
+      wrapped: wrapKind === "art",
       wrapKind,
       address: s.address ?? null,
       change: changeById.get(s.slug)?.kind ?? null,

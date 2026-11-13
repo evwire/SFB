@@ -68,7 +68,7 @@ export default function Heroes({
 
       {/* B: headline knocked out of a paper field, the field splits into the wall on scroll */}
       <div className="hero hero-b">
-        <h1 className="sr-only">Anyone can now own a Supercharger. Here is who already started.</h1>
+        <h1 className="sr-only">Anyone can now own a Tesla Supercharger. Meet the first owners.</h1>
         <div className="b-dim" aria-hidden="true" />
         <div className="b-half b-top" aria-hidden="true">
           <p className="b-ko">
@@ -139,7 +139,7 @@ export default function Heroes({
           <span className="d-spec" aria-hidden="true" />
           <div className="d-copy">
             <h1>
-              Anyone can now own a Supercharger. <em>Here is who already started.</em>
+              Anyone can now own a Tesla Supercharger. <em>Meet the first owners.</em>
             </h1>
             <p className="e-stats">
               {nfm(openSites)} open sites · {nfm(stalls)} stalls · {nfm(operators)} operators · {nfm(upcoming)} sites upcoming
@@ -166,7 +166,7 @@ export default function Heroes({
           <span className="e-rim" aria-hidden="true" />
           <div className="e-copy">
             <h1>
-              Anyone can now own a Supercharger. <em>Here is who already started.</em>
+              Anyone can now own a Tesla Supercharger. <em>Meet the first owners.</em>
             </h1>
             <p className="e-stats">
               {nfm(openSites)} open sites · {nfm(stalls)} stalls · {nfm(operators)} operators · {nfm(upcoming)} sites upcoming

@@ -14,7 +14,7 @@ import type { Entry } from "@/lib/wall-content";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Anyone can now own a Supercharger. Here is who already started.",
+  title: "Anyone can now own a Tesla Supercharger. Meet the first owners.",
   description:
     "Gas stations, a jeweller, a car dealer, a coffee truck, a city. Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.",
 };
@@ -84,7 +84,7 @@ export default async function Page() {
         <div className="w-tabhead">
           <div className="w-wrap">
             <p className="w-eyebrow">Hosts &amp; stories</p>
-            <h1 className="w-h2">Anyone can now own a Supercharger<span>.</span> Here is who already started<span>.</span></h1>
+            <h1 className="w-h2">Anyone can now own a Tesla Supercharger<span>.</span> Meet the first owners<span>.</span></h1>
             <p className="w-lede">Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.</p>
           </div>
         </div>

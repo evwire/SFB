@@ -76,6 +76,17 @@ export default function Wall({
         }
       }
     }
+    // Place the close-up art wraps (EV Auto guitar, Island Center beach stall, EVODS tree) at indices
+    // that pack into the right half of the glass card on typical desktop widths (1280, 1440, 1680).
+    // Grid and tile sizes stay the same; only the sequence changes.
+    {
+      const artAt: [number, number][] = [[107, 15], [91, 18], [138, 19]];
+      for (const [id] of artAt) {
+        const i = order.indexOf(id);
+        if (i >= 0) order.splice(i, 1);
+      }
+      for (const [id, idx] of artAt) order.splice(Math.min(idx, order.length), 0, id);
+    }
 
     let H = 0;
     let W = 0;
@@ -130,18 +141,14 @@ export default function Wall({
       startPos = new Map();
       best!.pos.forEach((b, id) => startPos.set(id, { x: b.x, y: b.y * sy, w: b.w, h: b.h * sy }));
 
-      // A few real photos where the wrap is plain to see at tile size sit in or beside the glass card: a single Island
-      // Center stall, the EV Auto guitar wrap and the EVODS tree. Each swaps places with a tile of the same shape, so
-      // nothing is cropped or stretched and the rest of the wall stays as it was.
-      {
+      // On mobile the card sits at the bottom, so the same three close-up art wraps swap with same-shape
+      // tiles just above it. Desktop placement is handled by the tile order above; the grid is left as packed.
+      if (mob) {
         const lens = stage.querySelector<HTMLElement>(".e-lens");
         const sr0 = stage.getBoundingClientRect();
         const lr0 = lens?.getBoundingClientRect();
         const lb = lr0 && lr0.width > 40 ? { x: lr0.left - sr0.left, y: lr0.top - sr0.top, w: lr0.width, h: lr0.height } : { x: W * 0.25, y: H * 0.25, w: W * 0.5, h: H * 0.5 };
-        // where each should sit: lower middle of the card, just left of it, just right of it
-        const spots: [number, [number, number]][] = mob
-          ? [[91, [W * 0.16, lb.y - 45]], [107, [W * 0.5, lb.y - 45]], [138, [W * 0.84, lb.y - 45]]]
-          : [[91, [lb.x + lb.w * 0.5, lb.y + lb.h * 0.8]], [107, [lb.x - 50, lb.y + lb.h * 0.45]], [138, [lb.x + lb.w + 50, lb.y + lb.h * 0.3]]];
+        const spots: [number, [number, number]][] = [[91, [W * 0.16, lb.y - 45]], [107, [W * 0.5, lb.y - 45]], [138, [W * 0.84, lb.y - 45]]];
         const used = new Set<number>(spots.map(([id]) => id));
         for (const [wid, [sx, sy]] of spots) {
           const a1 = startPos.get(wid);
