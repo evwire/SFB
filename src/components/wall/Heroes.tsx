@@ -53,9 +53,9 @@ export default function Heroes({
       <div className="hero hero-a">
         <div className="a-veil" aria-hidden="true" />
         <h1>
-          <span>Anyone can own</span>
-          <span>a Supercharger.</span>
-          <span className="a-em">Here is who did.</span>
+          <span>Anyone can now own</span>
+          <span>a Tesla Supercharger.</span>
+          <span className="a-em">Meet the first owners.</span>
         </h1>
         <div className="a-foot">
           <p>{sub}</p>
@@ -72,18 +72,18 @@ export default function Heroes({
         <div className="b-dim" aria-hidden="true" />
         <div className="b-half b-top" aria-hidden="true">
           <p className="b-ko">
-            <span>Anyone can own</span>
-            <span>a Supercharger.</span>
+            <span>Anyone can now own</span>
+            <span>a Tesla Supercharger.</span>
           </p>
         </div>
         <div className="b-half b-bot" aria-hidden="true">
           <p className="b-ko">
-            <span>Anyone can own</span>
-            <span>a Supercharger.</span>
+            <span>Anyone can now own</span>
+            <span>a Tesla Supercharger.</span>
           </p>
         </div>
         <div className="b-copy">
-          <p className="b-em" aria-hidden="true">Here is who did.</p>
+          <p className="b-em" aria-hidden="true">Meet the first owners.</p>
           <p className="b-sub">{sub}</p>
           <div className="b-links">
             <Cta />
@@ -102,7 +102,7 @@ export default function Heroes({
           <div className="c-main">
             <div className="c-head">
               <h1>
-                Anyone can own a Supercharger. <em>Here is who did.</em>
+                Anyone can now own a Tesla Supercharger. <em>Meet the first owners.</em>
               </h1>
               <p>
                 Gas stations, a jeweller, a car dealer, a coffee truck, a city. Real photos from our reporting, sorted

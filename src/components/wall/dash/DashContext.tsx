@@ -156,7 +156,8 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
       stalls: visible.reduce((a, s) => a + (s.stalls ?? 0), 0),
       stallsUnknown: visible.filter((s) => s.stalls == null).length,
       operators: new Set(open.map((s) => s.operator).filter(Boolean)).size,
-      areas: new Set(visible.map((s) => s.state)).size,
+      // "US" is the placeholder for a site whose state Tesla does not give: it is not a state, so it is not counted as one
+      areas: new Set(visible.map((s) => s.state).filter((a) => a !== "US")).size,
       rateLow: rates.length ? Math.min(...rates) : null,
       rateHigh: rates.length ? Math.max(...rates) : null,
       rateCur: open.find((s) => s.currency)?.currency ?? null,

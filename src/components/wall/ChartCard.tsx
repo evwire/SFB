@@ -15,7 +15,7 @@ export const DownloadIcon = () => (
 /** One chart: the card on the page, drawn at the width it has, and a Download PNG for the full-size image. */
 export default function ChartCard({ model, host }: { model: ChartModel; host: string }) {
   const art = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState(() => pageSize(1100));
+  const [size, setSize] = useState(() => pageSize(1100, model.spec.kind));
   const [theme, setTheme] = useState<Theme>("light");
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +23,7 @@ export default function ChartCard({ model, host }: { model: ChartModel; host: st
     const el = art.current;
     if (!el) return;
     const measure = () => {
-      if (el.clientWidth > 0) setSize(pageSize(el.clientWidth));
+      if (el.clientWidth > 0) setSize(pageSize(el.clientWidth, model.spec.kind));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -36,7 +36,7 @@ export default function ChartCard({ model, host }: { model: ChartModel; host: st
       ro.disconnect();
       mo.disconnect();
     };
-  }, []);
+  }, [model.spec.kind]);
 
   const svg = useMemo(() => renderChart(model, { ...size, theme, host }), [model, size, theme, host]);
 

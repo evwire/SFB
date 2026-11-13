@@ -11,11 +11,16 @@ export type RenderOpts = { W: number; H: number; k: number; theme: Theme; host: 
 export const EXPORT: Omit<RenderOpts, "theme" | "host"> = { W: 1200, H: 630, k: 1 };
 
 /** Sizes for the page: the card is about as wide as its column, type stays readable down to a phone. */
-export function pageSize(width: number): Omit<RenderOpts, "theme" | "host"> {
+export function pageSize(width: number, kind?: string): Omit<RenderOpts, "theme" | "host"> {
   const W = Math.max(300, Math.round(width));
   if (W >= 900) return { W, H: Math.round(W * 0.525), k: Math.min(1.1, W / 1156) };
-  if (W >= 520) return { W, H: Math.round(W * 0.74), k: Math.max(0.72, Math.min(1, W / 860)) };
-  return { W, H: Math.round(W * 1.5), k: Math.max(0.7, Math.min(0.95, W / 500)) };
+  if (W >= 520) {
+    const k = Math.max(0.78, Math.min(1, W / 860));
+    return { W, H: Math.round(W * (kind === "tiles" ? (W >= 790 ? 0.9 : 1.55) : 0.74)), k };
+  }
+  // a phone: type never scales below 0.84, so the smallest labels stay about 10px or more
+  const k = Math.max(0.84, Math.min(0.95, W / 440));
+  return { W, H: Math.round(W * (kind === "tiles" ? 2.2 : 1.6)), k };
 }
 
 type TOpts = { w?: number; a?: "start" | "middle" | "end"; ls?: number; font?: string; op?: number; italic?: boolean };
@@ -81,7 +86,7 @@ function lolli(spec: Lolli, b: Box, k: number, p: Pal, theme: Theme): string {
   const rows = b.h - onesH;
   const rh = Math.min(rows / n, 54 * k);
   const top = b.y;
-  const badge = Math.min(15 * k, rh * 0.36);
+  const badge = Math.max(Math.min(15 * k, rh * 0.36), Math.min(11.5, rh * 0.44));
   const labelX = b.x + badge * 2 + 12 * k;
   const max = Math.max(1, ...spec.rows.map((r) => r.value));
   const narrowL = b.w < 460;
@@ -95,7 +100,7 @@ function lolli(spec: Lolli, b: Box, k: number, p: Pal, theme: Theme): string {
     const cy = top + i * rh + rh / 2;
     const x = x0 + Math.max(2 * k, (r.value / max) * bw);
     s += `<circle cx="${n1(b.x + badge)}" cy="${n1(cy)}" r="${n1(badge)}" fill="${r.hi ? p.acc : p.track}"/>`;
-    s += t(b.x + badge, cy + badge * 0.36, initials(r.label), badge * 0.92, r.hi ? (theme === "dark" ? "#06210F" : "#FFFFFF") : p.mut, { a: "middle", w: 700 });
+    s += t(b.x + badge, cy + badge * 0.36, initials(r.label), Math.max(10, badge * 0.92), r.hi ? (theme === "dark" ? "#06210F" : "#FFFFFF") : p.mut, { a: "middle", w: 700 });
     s += t(labelX, cy + fs * 0.34, fit(r.label, lw, fs), fs, r.hi ? p.fg : p.mut, { w: r.hi ? 700 : 500 });
     s += `<line x1="${n1(x0)}" x2="${n1(x)}" y1="${n1(cy)}" y2="${n1(cy)}" stroke="${r.hi ? p.acc : BAR[theme]}" stroke-width="${n1(4 * k)}" stroke-linecap="round"/>`;
     s += `<circle cx="${n1(x)}" cy="${n1(cy)}" r="${n1((r.hi ? 9 : 7) * k)}" fill="${r.hi ? p.acc : p.slate}" stroke="${p.bg}" stroke-width="${n1(2.5 * k)}"/>`;
@@ -134,9 +139,10 @@ function track(spec: Track, b: Box, k: number, p: Pal, theme: Theme): string {
   const stacked = b.w < 460;
   const rh = Math.min(b.h / n, (stacked ? 60 : 52) * k);
   const top = b.y + Math.max(0, (b.h - rh * n) / 2) * 0.3;
-  const fs = Math.min((stacked ? 15 : 18) * k, rh * 0.4);
+  const fs = Math.min((stacked ? 15 : 18) * k, rh * 0.44);
   const max = Math.max(1, ...spec.rows.map((r) => r.value));
-  const valW = textW("00", fs, CW.sansBold) + textW("100%", fs * 0.85, CW.sans) + 26 * k;
+  const pfs = Math.max(fs * 0.9, 12);
+  const valW = textW("00", fs, CW.sansBold) + textW("100%", pfs, CW.sans) + 26 * k;
   const lw = stacked ? 0 : Math.min(b.w * 0.42, Math.max(...spec.rows.map((r) => textW(r.label, fs, CW.sans))) + 4 * k);
   const x0 = b.x + (stacked ? 0 : lw + 16 * k);
   const bw = b.x + b.w - x0 - valW;
@@ -152,8 +158,8 @@ function track(spec: Track, b: Box, k: number, p: Pal, theme: Theme): string {
     s += rr(x0, cy - th / 2, w, th, th / 2, r.hi ? `url(#hbar${"{U}"})` : r.soft ? "none" : BAR[theme]);
     if (r.soft) s += `<rect x="${n1(x0 + 0.75 * k)}" y="${n1(cy - th / 2 + 0.75 * k)}" width="${n1(w - 1.5 * k)}" height="${n1(th - 1.5 * k)}" rx="${n1(th / 2)}" fill="none" stroke="${p.slate}" stroke-width="${n1(1.5 * k)}" stroke-dasharray="${n1(4 * k)} ${n1(3 * k)}"/>`;
     const vx = b.x + b.w;
-    s += t(vx - textW(r.pct, fs * 0.85, CW.sans) - 8 * k, cy + fs * 0.34, String(r.value), fs, r.hi ? p.acc : p.fg, { w: 700, a: "end" });
-    s += t(vx, cy + fs * 0.32, r.pct, fs * 0.85, p.faint, { a: "end" });
+    s += t(vx - textW(r.pct, pfs, CW.sans) - 8 * k, cy + fs * 0.34, String(r.value), fs, r.hi ? p.acc : p.fg, { w: 700, a: "end" });
+    s += t(vx, cy + fs * 0.32, r.pct, pfs, p.mut, { a: "end" });
   });
   return s;
 }
@@ -316,76 +322,86 @@ const TILE_POS: Record<string, [number, number]> = {
 function tiles(spec: Tiles, b: Box, k: number, p: Pal, theme: Theme): string {
   const by = new Map(spec.rows.map((r) => [r.abbr, r]));
   const wide = b.w >= 700;
-  const gap = 4 * k;
+  const gap = (wide ? 4 : 3) * k;
   const legendH = 34 * k;
-  const gridMaxW = wide ? b.w * 0.56 : b.w;
-  const ts = Math.min((gridMaxW - gap * 10) / 11, (b.h - legendH - gap * 7) / 8);
-  const gw = ts * 11 + gap * 10;
-  const gh = ts * 8 + gap * 7;
+  // Tiles are wider than tall on a landscape card (the card is short) and taller than wide on a phone (it is narrow),
+  // so the state letters and the count both stay at a readable size.
+  const gridMaxW = wide ? b.w * 0.6 : b.w;
+  const tsw = Math.min((gridMaxW - gap * 10) / 11, wide ? 999 : 42);
+  const listH = wide ? 0 : 150 * k;
+  const maxTh = (b.h - legendH - listH - gap * 7) / 8;
+  const th = wide ? Math.min(maxTh, tsw) : Math.min(maxTh, tsw * 1.18);
+  const tw = wide ? Math.min(tsw, th * 1.55) : tsw;
+  const gw = tw * 11 + gap * 10;
+  const gh = th * 8 + gap * 7;
   const gx = b.x + (wide ? 0 : (b.w - gw) / 2);
   const gy = b.y + 2 * k;
   const max = Math.max(1, ...spec.rows.map((r) => r.open + r.up));
-  const step = (v: number) => (v <= 0 ? -1 : Math.min(4, Math.floor(((v - 1) / Math.max(1, max - 1)) * 4.999)));
   // sqrt-ish spread so one big state does not wash everything else out
   const level = (v: number) => (v <= 0 ? -1 : Math.min(4, Math.max(0, Math.round(Math.sqrt((v - 1) / Math.max(1, max - 1)) * 4))));
-  void step;
   let s = "";
-  const nfs = Math.max(9 * k, ts * 0.42);
-  const afs = Math.max(8 * k, ts * 0.27);
+  const afs = Math.max(10.5, th * 0.3);
+  const nfs = Math.max(wide ? 13 : 11.5, th * (wide ? 0.42 : 0.36));
+  const rx = Math.min(tw, th) * 0.16;
   for (const [abbr, [c, r]] of Object.entries(TILE_POS)) {
-    const x = gx + c * (ts + gap);
-    const y = gy + r * (ts + gap);
+    const x = gx + c * (tw + gap);
+    const y = gy + r * (th + gap);
     const row = by.get(abbr);
     const v = row ? row.open + row.up : 0;
     const lv = level(v);
     if (lv < 0) {
-      s += `<rect x="${n1(x + 0.5 * k)}" y="${n1(y + 0.5 * k)}" width="${n1(ts - k)}" height="${n1(ts - k)}" rx="${n1(ts * 0.16)}" fill="none" stroke="${p.hair}" stroke-width="${n1(k)}"/>`;
-      s += t(x + ts / 2, y + ts / 2 + afs * 0.36, abbr, afs, p.faint, { a: "middle", w: 600 });
+      s += `<rect x="${n1(x + 0.5 * k)}" y="${n1(y + 0.5 * k)}" width="${n1(tw - k)}" height="${n1(th - k)}" rx="${n1(rx)}" fill="none" stroke="${p.hair}" stroke-width="${n1(k)}"/>`;
+      s += t(x + tw / 2, y + th / 2 + afs * 0.36, abbr, afs, p.faint, { a: "middle", w: 600 });
       continue;
     }
-    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(ts)}" height="${n1(ts)}" rx="${n1(ts * 0.16)}" fill="${p.seq[lv]}"/>`;
-    s += t(x + ts * 0.12, y + ts * 0.31, abbr, afs, p.seqText[lv], { w: 700, op: 0.92 });
-    s += t(x + ts / 2, y + ts * 0.8, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
-    if (row && row.open > 0) s += `<circle cx="${n1(x + ts - ts * 0.17)}" cy="${n1(y + ts * 0.2)}" r="${n1(Math.max(2.2 * k, ts * 0.065))}" fill="${p.seqText[lv]}"/>`;
+    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(tw)}" height="${n1(th)}" rx="${n1(rx)}" fill="${p.seq[lv]}"/>`;
+    if (wide) {
+      s += t(x + tw * 0.1, y + th * 0.36, abbr, afs, p.seqText[lv], { w: 700, op: 0.95 });
+      s += t(x + tw / 2, y + th * 0.87, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
+    } else {
+      s += t(x + tw / 2, y + th * 0.38, abbr, afs, p.seqText[lv], { a: "middle", w: 700, op: 0.95 });
+      s += t(x + tw / 2, y + th * 0.86, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
+    }
+    if (row && row.open > 0) s += `<circle cx="${n1(x + tw - Math.min(tw, th) * 0.17)}" cy="${n1(y + Math.min(tw, th) * 0.19)}" r="${n1(Math.max(2.2 * k, Math.min(tw, th) * 0.06))}" fill="${p.seqText[lv]}"/>`;
   }
   // key: the scale and what the dot means
-  const ky = gy + gh + 24 * k;
+  const ky = gy + gh + 22 * k;
   const kw = Math.min(140 * k, gw * 0.4);
   p.seq.forEach((c, i) => (s += `<rect x="${n1(gx + (kw / 5) * i)}" y="${n1(ky - 9 * k)}" width="${n1(kw / 5 + 0.5)}" height="${n1(9 * k)}" fill="${c}" ${i === 0 ? `rx="${n1(3 * k)}"` : ""}/>`));
-  s += t(gx, ky + 14 * k, "1", 12.5 * k, p.faint);
-  s += t(gx + kw, ky + 14 * k, `${max} sites`, 12.5 * k, p.faint, { a: "end" });
+  s += t(gx, ky + 15 * k, "1", 12 * Math.max(k, 0.9), p.faint);
+  s += t(gx + kw, ky + 15 * k, `${max} sites`, 12 * Math.max(k, 0.9), p.faint, { a: "end" });
   const dx = gx + kw + 26 * k;
   s += `<circle cx="${n1(dx)}" cy="${n1(ky - 4.5 * k)}" r="${n1(3 * k)}" fill="${p.mut}"/>`;
-  s += t(dx + 10 * k, ky - 0.5 * k, "has an open site", 13 * k, p.mut);
-  if (wide) {
-    // right: the five biggest, as small stacked bars with their names
-    const px = gx + gw + 56 * k;
-    const pw = b.x + b.w - px;
-    s += t(px, b.y + 14 * k, "Most sites", 13 * k, p.faint, { w: 600, ls: 0.04 });
-    const rh = Math.min(50 * k, (b.h - 120 * k) / 5);
-    const topN = spec.top.length;
-    const mx = Math.max(...spec.top.map((r) => r.open + r.up));
-    const nfsz = 18 * k;
-    const vw = textW(String(mx), nfsz, CW.sansBold) + 26 * k;
-    const lw = Math.min(pw * 0.38, Math.max(...spec.top.map((r) => textW(r.name, nfsz, CW.sans))) + 6 * k);
-    const x0 = px + lw + 12 * k;
-    const bw = px + pw - x0 - vw;
-    spec.top.forEach((r, i) => {
-      const cy = b.y + 44 * k + i * rh + rh / 2 - 8 * k;
-      const wa = (r.open / mx) * bw;
-      const wb = (r.up / mx) * bw;
-      s += t(px, cy + nfsz * 0.34, fit(r.name, lw, nfsz), nfsz, i === 0 ? p.fg : p.mut, { w: i === 0 ? 700 : 500 });
-      const h = 14 * k;
-      s += rr(x0, cy - h / 2, bw, h, h / 2, p.track);
-      if (r.open) s += rr(x0, cy - h / 2, Math.max(h, wa), h, h / 2, p.acc);
-      if (r.up) s += rr(x0 + (r.open ? Math.max(h, wa) - h / 2 : 0), cy - h / 2, Math.max(h, wb) + (r.open ? h / 2 : 0), h, h / 2, BAR[theme]);
-      s += t(x0 + (r.open ? Math.max(h, wa) : 0) + (r.up ? Math.max(h, wb) : 0) + 10 * k, cy + nfsz * 0.34, String(r.open + r.up), nfsz, i === 0 ? p.acc : p.fg, { w: 700 });
-    });
-    // direct key for the two colours
-    const ly = b.y + 44 * k + topN * rh + 12 * k;
-    s += `<circle cx="${n1(px + 5 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${p.acc}"/>` + t(px + 16 * k, ly + 4.5 * k, "open", 14 * k, p.mut, { w: 600 });
-    s += `<circle cx="${n1(px + 78 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${BAR[theme]}"/>` + t(px + 89 * k, ly + 4.5 * k, "upcoming", 14 * k, p.mut, { w: 600 });
-  }
+  s += t(dx + 10 * k, ky - 0.5 * k, "has an open site", 13 * Math.max(k, 0.85), p.mut);
+  // the five biggest, as small stacked bars with their names: beside the grid on a landscape card, under it on a phone
+  const px = wide ? gx + gw + 56 * k : b.x;
+  const pw = wide ? b.x + b.w - px : b.w;
+  const top0 = wide ? b.y : ky + 34 * k;
+  s += t(px, top0 + 14 * k, "Most sites", 13 * Math.max(k, 0.85), p.faint, { w: 600, ls: 0.04 });
+  const rh = wide ? Math.min(50 * k, (b.h - 120 * k) / 5) : Math.min(26 * k, (b.y + b.h - top0 - 24 * k) / 5);
+  const topN = spec.top.length;
+  const mx = Math.max(...spec.top.map((r) => r.open + r.up));
+  const nfsz = (wide ? 18 : 14.5) * (wide ? k : Math.max(k, 0.9));
+  const vw = textW(String(mx), nfsz, CW.sansBold) + 26 * k;
+  const lw = Math.min(pw * 0.38, Math.max(...spec.top.map((r) => textW(r.name, nfsz, CW.sans))) + 6 * k);
+  const x0 = px + lw + 12 * k;
+  const bw = px + pw - x0 - vw;
+  spec.top.forEach((r, i) => {
+    const cy = (wide ? b.y + 44 * k - 8 * k : top0 + 24 * k - 4 * k) + i * rh + rh / 2;
+    const wa = (r.open / mx) * bw;
+    const wb = (r.up / mx) * bw;
+    s += t(px, cy + nfsz * 0.34, fit(r.name, lw, nfsz), nfsz, i === 0 ? p.fg : p.mut, { w: i === 0 ? 700 : 500 });
+    const h = (wide ? 14 : 11) * k;
+    s += rr(x0, cy - h / 2, bw, h, h / 2, p.track);
+    if (r.open) s += rr(x0, cy - h / 2, Math.max(h, wa), h, h / 2, p.acc);
+    if (r.up) s += rr(x0 + (r.open ? Math.max(h, wa) - h / 2 : 0), cy - h / 2, Math.max(h, wb) + (r.open ? h / 2 : 0), h, h / 2, BAR[theme]);
+    s += t(x0 + (r.open ? Math.max(h, wa) : 0) + (r.up ? Math.max(h, wb) : 0) + 10 * k, cy + nfsz * 0.34, String(r.open + r.up), nfsz, i === 0 ? p.acc : p.fg, { w: 700 });
+  });
+  // direct key for the two colours
+  const ly = wide ? b.y + 44 * k + topN * rh + 12 * k : top0 + 24 * k - 4 * k + topN * rh + 14 * k;
+  const lfs = 14 * Math.max(k, 0.85);
+  s += `<circle cx="${n1(px + 5 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${p.acc}"/>` + t(px + 16 * k, ly + 4.5 * k, "open", lfs, p.mut, { w: 600 });
+  s += `<circle cx="${n1(px + 78 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${BAR[theme]}"/>` + t(px + 89 * k, ly + 4.5 * k, "upcoming", lfs, p.mut, { w: 600 });
   return s;
 }
 

@@ -51,7 +51,7 @@ html.dark .h-cta i { background: var(--signal-bright); color: #06130c; }
 .hero-a h1 {
   position: absolute; left: 52px; right: 32px; top: max(112px, 15vh);
   display: flex; flex-direction: column;
-  font: 800 clamp(54px, 10.9vw, 210px) / 0.86 var(--disp); letter-spacing: -0.058em;
+  font: 800 clamp(40px, 7.6vw, 160px) / 0.9 var(--disp); letter-spacing: -0.052em;
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.45);
   opacity: calc(1 - var(--hp) * 1.5); transform: translateY(calc(var(--hp) * -70px)) scale(calc(1 + var(--hp) * 0.05)); transform-origin: 0 0;
 }
@@ -63,7 +63,7 @@ html.dark .h-cta i { background: var(--signal-bright); color: #06130c; }
 .hero-a .h-cta i { background: var(--signal-bright); color: #06130c; }
 
 /* ---------- B: headline knocked out of a paper field that splits into the wall ---------- */
-.hero-b { --bk: clamp(56px, 11.2vw, 210px); --bt: max(100px, 14vh); }
+.hero-b { --bk: clamp(40px, 7.4vw, 150px); --bt: max(100px, 14vh); }
 .b-dim { position: absolute; inset: 0; background: rgba(6, 8, 11, 0.34); opacity: calc(1 - var(--hp) * 3.2); }
 .b-half { position: absolute; inset: 0; background: var(--bg); mix-blend-mode: screen; will-change: transform; }
 html.dark .b-half { mix-blend-mode: multiply; }
@@ -286,13 +286,13 @@ html:not(.lg-refract) .e-lens { --mag: 1.1; }
 /* ---------- small screens ---------- */
 @media (max-width: 760px) {
   .w-hint { left: 12px; bottom: 14px; }
-  .hero-a h1 { left: 18px; right: 12px; top: 92px; font-size: clamp(46px, 15.6vw, 80px); line-height: 0.88; }
+  .hero-a h1 { left: 18px; right: 12px; top: 92px; font-size: clamp(36px, 11.4vw, 80px); line-height: 0.92; }
   .a-foot { left: 18px; right: 18px; bottom: 66px; flex-direction: column; align-items: flex-start; gap: 18px; }
   .a-foot p { font-size: 15px; line-height: 22px; }
-  .b-ko { left: 14px; font-size: 12.4vw; line-height: 0.88; }
-  .hero-b { --bk: 12.4vw; --bt: 96px; }
+  .b-ko { left: 14px; font-size: 8.3vw; line-height: 0.9; }
+  .hero-b { --bk: 8.3vw; --bt: 96px; }
   .b-copy { left: 18px; right: 18px; }
-  .b-em { font-size: 11vw; }
+  .b-em { font-size: 8.6vw; }
   .b-sub { font-size: 15px; line-height: 22px; margin-top: 12px; }
   .b-links { margin-top: 16px; gap: 20px; }
   .c-band { padding: 70px 16px 18px; }
