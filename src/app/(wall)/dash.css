@@ -99,6 +99,8 @@ html:not([data-tab="charts"]) .tab-charts { display: none; }
 .dz-kpi .rate b { font-size: clamp(24px, 2.2vw, 32px); padding: 3px 0 4px; }
 .dz-kpi .cov b { color: var(--amber); }
 .dz-kpi span { order: 2; font: 400 var(--t-small)/16px var(--sans); color: var(--mut); }
+.dz-kpi .k span { display: inline; order: 0; font: inherit; color: inherit; line-height: inherit; }
+.dz-kpi .k .ks { display: none; }
 
 /* master Open / Upcoming / Both switch: top left, above the filter rail */
 .dz-master { display: flex; flex-direction: column; justify-content: center; gap: var(--s-3); padding: var(--s-4); }
@@ -332,7 +334,9 @@ html:not([data-tab="charts"]) .tab-charts { display: none; }
   .dz-kpi b { font-size: 24px; min-height: 28px; }
   .dz-kpi .rate b { font-size: 15.5px; padding: 0; letter-spacing: -0.03em; }
   .dz-kpi .k { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dz-kpi span { display: none; }
+  .dz-kpi > div > span { display: none; }
+  .dz-kpi .k .kl { display: none; }
+  .dz-kpi .k .ks { display: inline; }
   .dz-rail, .dz-panel { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 30; max-height: 74%; grid-column: auto; grid-row: auto; opacity: 1; transform: translateY(110%); transition: transform 0.4s var(--enter); border-radius: var(--r-panel); box-shadow: 0 0 0 1px var(--hair), 0 -20px 50px -20px rgba(0, 0, 0, 0.55); }
   .dz-rail[data-open="1"], .dz[data-panel="1"] .dz-panel { transform: none; }
   .dz-panel { overflow: hidden; }

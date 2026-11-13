@@ -46,7 +46,10 @@ export function Kpis() {
     <div className="dz-kpi" role="list" aria-label={`Totals for the ${f.phase === "both" ? "open and upcoming" : f.phase} sites and current filters`} aria-live="polite">
       {items.map((k) => (
         <div role="listitem" key={k.key} className={k.cls}>
-          <p className="k">{k.label}</p>
+          <p className="k">
+            <span className="kl">{k.label}</span>
+            <span className="ks">{k.short ?? k.label}</span>
+          </p>
           <b>{k.value}</b>
           <span>{k.note}</span>
         </div>

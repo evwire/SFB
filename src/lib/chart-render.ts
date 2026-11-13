@@ -20,7 +20,7 @@ export function pageSize(width: number, kind?: string): Omit<RenderOpts, "theme"
   }
   // a phone: type never scales below 0.84, so the smallest labels stay about 10px or more
   const k = Math.max(0.84, Math.min(0.95, W / 440));
-  return { W, H: Math.round(W * (kind === "tiles" ? 2.2 : 1.6)), k };
+  return { W, H: Math.round(W * (kind === "tiles" ? 2.2 : kind === "track" ? 1.95 : kind === "lolli" ? 1.7 : 1.5)), k };
 }
 
 type TOpts = { w?: number; a?: "start" | "middle" | "end"; ls?: number; font?: string; op?: number; italic?: boolean };
@@ -77,7 +77,7 @@ const BAR = { light: "#C9D6D1", dark: "#34414C" };
 function lolli(spec: Lolli, b: Box, k: number, p: Pal, theme: Theme): string {
   const n = spec.rows.length;
   const narrowL0 = b.w < 460;
-  const fs = Math.min((narrowL0 ? 17 : 19) * k, 22 * k);
+  const fs = Math.min((narrowL0 ? 15.5 : 19) * k, 22 * k);
   const gap = 15 * k;
   const dotsPerLine = Math.max(8, Math.floor(b.w / gap));
   const dotLines = spec.ones > 0 ? Math.ceil(spec.ones / dotsPerLine) : 0;
@@ -90,7 +90,7 @@ function lolli(spec: Lolli, b: Box, k: number, p: Pal, theme: Theme): string {
   const labelX = b.x + badge * 2 + 12 * k;
   const max = Math.max(1, ...spec.rows.map((r) => r.value));
   const narrowL = b.w < 460;
-  const lw = Math.min(b.w * (narrowL ? 0.42 : 0.34), Math.max(...spec.rows.map((r) => textW(r.label, fs, CW.sans))) + 4 * k);
+  const lw = Math.min(b.w * (narrowL ? 0.46 : 0.34), Math.max(...spec.rows.map((r) => textW(r.label, fs, CW.sans))) + 4 * k);
   const x0 = labelX + lw + 16 * k;
   const vw = textW(String(max), fs, CW.sansBold) + 18 * k;
   const bw = b.x + b.w - x0 - vw;
@@ -359,7 +359,7 @@ function tiles(spec: Tiles, b: Box, k: number, p: Pal, theme: Theme): string {
       s += t(x + tw * 0.1, y + th * 0.36, abbr, afs, p.seqText[lv], { w: 700, op: 0.95 });
       s += t(x + tw / 2, y + th * 0.87, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
     } else {
-      s += t(x + tw / 2, y + th * 0.38, abbr, afs, p.seqText[lv], { a: "middle", w: 700, op: 0.95 });
+      s += t(x + tw * 0.1, y + th * 0.38, abbr, afs, p.seqText[lv], { w: 700, op: 0.95 });
       s += t(x + tw / 2, y + th * 0.86, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
     }
     if (row && row.open > 0) s += `<circle cx="${n1(x + tw - Math.min(tw, th) * 0.17)}" cy="${n1(y + Math.min(tw, th) * 0.19)}" r="${n1(Math.max(2.2 * k, Math.min(tw, th) * 0.06))}" fill="${p.seqText[lv]}"/>`;

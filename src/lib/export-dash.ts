@@ -196,7 +196,7 @@ export function renderDash(d: DashImage): string {
     s += txt(nx, cy + 4.5, fit(o.name, railW - 44 - (nx - ax - 44) - 52, 13.5, CW.sans), 13.5, p.fg, { w: o.on ? 600 : 500 });
     s += txt(ax + railW - 18, cy + 4.5, String(o.count), 12.5, p.faint, { a: "end" });
   }
-  ry += 8;
+  ry += d.rail.moreOps > 0 ? 8 : 18;
   const field2 = (yy: number, l: string) => `<rect x="${ax + 14}" y="${yy}" width="${railW - 28}" height="34" rx="12" fill="${field}"/>` + txt(ax + 28, yy + 22, l, 13.5, p.fg) + chev(ax + railW - 30, yy + 17);
   if (d.rail.moreOps > 0) {
     s += field2(ry, `${d.rail.moreOps} more operators...`);

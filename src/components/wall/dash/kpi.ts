@@ -10,7 +10,7 @@ export function dayShort(iso: string, year = false): string {
   return m ? `${Number(m[3])} ${MON[Number(m[2]) - 1]}${year ? ` ${m[1]}` : ""}` : iso;
 }
 
-export type KpiItem = { key: string; label: string; value: string; note: string; cls?: "rate" | "cov" };
+export type KpiItem = { key: string; label: string; /** a shorter label for phones, same meaning */ short?: string; value: string; note: string; cls?: "rate" | "cov" };
 
 /** The six totals in the strip above the map. The page and the PNG download read the same list. */
 export function kpiItems(kpi: Kpis, f: Filters): KpiItem[] {
@@ -39,10 +39,11 @@ export function kpiItems(kpi: Kpis, f: Filters): KpiItem[] {
     },
     { key: "operators", label: "Operators", value: up ? "n/a" : nf(kpi.operators), note: up ? "not stated for upcoming sites" : "with an open site" },
     { key: "areas", label: f.region === "eu" ? "Countries" : "States", value: nf(kpi.areas), note: "with a site" },
-    { key: "rate", label: "Tesla rate per kWh", value: rate, note: up ? "open sites only" : "open sites, Tesla owners", cls: "rate" },
+    { key: "rate", label: "Tesla rate per kWh", short: "Rate per kWh", value: rate, note: up ? "open sites only" : "open sites, Tesla owners", cls: "rate" },
     {
       key: "covered",
       label: "Stories covered by EVwire",
+      short: "EVwire stories",
       value: nf(kpi.covered),
       note: `${kpi.covered === 1 ? "site" : "sites"} with a story`,
       cls: "cov",

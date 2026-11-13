@@ -162,7 +162,7 @@ export function frame(o: FrameOpts): { svg: string; body: Box; footerTop: number
   head += `<circle cx="${n1(pad + 4 * k)}" cy="${n1(y + efs * 0.4)}" r="${n1(4 * k)}" fill="${p.acc}"/>`;
   head += `<text x="${n1(pad + 16 * k)}" y="${n1(y + efs * 0.78)}" font-family="${FONT_SANS}" font-weight="700" font-size="${n1(efs)}" letter-spacing="${n1(0.12 * efs)}" fill="${p.acc}">SUPERCHARGER FOR BUSINESS</text>`;
   y += efs + 14 * k;
-  const titleFs = (narrow ? 34 : 40) * k;
+  const titleFs = (narrow ? 28 : 40) * k;
   const titleLines = wrap(o.title, o.W - pad * 2, titleFs, CW.disp, narrow ? 4 : 2);
   let ty = y + titleFs * 0.86;
   for (const line of titleLines) {
