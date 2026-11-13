@@ -2,7 +2,7 @@ import "server-only";
 import { getRegionalSiteData } from "./data";
 import { getCoverageArticles } from "./feed";
 import { attachCoverage } from "./coverage";
-import { article, type WallPhoto, type WallArticle } from "./wall";
+import { article, allArticles, type WallPhoto, type WallArticle } from "./wall";
 import type { ChangeItem, Site } from "./types";
 import photosJson from "../../data/wall/photos.json";
 import hostTypesJson from "../../data/wall/host-types.json";
@@ -38,7 +38,7 @@ export type DSite = {
   idleFee: string | null;
   currency: string | null;
   url: string;
-  articles: { title: string; url: string }[];
+  articles: { title: string; url: string; image: string | null }[];
   photos: DPhoto[];
   wrapped: boolean;
   change: string | null; // kind from latest-changes.json when this site is in the "new since last check" feed
@@ -165,14 +165,15 @@ export async function getDashData(): Promise<DashData> {
     list.sort((a, b) => (a.id === cover ? -1 : b.id === cover ? 1 : a.id - b.id));
   }
 
+  const imgByUrl = new Map(allArticles().map((a) => [a.url, a.image]));
   const mk = (s: Site, region: "us" | "eu", phase: "open" | "upcoming"): DSite | null => {
     if (s.x == null || s.y == null) return null;
-    const arts = new Map<string, { title: string; url: string }>();
+    const arts = new Map<string, { title: string; url: string; image: string | null }>();
     for (const n of CARD_ARTICLES[s.slug] ?? []) {
       const a: WallArticle = article(n);
-      arts.set(a.url, { title: a.title, url: a.url });
+      arts.set(a.url, { title: a.title, url: a.url, image: a.image });
     }
-    for (const a of s.articles ?? []) if (!arts.has(a.url)) arts.set(a.url, { title: a.title, url: a.url });
+    for (const a of s.articles ?? []) if (!arts.has(a.url)) arts.set(a.url, { title: a.title, url: a.url, image: imgByUrl.get(a.url) ?? null });
     const photos = photosBySite.get(s.slug) ?? [];
     const ht = phase === "open" && region === "us" ? hostFile[s.slug]?.host_type : null;
     return {

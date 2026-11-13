@@ -234,6 +234,10 @@ function Panel({ s }: { s: DSite }) {
       <div className="dz-plinks top">
         {s.articles.map((a) => (
           <a key={a.url} className="dz-story" href={a.url} target="_blank" rel="noopener">
+            {a.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={a.image} alt="" width={720} height={378} loading="lazy" />
+            )}
             <span>Read on EVwire</span>
             {a.title}
           </a>

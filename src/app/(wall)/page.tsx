@@ -247,8 +247,15 @@ export default async function Page() {
             </p>
             <ul className="w-cards">
               {d.cards.map((c) => (
-                <li key={c.key} className={c.photo ? "has-photo" : "no-photo"}>
-                  {c.photo && (
+                <li key={c.key} className={c.articles[0]?.image || c.photo ? "has-photo" : "no-photo"}>
+                  {c.articles[0]?.image ? (
+                    <a className="w-card-img story" href={c.articles[0].url} target="_blank" rel="noopener" tabIndex={-1} aria-hidden="true">
+                      {/* our own EVwire story cover (the beehiiv post thumbnail) */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.articles[0].image} width={720} height={378} alt="" loading="lazy" />
+                    </a>
+                  ) : (
+                    c.photo && (
                     <a className="w-card-img" href={c.articles[0].url} target="_blank" rel="noopener" tabIndex={-1} aria-hidden="true">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -260,6 +267,7 @@ export default async function Page() {
                         style={{ objectPosition: c.photo.focus }}
                       />
                     </a>
+                    )
                   )}
                   <div className="w-card-body">
                     <p className="w-card-noun">{c.noun}</p>

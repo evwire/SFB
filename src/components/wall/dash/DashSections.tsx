@@ -170,12 +170,16 @@ function Covered() {
         <span className="dz-pill">{list.length}</span>
       </header>
       <ul className="dz-covered">
-        {list.slice(0, 18).map((s) => (
+        {list.map((s) => (
           <li key={s.id}>
             <button type="button" onClick={() => { select(s.id); window.dispatchEvent(new CustomEvent("dz-goto")); }}>
-              {s.photos[0] ? (
+              {s.articles[0]?.image ? (
+                // our own EVwire story cover (the beehiiv post thumbnail)
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={s.photos[0].src} alt="" loading="lazy" />
+                <img src={s.articles[0].image} alt="" width={720} height={378} loading="lazy" />
+              ) : s.photos[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="fb" src={s.photos[0].src} alt="" loading="lazy" />
               ) : (
                 <span className="ph" aria-hidden="true" />
               )}
@@ -189,7 +193,6 @@ function Covered() {
           </li>
         ))}
       </ul>
-      {list.length > 18 && <p className="dz-fine">{list.length - 18} more are on the map.</p>}
     </section>
   );
 }

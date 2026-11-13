@@ -12,7 +12,8 @@ import seed from "../../data/sites.seed.json";
  * published EVwire stories; nothing here is generated or invented.
  */
 
-export type WallArticle = { n: number; date: string; title: string; url: string };
+/** image: our own beehiiv post cover (og:image of the article), saved in public/stories. */
+export type WallArticle = { n: number; date: string; title: string; url: string; image: string | null };
 
 export type WallPhoto = {
   id: number;
@@ -52,6 +53,10 @@ export function article(n: number): WallArticle {
   const a = artByN.get(n);
   if (!a) throw new Error(`wall: unknown article ${n}`);
   return a;
+}
+
+export function allArticles(): WallArticle[] {
+  return ARTICLES;
 }
 
 /** Short link text for groups that point at more than one story. */
