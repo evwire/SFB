@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MapView from "./MapView";
 import { useDash } from "./DashContext";
 import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
@@ -81,7 +81,7 @@ export function PhaseBar() {
     ["upcoming", "Upcoming", upc],
     ["both", "Both", open + upc],
   ];
-  const showing = f.phase === "open" ? `Showing ${nf(open)} open sites` : f.phase === "upcoming" ? `Showing ${nf(upc)} upcoming sites` : `Showing all ${nf(open + upc)}: ${nf(open)} open, ${nf(upc)} upcoming`;
+  const showing = f.phase === "open" ? `Showing ${nf(open)} open sites` : f.phase === "upcoming" ? `Showing ${nf(upc)} upcoming sites` : `Showing ${nf(open + upc)} sites: ${nf(open)} open, ${nf(upc)} upcoming`;
   return (
     <div className="dz-master" role="group" aria-label="Which sites to show: open, upcoming or both">
       <div className="dz-mseg">
@@ -152,11 +152,6 @@ function Rail({ onClose }: { onClose?: () => void }) {
           ))}
         </div>
       )}
-      {f.region === "us" && (
-        <Toggle on={f.noFrancis} onClick={() => set({ noFrancis: !f.noFrancis })}>
-          Without Francis Energy <small>{count(FRANCIS)}</small>
-        </Toggle>
-      )}
 
       {hosts.length > 0 && f.region === "us" && (
         <>
@@ -191,7 +186,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
         Stories covered by EVwire
       </Toggle>
       <Toggle on={f.wrapped} onClick={() => set({ wrapped: !f.wrapped })} swatch={<em className="dz-star">✦</em>}>
-        Wrapped stalls
+        Wrapped or branded stalls
       </Toggle>
       <Toggle on={f.isNew} onClick={() => set({ isNew: !f.isNew })} swatch={<em className="dz-newdot" />}>
         New since last check
@@ -200,7 +195,14 @@ function Rail({ onClose }: { onClose?: () => void }) {
   );
 }
 
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-08-04" to "4 Aug 2026", no time zone maths so it never shifts a day. */
+function shortDate(iso: string | null | undefined): string | null {
+  const m = iso && /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : null;
+}
+
+function Fact({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <div>
       <dt>{k}</dt>
@@ -213,8 +215,9 @@ function Panel({ s }: { s: DSite }) {
   const { select, color, data } = useDash();
   const ht = data.hostTypes.find((h) => h.key === s.hostType)?.label;
   const [pi, setPi] = useState(0);
-  const photo = s.photos[Math.min(pi, s.photos.length - 1)];
-  const place = [s.city, s.state === "US" ? null : s.state].filter(Boolean).join(", ");
+  const [more, setMore] = useState(false);
+  const track = useRef<HTMLDivElement>(null);
+  const place = [s.address, s.city, s.state === "US" ? null : s.state].filter(Boolean).join(", ");
   const changeText: Record<string, string> = {
     opened: "Opened since the last check",
     new_open: "New on the map since the last check",
@@ -223,65 +226,115 @@ function Panel({ s }: { s: DSite }) {
     back_to_upcoming: "Back to upcoming",
     ownership_changed: "Ownership changed",
   };
+  // gallery: slides are 16:9 and snap, so a swipe or trackpad scroll moves between photos; thumbs jump to one
+  const go = (i: number) => {
+    const el = track.current;
+    if (!el) return;
+    setPi(i);
+    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+  };
+  const onScroll = () => {
+    const el = track.current;
+    if (el && el.clientWidth) setPi(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  const open = s.phase === "open";
+  const opened = shortDate(s.openedOn);
+  const facts: [string, React.ReactNode | null][] = [
+    ["Stalls", s.stalls],
+    ["Power", s.kw != null ? `${s.kw} kW` : null],
+    ["Tesla rate", s.teslaRate],
+    ["Other EVs", s.otherRate],
+    ["Idle fee", s.idleFee],
+    ["Host", s.host],
+    ["Host type", open && s.region === "us" ? ht ?? null : null],
+    [open ? "Opened" : "Status", open ? opened : s.badge],
+  ];
+  const have = facts.filter(([, v]) => v != null && v !== "");
+  const missing = facts.filter(([k, v]) => (v == null || v === "") && k !== "Idle fee").map(([k]) => k.toLowerCase());
+  const shown = more ? s.articles : s.articles.slice(0, 2);
   return (
     <div className="dz-panel-in" key={s.id}>
       <button type="button" className="dz-x" onClick={() => select(null)} aria-label="Close details">
         ×
       </button>
-      {photo ? (
-        <figure className="dz-photo">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.src} alt={photo.alt} style={{ objectPosition: photo.focus }} />
-          <figcaption>Photo: {photo.credit}</figcaption>
+      {s.photos.length ? (
+        <div className="dz-gal">
+          <div className="dz-hero">
+          <div className="dz-track" ref={track} onScroll={onScroll} tabIndex={0} aria-label={`Photos of ${s.name}`}>
+            {s.photos.map((p, i) => (
+              <figure key={p.id} className="dz-slide" aria-hidden={i !== pi}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.src} alt={p.alt} style={{ objectPosition: p.focus }} loading={i === 0 ? "eager" : "lazy"} />
+              </figure>
+            ))}
+          </div>
+          <span className="dz-credit">Photo: {s.photos[Math.min(pi, s.photos.length - 1)].credit}</span>
+          {s.photos.length > 1 && <span className="dz-count">{pi + 1} / {s.photos.length}</span>}
+          </div>
           {s.photos.length > 1 && (
             <div className="dz-thumbs">
               {s.photos.map((p, i) => (
-                <button key={p.id} type="button" aria-pressed={i === pi} aria-label={`Photo ${i + 1}`} onClick={() => setPi(i)}>
+                <button key={p.id} type="button" aria-pressed={i === pi} aria-label={`Photo ${i + 1} of ${s.photos.length}`} onClick={() => go(i)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.src} alt="" />
+                  <img src={p.src} alt="" style={{ objectPosition: p.focus }} />
                 </button>
               ))}
             </div>
           )}
-        </figure>
+        </div>
       ) : (
         <div className="dz-nophoto">No photo of this site yet</div>
       )}
-      <div className="dz-ptags">
-        <span className="dz-tag" style={{ ["--c" as string]: color(s.operator) }}>
-          {s.operator ?? "Operator not stated"}
-        </span>
-        <span className="dz-tag plain">{s.phase === "open" ? "Open" : s.badge ?? "Upcoming"}</span>
-        {s.change && <span className="dz-tag new">{changeText[s.change] ?? "New"}</span>}
-      </div>
-      <h3>{s.name}</h3>
-      <p className="dz-place">{place || NS}</p>
-      <div className="dz-plinks top">
-        {s.articles.map((a) => (
-          <a key={a.url} className="dz-story" href={a.url} target="_blank" rel="noopener">
-            {a.image && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={a.image} alt="" width={720} height={378} loading="lazy" />
+      <div className="dz-body">
+        <div className="dz-ptags">
+          <span className="dz-tag" style={{ ["--c" as string]: color(s.operator) }}>
+            {s.operator ?? "Operator not stated"}
+          </span>
+          <span className={`dz-tag status ${open ? "open" : "up"}`}>{open ? "Open" : s.badge ?? "Upcoming"}</span>
+          {s.change && <span className="dz-tag new">{changeText[s.change] ?? "New"}</span>}
+        </div>
+        <h3>{s.name}</h3>
+        <p className="dz-place">{place || NS}</p>
+        <dl className="dz-facts">
+          {have.map(([k, v]) => (
+            <Fact key={k} k={k} v={v} />
+          ))}
+        </dl>
+        {missing.length > 0 && <p className="dz-fine">Not stated on Find Us: {missing.join(", ")}.</p>}
+        {s.wrapKind === "art" && <p className="dz-note">✦ Wrapped stalls: custom artwork on the stalls, shown in our photos and stories.</p>}
+        {s.wrapKind === "brand" && <p className="dz-note">✦ Branded stalls: the host&apos;s own logo is on the stalls, shown in our photos and stories.</p>}
+        {s.operator === FRANCIS && <p className="dz-note">One of the Francis Energy sites, a single network with many sites on the map.</p>}
+
+        <h4 className="dz-sec">Read on EVwire</h4>
+        {s.articles.length ? (
+          <>
+            <ul className="dz-arts">
+              {shown.map((a) => (
+                <li key={a.url}>
+                  <a href={a.url} target="_blank" rel="noopener">
+                    {a.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.image} alt="" width={96} height={50} loading="lazy" />
+                    ) : (
+                      <i className="dz-athumb" aria-hidden="true" />
+                    )}
+                    <span className="dz-atxt">
+                      <b>{a.title}</b>
+                      {shortDate(a.date) && <time dateTime={a.date ?? undefined}>{shortDate(a.date)}</time>}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {s.articles.length > 2 && (
+              <button type="button" className="dz-morebtn" aria-expanded={more} onClick={() => setMore(!more)}>
+                {more ? "Show fewer" : `Show ${s.articles.length - 2} more`}
+              </button>
             )}
-            <span>Read on EVwire</span>
-            {a.title}
-          </a>
-        ))}
-        {!s.articles.length && <p className="dz-fine">EVwire has not written about this site yet.</p>}
-      </div>
-      <dl className="dz-facts">
-        <Row k="Host" v={s.host ?? NS} />
-        {s.phase === "open" && s.region === "us" && <Row k="Host type" v={ht ?? "not classified"} />}
-        <Row k="Stalls" v={s.stalls ?? NS} />
-        <Row k="Power" v={s.kw != null ? `${s.kw} kW` : NS} />
-        <Row k="Tesla rate" v={s.teslaRate ?? NS} />
-        <Row k="Other EVs" v={s.otherRate ?? NS} />
-        {s.idleFee && <Row k="Idle fee" v={s.idleFee} />}
-        <Row k={s.phase === "open" ? "Opened" : "Status"} v={s.phase === "open" ? NS : s.badge ?? NS} />
-      </dl>
-      {s.wrapped && <p className="dz-note">✦ This site has wrapped stalls, shown in our photos.</p>}
-      {s.operator === FRANCIS && <p className="dz-note">One of the Francis Energy sites, a single network with many sites on the map.</p>}
-      <div className="dz-plinks">
+          </>
+        ) : (
+          <p className="dz-fine">EVwire has not written about this site yet.</p>
+        )}
         <a className="dz-tesla" href={s.url} target="_blank" rel="noopener">
           Open on Tesla Find Us
         </a>
@@ -291,7 +344,8 @@ function Panel({ s }: { s: DSite }) {
 }
 
 function Legend() {
-  const { visible, color, f } = useDash();
+  const { visible, color, f, set } = useDash();
+  const byOp = f.colorBy === "operator";
   const showOpen = f.phase !== "upcoming";
   const showUp = f.phase !== "open";
   const ops = useMemo(() => {
@@ -312,7 +366,17 @@ function Legend() {
   const hasNew = visible.some((s) => s.change);
   return (
     <div className="dz-legend" aria-label="Legend">
-      {showOpen && (ops.top.length > 0 || ops.other > 0) && (
+      <div className="lg-by" role="group" aria-label="Colour the pins by">
+        <span>Color by</span>
+        <div className="dz-seg">
+          {([["status", "Status"], ["operator", "Operator"]] as const).map(([v, t]) => (
+            <button key={v} type="button" aria-pressed={f.colorBy === v} onClick={() => set({ colorBy: v })}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      {byOp && showOpen && (ops.top.length > 0 || ops.other > 0) && (
         <p className="lg-ops">
           {ops.top.map(([o, n]) => (
             <span key={o}>
@@ -335,10 +399,10 @@ function Legend() {
         </p>
       )}
       <p className="lg-sym">
-        {showOpen && <span className="lg-size"><em className="dz-sw sm2" /><em className="dz-sw lg2" /> Open site, sized by stalls</span>}
-        {showUp && <span><em className="dz-ring" /> Upcoming</span>}
+        {showOpen && <span className={`lg-size${byOp ? "" : " brand"}`}><em className="dz-sw sm2" /><em className="dz-sw lg2" /> Open site, sized by stalls</span>}
+        {showUp && <span><em className={`dz-ring${byOp ? "" : " brand"}`} /> Upcoming</span>}
         {hasCov && <span><em className="dz-dia" /> Stories covered by EVwire</span>}
-        {hasWrap && <span><em className="dz-star">✦</em> Wrapped stalls</span>}
+        {hasWrap && <span><em className="dz-star">✦</em> Wrapped or branded stalls</span>}
         {hasNew && <span><em className="dz-newdot" /> New since last check</span>}
       </p>
     </div>
@@ -346,8 +410,19 @@ function Legend() {
 }
 
 export function DashFrame() {
-  const { selected, f, set, active, data } = useDash();
+  const { selected, select, f, set, active, data } = useDash();
   const [sheet, setSheet] = useState(false);
+  // Esc closes the filter sheet first, then the site panel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if ((e.target as HTMLElement | null)?.tagName === "SELECT") return;
+      if (sheet) setSheet(false);
+      else if (selected) select(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sheet, selected, select]);
   const asOf = f.region === "eu" ? data.asOf.eu : data.asOf.us;
   return (
     <div className="dz" data-landed="0" data-panel={selected ? "1" : "0"}>

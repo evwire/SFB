@@ -1,0 +1,353 @@
+{
+ "_meta": {
+  "about": "Which sites have wrapped or branded stalls, and the proof. kind art = custom artwork wrap, brand = the host's own logo or livery on the stall. A site is listed only when one of our real photos, one of our article cover images, or the article text shows or says it. Audited 2026-11-13 against all 39 wall photos and all 38 EVwire articles.",
+  "evidence_types": {
+   "photo": "a real photo in public/wall",
+   "cover": "the og:image of the linked EVwire article, saved in public/stories",
+   "article": "quote from the article text on evwire.com"
+  }
+ },
+ "sites": {
+  "499203": {
+   "name": "Isle of Palms, SC (Island Center)",
+   "kind": "art",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 21,
+     "url": "https://evwire.com/p/south-carolina-first-tesla-supercharger-for-business-isle-of-palms",
+     "quote": "Each Supercharger cabinet features a custom wrap created by LINGEO Sign, showcasing artwork inspired by Isle of Palms"
+    },
+    {
+     "type": "photo",
+     "file": "public/wall/p91.webp",
+     "shows": "beach-scene artwork printed on all four stalls"
+    }
+   ]
+  },
+  "490806": {
+   "name": "Brentwood, TN (EV Auto)",
+   "kind": "art",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 25,
+     "url": "https://evwire.com/p/ev-auto-nashville-supercharger-guitar-wraps-legendary-artists",
+     "quote": "all eight stalls now carry custom wraps featuring guitars of eight legendary artists"
+    },
+    {
+     "type": "photo",
+     "file": "public/wall/p107.webp",
+     "shows": "a different guitar wrapped on each stall"
+    }
+   ]
+  },
+  "499626": {
+   "name": "East Wenatchee, WA (EVODS)",
+   "kind": "art",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 34,
+     "url": "https://evwire.com/p/evods-first-tesla-supercharger-for-business-east-wenatchee-washington",
+     "quote": "a close-up of one of the location’s Supercharger stalls, complete with EVODS’ custom design, which is a pretty cool nod to Wenatchee being known as the “Apple Capital of the World.”"
+    },
+    {
+     "type": "photo",
+     "file": "public/wall/p138.webp",
+     "shows": "apple-themed artwork on the stall"
+    }
+   ]
+  },
+  "472503": {
+   "name": "Land O' Lakes, FL (Suncoast)",
+   "kind": "art",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 99,
+     "url": "https://evwire.com/p/us-the-first-third-party-tesla-supercharger-in-north-america-installed-by-suncoast-charging",
+     "quote": "How great are these animal wraps?"
+    },
+    {
+     "type": "article",
+     "article": 13,
+     "url": "https://evwire.com/p/suncoast-charging-new-charger-designs-florida-species",
+     "quote": "When we covered the company's launch last year as the first third-party-owned Tesla Supercharger in North America, its stalls already featured native Florida wildlife."
+    },
+    {
+     "type": "photo",
+     "file": "public/wall/p157.webp",
+     "shows": "wildlife artwork on the stalls"
+    }
+   ]
+  },
+  "490113": {
+   "name": "Wesley Chapel, FL (Suncoast)",
+   "kind": "art",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 13,
+     "url": "https://evwire.com/p/suncoast-charging-new-charger-designs-florida-species",
+     "quote": "Each of the stalls features a different threatened Florida species. The four designs feature the gopher tortoise, the Florida scrub jay, the eastern indigo snake, and the longleaf pine"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/13.webp",
+     "article": 13,
+     "url": "https://evwire.com/p/suncoast-charging-new-charger-designs-florida-species",
+     "shows": "four stalls, each with its own Florida species artwork"
+    }
+   ]
+  },
+  "481260": {
+   "name": "Alpharetta, GA (City of Alpharetta)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "photo",
+     "file": "public/wall/p28.webp",
+     "shows": "stalls carry the City of Alpharetta logo and a green Public Charging Station panel"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/2.webp",
+     "article": 2,
+     "url": "https://evwire.com/p/alpharetta-city-superchargers-police-fleet-charging",
+     "shows": "City of Alpharetta, Georgia, Public Charging Station logo printed on the stall"
+    }
+   ]
+  },
+  "484317": {
+   "name": "Boca Raton, FL (DBRL)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "cover",
+     "file": "public/stories/4.webp",
+     "article": 4,
+     "url": "https://evwire.com/p/tesla-superchargers-diamond-shop-florida",
+     "shows": "stall carries the DBRL logo"
+    }
+   ]
+  },
+  "463680": {
+   "name": "Carson City, NV (Genoa Golf Club)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "cover",
+     "file": "public/stories/7.webp",
+     "article": 7,
+     "url": "https://evwire.com/p/tesla-supercharger-for-business-debuts-genoa-nv-details",
+     "shows": "stalls carry the Genoa Golf Club logo"
+    }
+   ]
+  },
+  "489205": {
+   "name": "Columbia, MO (Little General)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "cover",
+     "file": "public/stories/16.webp",
+     "article": 16,
+     "url": "https://evwire.com/p/little-general-opens-tesla-supercharger-columbia-mo-travel-center",
+     "shows": "stalls carry the Little General logo"
+    }
+   ]
+  },
+  "481259": {
+   "name": "Greenwood Village, CO (HiON EV)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "cover",
+     "file": "public/stories/17.webp",
+     "article": 17,
+     "url": "https://evwire.com/p/hion-tesla-v4-supercharger-greenwood-village-denver-tech-center",
+     "shows": "stalls carry the orange HiON speech-bubble logo, one stall is fully orange"
+    }
+   ]
+  },
+  "481359": {
+   "name": "Fredericksburg, TX (Courtyard)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "cover",
+     "file": "public/stories/3.webp",
+     "article": 3,
+     "url": "https://evwire.com/p/courtyard-supercharger-fredericksburg-texas-tesla-supercharger",
+     "shows": "stall carries the Courtyard logo"
+    }
+   ]
+  },
+  "487202": {
+   "name": "Nanuet, NY (EVIO)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "photo",
+     "file": "public/wall/p48.webp",
+     "shows": "EVIO stalls"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/8.webp",
+     "article": 8,
+     "url": "https://evwire.com/p/evio-charging-first-privately-owned-tesla-supercharger-new-york",
+     "shows": "stalls carry the large EVIO logo"
+    }
+   ]
+  },
+  "487103": {
+   "name": "Norcross, GA (ChargedEV Hubs)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 9,
+     "url": "https://evwire.com/p/chargedev-hubs-debuts-thirdparty-supercharger-site-georgia",
+     "quote": "the companies deploying third-party Superchargers can use the large canvas of the charger itself to display their logos (or even get really creative with them in some cases): Here’s a video of the Norcross site"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/9.webp",
+     "article": 9,
+     "url": "https://evwire.com/p/chargedev-hubs-debuts-thirdparty-supercharger-site-georgia",
+     "shows": "stalls carry the ChargedEV logo"
+    }
+   ]
+  },
+  "490457": {
+   "name": "Houston, TX (Electric Son)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "photo",
+     "file": "public/wall/p115.webp",
+     "shows": "small Electric Son logo near the top of each stall"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/28.webp",
+     "article": 28,
+     "url": "https://evwire.com/p/electric-son-houston-supercharger-coffee-fellows",
+     "shows": "Electric Son logo on the stall"
+    }
+   ]
+  },
+  "58992": {
+   "name": "Chicago, IL (EVgo)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "photo",
+     "file": "public/wall/p145.webp",
+     "shows": "EVgo logo on the stalls"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/35.webp",
+     "article": 35,
+     "url": "https://evwire.com/p/evgo-first-supercharger-site-launched-chicago",
+     "shows": "EVgo logo on the stall"
+    }
+   ]
+  },
+  "484160": {
+   "name": "Norman, OK (Francis Energy)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "photo",
+     "file": "public/wall/p62.webp",
+     "shows": "Francis Energy logo on the stalls"
+    },
+    {
+     "type": "cover",
+     "file": "public/stories/1.webp",
+     "article": 1,
+     "url": "https://evwire.com/p/francis-energy-partners-with-tesla-to-install-superchargers-in-oklahoma",
+     "shows": "Francis Energy logo on the stall"
+    }
+   ]
+  },
+  "484459": {
+   "name": "Durant, OK (Francis Energy)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 1,
+     "url": "https://evwire.com/p/francis-energy-partners-with-tesla-to-install-superchargers-in-oklahoma",
+     "quote": "Durant, Oklahoma, Francis-labeled Superchargers being installed as of mid-December."
+    }
+   ]
+  },
+  "495547": {
+   "name": "Midlothian, TX (Victron Energy)",
+   "kind": "brand",
+   "evidence": [
+    {
+     "type": "article",
+     "article": 19,
+     "url": "https://evwire.com/p/victron-energy-midlothian-tesla-supercharger-launch-details",
+     "quote": "it wears its host's branding instead of Tesla's. The stalls are branded to Victron Energy"
+    }
+   ]
+  }
+ },
+ "unverified": [
+  {
+   "site": "491102 / 496877",
+   "name": "Statesville NC (Roam Energy) / Prattville AL (Lakh Enterprises)",
+   "why": "The cover of the Roam article (27) shows a stall with a ROAM logo, but it does not say which of the two sites it is, so neither is marked.",
+   "source": "https://evwire.com/p/roam-energy-tesla-supercharger-for-business-sites-us"
+  },
+  {
+   "site": "490529",
+   "name": "Redmond, WA (Resound Energy)",
+   "why": "Photos 149-154 show plain white stalls and the cover has a small Resound watermark that I could not confirm as stall branding.",
+   "source": "https://evwire.com/p/resound-energy-first-tesla-supercharger-for-business-site-wa-location"
+  },
+  {
+   "site": "Deary, ID (Pie Safe)",
+   "name": "Pie Safe Bakery, Deary ID",
+   "why": "Articles 1, 2 and 3 list it next to the wrapped Suncoast stalls but never say its stalls are wrapped.",
+   "source": "https://evwire.com/p/francis-energy-partners-with-tesla-to-install-superchargers-in-oklahoma"
+  },
+  {
+   "site": "488570",
+   "name": "Grand Island, NE (PPR)",
+   "why": "Photos 70 and 72 show plain white stalls; only the van is branded.",
+   "source": "https://evwire.com/p/ppr-energy-solutions-tesla-v4-supercharger-grand-island-ny"
+  },
+  {
+   "site": "UCN lounges",
+   "name": "United Chargers Network",
+   "why": "Covers of articles 23 and 24 show UCN-branded stalls, but UCN is not one of our mapped sites.",
+   "source": "https://evwire.com/p/anthony-tracey-united-chargers-network-ceo-supercharger-for-business"
+  },
+  {
+   "site": "Belleville, KS (AC Customs)",
+   "name": "AC Customs",
+   "why": "Photo 33 shows plain stalls; the article only says the program can be customised.",
+   "source": "https://evwire.com/p/tesla-supercharger-for-business-rare-v3-site-belleville-kansas"
+  },
+  {
+   "site": "Medellín and Bogotá (Tesla)",
+   "name": "Colombia stall wrapped in the country's flag",
+   "why": "Article 37 states it, but these are Tesla-owned Colombian sites and outside our US map.",
+   "source": "https://evwire.com/p/tesla-supercharger-for-business-colombia-mexico-launch-37-countries"
+  },
+  {
+   "site": "EV Auto, 20 planned",
+   "name": "EV Auto rollout",
+   "why": "Article 14 says future sites will 'feature their custom design', but only Brentwood is open.",
+   "source": "https://evwire.com/p/ev-auto-tesla-superchargers-dealerships-video"
+  }
+ ]
+}

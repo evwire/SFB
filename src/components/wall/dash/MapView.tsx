@@ -207,12 +207,13 @@ export default function MapView() {
               const photo = site.phase === "open" && site.region === "us" ? site.photos[0] : undefined;
               const r = photo ? PHOTO_PIN / 2 : pinPx(site);
               const rv = px(r) * (sel ? 1.25 : 1);
-              const col = color(site.operator);
+              const byOp = f.colorBy === "operator";
+              const col = byOp ? color(site.operator) : "var(--pin-brand)";
               const up = site.phase === "upcoming";
               return (
                 <g
                   key={site.id}
-                  className={`pin${photo ? " has-photo" : ""}${up ? " up" : ""}${sel ? " sel" : ""}`}
+                  className={`pin${photo ? " has-photo" : ""}${up ? " up" : ""}${sel ? " sel" : ""}${byOp ? "" : " st"}`}
                   style={{ ["--d" as string]: String(i % 9) }}
                   transform={`translate(${site.x} ${site.y})`}
                   onPointerEnter={(e) => {
@@ -257,7 +258,7 @@ export default function MapView() {
                       />
                     </>
                   ) : (
-                    <circle r={rv} fill={up ? "var(--card)" : col} fillOpacity={up ? 0.55 : 1} className="pin-dot" strokeWidth={px(up ? 1.5 : 1.6)} />
+                    <circle r={rv} fill={up ? (byOp ? "var(--card)" : "var(--pin-brand)") : col} fillOpacity={up ? (byOp ? 0.55 : 0.14) : 1} className="pin-dot" strokeWidth={px(up ? 1.5 : 1.6)} />
                   )}
                   {site.articles.length > 0 && (
                     <rect

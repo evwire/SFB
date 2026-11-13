@@ -316,3 +316,6 @@ html[data-hero="b"]:not(.dark) .w-stage { background: color-mix(in srgb, #fbfcfc
 html.dark .e-glass { background: #06080b; }
 .w-stage[data-gone="1"] .w-hero { visibility: hidden; }
 /* the card stays put through the first third of the scroll; only the scroll cue leaves at once (see --hp) */
+
+/* mid-flight the headline fades ahead of the glass, so the card never reads as text on mush */
+.e-copy { opacity: calc(1 - var(--lp, 0) * 2.8); }

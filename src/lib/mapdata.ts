@@ -6,6 +6,7 @@ import { article, allArticles, type WallPhoto, type WallArticle } from "./wall";
 import type { ChangeItem, Site } from "./types";
 import photosJson from "../../data/wall/photos.json";
 import hostTypesJson from "../../data/wall/host-types.json";
+import wrapsJson from "../../data/wall/wraps.json";
 import changesJson from "../../data/latest-changes.json";
 
 /**
@@ -38,9 +39,11 @@ export type DSite = {
   idleFee: string | null;
   currency: string | null;
   url: string;
-  articles: { title: string; url: string; image: string | null }[];
+  articles: { title: string; url: string; image: string | null; date: string | null }[];
   photos: DPhoto[];
   wrapped: boolean;
+  wrapKind: "art" | "brand" | null; // art = custom artwork wrap, brand = the host's logo on the stall; proof is in data/wall/wraps.json
+  address: string | null;
   change: string | null; // kind from latest-changes.json when this site is in the "new since last check" feed
 };
 
@@ -104,6 +107,9 @@ const CARD_ARTICLES: Record<string, number[]> = {
   "472503": [99, 13], "490113": [99, 13], "490806": [14, 25], "488570": [15], "489205": [16], "481259": [17],
   "495547": [19], "499203": [21], "496877": [27], "491102": [27], "490457": [28], "499626": [34], "58992": [35], "490529": [36],
 };
+
+/** Sites whose stalls are wrapped or branded, each with its proof (a photo, an article cover or a quote). */
+const wrapSites = wrapsJson.sites as Record<string, { kind: string }>;
 
 const HOST_LABEL: Record<string, string> = {
   fuel: "Gas station, c-store or travel center",
@@ -174,16 +180,17 @@ export async function getDashData(): Promise<DashData> {
   const known = new Map(allArticles().map((a) => [a.url, a]));
   const mk = (s: Site, region: "us" | "eu", phase: "open" | "upcoming"): DSite | null => {
     if (s.x == null || s.y == null) return null;
-    const arts = new Map<string, { title: string; url: string; image: string | null }>();
+    const arts = new Map<string, { title: string; url: string; image: string | null; date: string | null }>();
     for (const n of CARD_ARTICLES[s.slug] ?? []) {
       const a: WallArticle = article(n);
-      arts.set(a.url, { title: a.title, url: a.url, image: a.image });
+      arts.set(a.url, { title: a.title, url: a.url, image: a.image, date: a.date });
     }
     for (const a of s.articles ?? []) {
       const k = known.get(a.url);
-      if (k && !arts.has(k.url)) arts.set(k.url, { title: k.title, url: k.url, image: k.image });
+      if (k && !arts.has(k.url)) arts.set(k.url, { title: k.title, url: k.url, image: k.image, date: k.date });
     }
     const photos = photosBySite.get(s.slug) ?? [];
+    const wrapKind = (wrapSites[s.slug]?.kind as "art" | "brand" | undefined) ?? null;
     const ht = phase === "open" && region === "us" ? hostFile[s.slug]?.host_type : null;
     return {
       id: s.slug,
@@ -209,7 +216,9 @@ export async function getDashData(): Promise<DashData> {
       url: s.sourceUrl,
       articles: [...arts.values()],
       photos,
-      wrapped: photos.some((p) => p.wrap),
+      wrapped: wrapKind !== null,
+      wrapKind,
+      address: s.address ?? null,
       change: changeById.get(s.slug)?.kind ?? null,
     };
   };

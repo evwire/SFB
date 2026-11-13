@@ -54,7 +54,7 @@ export default async function Page() {
   const flights = Object.entries(PHOTO_SITE).flatMap(([pid, sid]) => {
     const site = siteById.get(sid);
     if (!site) return [];
-    return [{ photoId: Number(pid), siteId: sid, x: site.x, y: site.y, color: color(site.operator), cover: site.photos[0]?.id === Number(pid) }];
+    return [{ photoId: Number(pid), siteId: sid, x: site.x, y: site.y, color: "#1b9152", cover: site.photos[0]?.id === Number(pid) }];
   });
   const st = d.stats;
   const notClassified = st.openSites - d.hostClassified;

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { DashData, DSite } from "@/lib/mapdata";
-import { FRANCIS, makeOpColor } from "@/lib/opcolor";
+import { makeOpColor } from "@/lib/opcolor";
 
 export type Filters = {
   region: "us" | "eu";
@@ -14,7 +14,8 @@ export type Filters = {
   covered: boolean;
   wrapped: boolean;
   isNew: boolean;
-  noFrancis: boolean;
+  /** pin colour: one calm brand colour by status (default), or one colour per operator */
+  colorBy: "status" | "operator";
 };
 
 export const DEFAULTS: Filters = {
@@ -27,7 +28,7 @@ export const DEFAULTS: Filters = {
   covered: false,
   wrapped: false,
   isNew: false,
-  noFrancis: false,
+  colorBy: "status",
 };
 
 export type Kpis = {
@@ -82,7 +83,11 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   const byId = useMemo(() => new Map(data.sites.map((s) => [s.id + s.phase + s.region, s])), [data.sites]);
   const byKey = useMemo(() => new Map(data.sites.map((s) => [s.id, s])), [data.sites]);
 
-  const set = useCallback((p: Partial<Filters>) => setF((o) => ({ ...o, ...p })), []);
+  // picking an operator filter switches the pins to operator colours (unless colorBy is set in the same call)
+  const set = useCallback(
+    (p: Partial<Filters>) => setF((o) => ({ ...o, ...(p.operators?.length && !p.colorBy ? { colorBy: "operator" as const } : null), ...p })),
+    []
+  );
   // the Open / Upcoming / Both switch is not a filter, so Clear keeps it
   const reset = useCallback(() => setF((o) => ({ ...DEFAULTS, region: o.region, phase: o.phase })), []);
 
@@ -110,7 +115,6 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
       regionSites.filter((s) => {
         if (f.phase !== "both" && s.phase !== f.phase) return false;
         if (f.operators.length && !(s.operator && f.operators.includes(s.operator))) return false;
-        if (f.noFrancis && s.operator === FRANCIS) return false;
         if (f.host && s.hostType !== f.host) return false;
         if (f.state && s.state !== f.state) return false;
         if (f.minStalls && !(s.stalls != null && s.stalls >= f.minStalls)) return false;
@@ -143,7 +147,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
 
   const active =
     f.operators.length + (f.host ? 1 : 0) + (f.state ? 1 : 0) + (f.minStalls ? 1 : 0) +
-    (f.covered ? 1 : 0) + (f.wrapped ? 1 : 0) + (f.isNew ? 1 : 0) + (f.noFrancis ? 1 : 0);
+    (f.covered ? 1 : 0) + (f.wrapped ? 1 : 0) + (f.isNew ? 1 : 0);
 
   const selected = sel ? byKey.get(sel) ?? null : null;
   const select = useCallback((id: string | null) => setSel(id), []);
