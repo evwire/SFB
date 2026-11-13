@@ -18,6 +18,12 @@ const ease = (t: number) => {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 };
 
+/** a softer start than ease(): the tiles visibly move on the very first scroll pixels */
+const soft = (t: number) => {
+  t = Math.min(1, Math.max(0, t));
+  return t * t * (3 - 2 * t);
+};
+
 export type Flight = { photoId: number; siteId: string; x: number; y: number; color: string; cover: boolean };
 
 export default function Wall({
@@ -134,6 +140,25 @@ export default function Wall({
           endPos.set(f.photoId, { x: ox + f.x * fit - d / 2, y: oy + f.y * fit - d / 2, w: d, h: d });
         }
       }
+      // The glass lens shows a magnified copy of the wall. Once the tiles leave, it must show the map under them
+      // too, so the lens keeps a copy of the map at the same place.
+      const eWorld = stage.querySelector<HTMLElement>(".e-world");
+      if (svg && eWorld) {
+        let c = eWorld.querySelector<SVGSVGElement>(":scope > .e-mapclone");
+        if (!c) {
+          c = svg.cloneNode(true) as SVGSVGElement;
+          c.classList.remove("dz-svg");
+          c.classList.add("e-mapclone");
+          c.setAttribute("aria-hidden", "true");
+          c.setAttribute("focusable", "false");
+          c.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+          c.querySelectorAll("[tabindex]").forEach((n) => n.removeAttribute("tabindex"));
+          eWorld.insertBefore(c, eWorld.firstChild);
+        }
+        const r2 = svg.getBoundingClientRect();
+        const s2 = stage.getBoundingClientRect();
+        c.style.cssText = `position:absolute;left:${r2.left - s2.left}px;top:${r2.top - s2.top}px;width:${r2.width}px;height:${r2.height}px;overflow:visible;pointer-events:none`;
+      }
       flySpan = H * 2.1;
       // flight, then a short hold on the landed dashboard before the page scrolls on
       track.style.height = `${flySpan + H * 0.45 + H}px`;
@@ -141,16 +166,20 @@ export default function Wall({
       lastW = W;
     };
 
+    const heroE = document.documentElement.dataset.hero === "e";
     let landed = false;
     const render = () => {
       if (!W || !H) return;
       const y = Math.max(0, -track.getBoundingClientRect().top);
       const p = Math.min(1, y / flySpan);
       const hp = Math.min(1, y / (H * 0.6));
-      const mp = ease((p - 0.1) / 0.45);
-      const pp = Math.min(1, Math.max(0, (p - 0.5) / 0.4));
+      // Timings (p = 0..1 across the whole fly span): the tiles leave at once, the map is up by 0.4, the glass
+      // card holds fully visible to 0.36 and is gone by 0.58.
+      const mp = soft((p - 0.01) / 0.42);
+      const lp = ease((p - 0.36) / 0.22);
+      const pp = Math.min(1, Math.max(0, (p - 0.45) / 0.4));
       const cr = Math.min(1, Math.max(0, (p - 0.8) / 0.17));
-      const lensVisible = y < H * 0.8;
+      const lensVisible = lp < 1;
 
       tiles.forEach((t) => {
         const a = startPos.get(t.id);
@@ -158,8 +187,8 @@ export default function Wall({
         const el = tileEls.current.get(t.id);
         if (!a || !el) return;
         const f = flightOf.get(t.id);
-        const delay = 0.14 + ((t.id * 7) % 11) * 0.012;
-        const e = ease((p - delay) / 0.62);
+        const delay = ((t.id * 7) % 11) * 0.0055; // 0 to 0.055: a slight stagger, nobody waits
+        const e = soft((p - delay) / 0.74);
         if (rm || !f || !b) {
           // reduced motion, or a photo whose site is not on the map: it only fades
           el.style.transform = `translate3d(${a.x}px,${a.y}px,0)`;
@@ -167,7 +196,7 @@ export default function Wall({
           el.style.height = `${a.h}px`;
           el.style.borderRadius = "0px";
           el.style.boxShadow = "none";
-          el.style.opacity = String(1 - ease((p - (rm ? 0.3 : delay)) / 0.3));
+          el.style.opacity = String(1 - soft((p - (rm ? 0.04 : delay)) / (rm ? 0.3 : 0.3)));
           el.style.setProperty("--ln", "1");
         } else {
           const x = a.x + (b.x - a.x) * e;
@@ -190,11 +219,12 @@ export default function Wall({
       if (lensVisible && cloneWorld.current) cloneWorld.current.style.transform = "";
 
       stage.style.setProperty("--hp", String(hp));
+      stage.style.setProperty("--lp", String(lp));
       stage.style.setProperty("--mp", String(mp));
       stage.style.setProperty("--pp", String(pp));
       stage.style.setProperty("--cr", String(cr));
       stage.style.setProperty("--p", String(p));
-      stage.dataset.gone = hp >= 1 ? "1" : "0";
+      stage.dataset.gone = (heroE ? lp : hp) >= 1 ? "1" : "0";
       const now = p >= 0.985;
       if (now !== landed) {
         landed = now;
@@ -252,6 +282,12 @@ export default function Wall({
     const settle = window.setTimeout(relayout, 400);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
+    const onUnland = () =>
+      window.setTimeout(() => {
+        stage.querySelector(".e-world > .e-mapclone")?.remove();
+        relayout();
+      }, 60);
+    window.addEventListener("dz-unland", onUnland);
     window.addEventListener("dz-goto", onGoto);
     window.addEventListener("dz-tab", onTab);
     document.addEventListener("click", onClick);
@@ -261,6 +297,7 @@ export default function Wall({
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("dz-goto", onGoto);
+      window.removeEventListener("dz-unland", onUnland);
       window.removeEventListener("dz-tab", onTab);
       document.removeEventListener("click", onClick);
       if (raf) cancelAnimationFrame(raf);

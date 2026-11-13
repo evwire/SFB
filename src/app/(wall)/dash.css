@@ -198,7 +198,7 @@ html.dark .dz-story img { width: calc(100% + 28px); margin: -12px -14px 6px; max
 .dz-wide .dz-fine { margin-top: 14px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-e .e-lens { transform: translate(-50%, -50%) !important; opacity: calc(1 - var(--hp, 0)); }
+  .hero-e .e-lens { transform: translate(-50%, -50%) !important; opacity: calc(1 - var(--lp, 0)); }
   .dz-grid, .dz-bars .t i { transition: none; }
 }
 
