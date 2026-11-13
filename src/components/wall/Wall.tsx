@@ -76,18 +76,6 @@ export default function Wall({
         }
       }
     }
-    // Place the close-up art wraps (EV Auto guitar, Island Center beach stall, EVODS tree) at indices
-    // that pack into the right half of the glass card on typical desktop widths (1280, 1440, 1680).
-    // Grid and tile sizes stay the same; only the sequence changes.
-    {
-      const artAt: [number, number][] = [[107, 15], [91, 18], [138, 19]];
-      for (const [id] of artAt) {
-        const i = order.indexOf(id);
-        if (i >= 0) order.splice(i, 1);
-      }
-      for (const [id, idx] of artAt) order.splice(Math.min(idx, order.length), 0, id);
-    }
-
     let H = 0;
     let W = 0;
     let startPos = new Map<number, Box>();
@@ -103,74 +91,122 @@ export default function Wall({
       const mob = W < 900;
 
       // The wall: choose the row count whose total height is closest to the viewport.
-      let best: { score: number; pos: Map<number, Box>; th: number } | null = null;
-      const ars = order.map((id) => clampAr(byId.get(id)!.ar));
-      const tot = ars.reduce((a, b) => a + b, 0);
-      for (let R = 3; R <= 14; R++) {
-        const rows: [number, number][][] = [];
-        let cur: [number, number][] = [];
-        let cs = 0;
-        let k = 1;
-        order.forEach((id, i) => {
-          cur.push([id, ars[i]]);
-          cs += ars[i];
-          if (cs >= (tot * k) / R - 0.0001 && rows.length < R - 1) {
-            rows.push(cur);
-            cur = [];
-            k++;
-          }
-        });
-        if (cur.length) rows.push(cur);
-        let y = 0;
-        const pos = new Map<number, Box>();
-        for (const r of rows) {
-          const s2 = r.reduce((a, c) => a + c[1], 0);
-          const h = (W - (r.length - 1) * GAP) / s2;
-          let x = 0;
-          for (const [id, a] of r) {
-            pos.set(id, { x, y, w: a * h, h });
-            x += a * h + GAP;
-          }
-          y += h + GAP;
-        }
-        const th = y - GAP;
-        const score = Math.abs(th - H);
-        if (!best || score < best.score) best = { score, pos, th };
-      }
-      const sy = H / best!.th;
-      startPos = new Map();
-      best!.pos.forEach((b, id) => startPos.set(id, { x: b.x, y: b.y * sy, w: b.w, h: b.h * sy }));
-
-      // On mobile the card sits at the bottom, so the same three close-up art wraps swap with same-shape
-      // tiles just above it. Desktop placement is handled by the tile order above; the grid is left as packed.
-      if (mob) {
-        const lens = stage.querySelector<HTMLElement>(".e-lens");
-        const sr0 = stage.getBoundingClientRect();
-        const lr0 = lens?.getBoundingClientRect();
-        const lb = lr0 && lr0.width > 40 ? { x: lr0.left - sr0.left, y: lr0.top - sr0.top, w: lr0.width, h: lr0.height } : { x: W * 0.25, y: H * 0.25, w: W * 0.5, h: H * 0.5 };
-        const spots: [number, [number, number]][] = [[91, [W * 0.16, lb.y - 45]], [107, [W * 0.5, lb.y - 45]], [138, [W * 0.84, lb.y - 45]]];
-        const used = new Set<number>(spots.map(([id]) => id));
-        for (const [wid, [sx, sy]] of spots) {
-          const a1 = startPos.get(wid);
-          const wt = byId.get(wid);
-          if (!a1 || !wt) continue;
-          let pick: number | null = null;
-          let bd = Infinity;
-          for (const [id, bx] of startPos) {
-            if (used.has(id) || Math.abs(clampAr(byId.get(id)!.ar) - clampAr(wt.ar)) > 0.02) continue;
-            const d = Math.hypot(bx.x + bx.w / 2 - sx, bx.y + bx.h / 2 - sy);
-            if (d < bd) {
-              bd = d;
-              pick = id;
+      // Packed as a uniform justified grid; only the photo sequence changes, never a tile's size.
+      const pack = (ord: number[]): Map<number, Box> => {
+        const ars = ord.map((id) => clampAr(byId.get(id)!.ar));
+        const tot = ars.reduce((a, b) => a + b, 0);
+        let best: { score: number; pos: Map<number, Box>; th: number } | null = null;
+        for (let R = 3; R <= 14; R++) {
+          const rows: [number, number][][] = [];
+          let cur: [number, number][] = [];
+          let cs = 0;
+          let k = 1;
+          ord.forEach((id, i) => {
+            cur.push([id, ars[i]]);
+            cs += ars[i];
+            if (cs >= (tot * k) / R - 0.0001 && rows.length < R - 1) {
+              rows.push(cur);
+              cur = [];
+              k++;
             }
+          });
+          if (cur.length) rows.push(cur);
+          let y = 0;
+          const pos = new Map<number, Box>();
+          for (const r of rows) {
+            const s2 = r.reduce((a, c) => a + c[1], 0);
+            const h = (W - (r.length - 1) * GAP) / s2;
+            let x = 0;
+            for (const [id, a] of r) {
+              pos.set(id, { x, y, w: a * h, h });
+              x += a * h + GAP;
+            }
+            y += h + GAP;
           }
-          if (pick == null) continue;
-          const b1 = startPos.get(pick)!;
-          startPos.set(wid, b1);
-          startPos.set(pick, a1);
-          used.add(pick);
+          const th = y - GAP;
+          const score = Math.abs(th - H);
+          if (!best || score < best.score) best = { score, pos, th };
         }
+        const sy = H / best!.th;
+        const start = new Map<number, Box>();
+        best!.pos.forEach((b, id) => start.set(id, { x: b.x, y: b.y * sy, w: b.w, h: b.h * sy }));
+        return start;
+      };
+
+      const areaOverlap = (a: Box, b: Box) => {
+        const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+        const iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+        return ix * iy;
+      };
+
+      // Close-up art wraps, most recognisable first: guitar, beach, surf, tree, chair, palm.
+      const WRAPS = [107, 91, 92, 138, 93, 94].filter((id) => byId.has(id));
+
+      // The glass shows a magnified copy of the wall, zoomed about the card's centre. Score a layout
+      // by how much of those wraps appear INSIDE the card after that zoom, especially in the right
+      // half beside or below the headline (the headline sits on top of the glass and is not magnified).
+      const scoreArt = (pos: Map<number, Box>) => {
+        const lens = stage.querySelector<HTMLElement>(".e-lens");
+        const lw = lens?.offsetWidth ?? 0;
+        const lh = lens?.offsetHeight ?? 0;
+        if (lw < 40 || lh < 40) return 0;
+        const mag = parseFloat(getComputedStyle(lens!).getPropertyValue("--mag")) || 1.12;
+        const lx = (W - lw) / 2;
+        const ly = mob ? Math.max(0, H - 56 - lh) : (H - lh) / 2;
+        const lcx = lx + lw / 2;
+        const lcy = ly + lh / 2;
+        const card: Box = { x: lx, y: ly, w: lw, h: lh };
+        // Right half of the card, from just under the top padding down to above the scroll cue:
+        // this is the band where a wrap stays visible through the glass rather than under the type.
+        const clear: Box = { x: lx + lw * 0.5, y: ly + lh * 0.22, w: lw * 0.48, h: lh * 0.58 };
+        let s = 0;
+        let clearlyIn = 0;
+        WRAPS.forEach((id, i) => {
+          const b = pos.get(id);
+          if (!b) return;
+          const shown: Box = { x: lcx + (b.x - lcx) * mag, y: lcy + (b.y - lcy) * mag, w: b.w * mag, h: b.h * mag };
+          const inCard = areaOverlap(shown, card);
+          const inClear = areaOverlap(shown, clear);
+          const tile = shown.w * shown.h || 1;
+          const fracCard = inCard / tile;
+          const fracClear = inClear / tile;
+          const wgt = i < 3 ? 3 : 1.2;
+          s += wgt * (inClear + 0.25 * inCard);
+          if (fracClear >= 0.28 && fracCard >= 0.45) clearlyIn += i < 3 ? 2 : 1;
+        });
+        return s + clearlyIn * 80;
+      };
+
+      const moveTo = (ord: number[], id: number, idx: number) => {
+        const next = ord.filter((x) => x !== id);
+        next.splice(Math.min(Math.max(0, idx), next.length), 0, id);
+        return next;
+      };
+
+      // Search: try placing each wrap at every index, then refine the others, always re-packing
+      // so the result holds when the viewport or the column count changes. No fixed indices.
+      let bestOrd = order.slice();
+      let bestPos = pack(bestOrd);
+      let bestS = scoreArt(bestPos);
+      for (const id of WRAPS) {
+        let localOrd = bestOrd;
+        let localPos = bestPos;
+        let localS = bestS;
+        for (let i = 0; i < order.length; i++) {
+          const cand = moveTo(bestOrd, id, i);
+          const pos = pack(cand);
+          const s = scoreArt(pos);
+          if (s > localS) {
+            localS = s;
+            localOrd = cand;
+            localPos = pos;
+          }
+        }
+        bestOrd = localOrd;
+        bestPos = localPos;
+        bestS = localS;
       }
+      startPos = bestPos;
 
       // Where each photo lands: the real position of its site on the map that sits under the wall.
       endPos = new Map();
