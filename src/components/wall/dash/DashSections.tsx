@@ -50,7 +50,7 @@ function Leaderboard() {
             <button type="button" onClick={() => set({ operators: f.operators.includes(r.op) ? [] : [r.op] })} title="Filter the map to this operator">
               <span className="n">{r.op}</span>
               <span className="t">
-                <i style={{ width: `${(r[m] / max) * 100}%`, background: color(r.op) }} />
+                <i style={{ width: `${(r[m] / max) * 100}%`, background: f.colorBy === "operator" ? color(r.op) : "var(--pin-brand)" }} />
               </span>
               <span className="v">{nf(r[m])}</span>
             </button>

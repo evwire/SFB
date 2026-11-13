@@ -9,6 +9,9 @@ import type { DSite } from "@/lib/mapdata";
 type View = { k: number; x: number; y: number };
 
 export const PHOTO_PIN = 26; // px, also the size the flying photos shrink to
+/** Phones get a smaller photo pin so neighbouring sites stay readable; each site is still its own pin. */
+export const PHOTO_PIN_SMALL = 21;
+export const photoPinPx = () => (typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches ? PHOTO_PIN_SMALL : PHOTO_PIN);
 
 // Open pins are filled dots sized by stalls; upcoming pins are small hollow rings (see dash.css).
 export const pinPx = (s: DSite) => {
@@ -29,7 +32,7 @@ const ease = (t: number) => {
  * scroll: it zooms only with ctrl+wheel (a trackpad pinch) or the buttons, and pans by dragging once zoomed.
  */
 export default function MapView() {
-  const { f, visible, color, selected, select, data, viewRef: ctxView } = useDash();
+  const { f, visible, regionSites, color, selected, select, data, viewRef: ctxView } = useDash();
   const eu = f.region === "eu";
   const vw = eu ? EU_VIEW_W : VIEW_W;
   const vh = eu ? EU_VIEW_H : VIEW_H;
@@ -37,6 +40,14 @@ export default function MapView() {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const [fit, setFit] = useState(1);
+  const [photoPx, setPhotoPx] = useState(PHOTO_PIN);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 760px)");
+    const on = () => setPhotoPx(photoPinPx());
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [view, setView] = useState<View>({ k: 1, x: 0, y: 0 });
   const [tip, setTip] = useState<{ s: DSite; x: number; y: number } | null>(null);
   const drag = useRef<{ x: number; y: number; vx: number; vy: number; moved: boolean } | null>(null);
@@ -47,9 +58,13 @@ export default function MapView() {
   const anim = useRef(0);
   const goto = useRef<string | null>(null);
 
+  // Europe holds sites in only a few countries, so its home view frames them (the US home view is the whole map, where
+  // the photo wall lands). The image download reads this view, so the picture is framed the same way.
+  const home = (): View => (eu ? frame(regionSites.map((x) => ({ x: x.x, y: x.y })), 70, 5) : FULL);
   useEffect(() => {
     cancelAnimationFrame(anim.current);
-    setView(FULL);
+    setView(home());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eu]);
 
   useEffect(() => {
@@ -122,7 +137,7 @@ export default function MapView() {
         return;
       }
     }
-    animateTo(sig === "full" ? FULL : frame(visible));
+    animateTo(sig === "full" ? home() : frame(visible));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, eu]);
 
@@ -174,9 +189,9 @@ export default function MapView() {
     <div
       className="dz-map"
       ref={wrap}
-      data-zoomed={view.k > 1 ? "1" : "0"}
+      data-zoomed={view.k > home().k + 0.05 ? "1" : "0"}
       onPointerDown={(e) => {
-        if (view.k <= 1 || (e.target as Element).closest(".dz-zoom")) return;
+        if (view.k <= home().k + 0.05 || (e.target as Element).closest(".dz-zoom")) return;
         cancelAnimationFrame(anim.current);
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false };
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -206,7 +221,7 @@ export default function MapView() {
             {order.map((site, i) => {
               const sel = selected?.id === site.id;
               const photo = site.phase === "open" && site.region === "us" ? site.photos[0] : undefined;
-              const r = photo ? PHOTO_PIN / 2 : pinPx(site);
+              const r = photo ? photoPx / 2 : pinPx(site);
               const rv = px(r) * (sel ? 1.25 : 1);
               const byOp = f.colorBy === "operator";
               const col = byOp ? color(site.operator) : "var(--pin-brand)";
@@ -271,7 +286,7 @@ export default function MapView() {
       <div className="dz-zoom" role="group" aria-label="Zoom">
         <button type="button" aria-label="Zoom in" onClick={() => zoomAt(1.5, vw / 2, vh / 2)}>+</button>
         <button type="button" aria-label="Zoom out" onClick={() => zoomAt(1 / 1.5, vw / 2, vh / 2)}>−</button>
-        <button type="button" aria-label="Reset zoom" onClick={() => animateTo(FULL, 500)} disabled={view.k === 1}>
+        <button type="button" aria-label="Reset zoom" onClick={() => animateTo(home(), 500)} disabled={Math.abs(view.k - home().k) < 0.01 && Math.abs(view.x - home().x) < 1 && Math.abs(view.y - home().y) < 1}>
           ⤢
         </button>
       </div>

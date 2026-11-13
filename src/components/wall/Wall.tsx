@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import type { WallGroup } from "@/lib/wall";
 import Heroes from "./Heroes";
 import { VIEW_W, VIEW_H } from "@/lib/us-states.generated";
-import { PHOTO_PIN } from "./dash/MapView";
+import { photoPinPx } from "./dash/MapView";
 
 const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -217,7 +217,7 @@ export default function Wall({
         const fit = Math.min(r.width / VIEW_W, r.height / VIEW_H);
         const ox = r.left - sr.left + (r.width - VIEW_W * fit) / 2;
         const oy = r.top - sr.top + (r.height - VIEW_H * fit) / 2;
-        const d = PHOTO_PIN;
+        const d = photoPinPx();
         for (const f of flights) {
           endPos.set(f.photoId, { x: ox + f.x * fit - d / 2, y: oy + f.y * fit - d / 2, w: d, h: d });
         }

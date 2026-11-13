@@ -330,7 +330,7 @@ function Legend() {
   const { visible, color, f, set } = useDash();
   const byOp = f.colorBy === "operator";
   const showOpen = f.phase !== "upcoming";
-  const showUp = f.phase !== "open";
+  const showUp = f.phase !== "open" && visible.some((s) => s.phase === "upcoming");
   const ops = useMemo(() => {
     const m = new Map<string, number>();
     let other = 0;
