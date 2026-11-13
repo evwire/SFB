@@ -73,6 +73,30 @@ export async function svgToPng(svg: string, scale = 2): Promise<Blob> {
   }
 }
 
+/**
+ * Small square JPEG data URIs for photos on this site. An SVG drawn into an <img> cannot load other files, so the
+ * picture carries its photo pins inline. Same-origin fetch, so the canvas is never tainted.
+ */
+export async function loadThumbs(urls: string[], px = 96): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  await Promise.all(
+    [...new Set(urls)].map(async (u) => {
+      try {
+        const bmp = await createImageBitmap(await (await fetch(u)).blob());
+        const c = document.createElement("canvas");
+        c.width = c.height = px;
+        const side = Math.min(bmp.width, bmp.height);
+        c.getContext("2d")!.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, px, px);
+        out.set(u, c.toDataURL("image/jpeg", 0.84));
+        bmp.close();
+      } catch {
+        /* a photo that will not load is drawn as a plain pin */
+      }
+    })
+  );
+  return out;
+}
+
 export function saveBlob(blob: Blob, name: string) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);

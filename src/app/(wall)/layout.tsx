@@ -6,6 +6,7 @@ import "@fontsource/fraunces/600-italic.css";
 import "./wall.css";
 import "./hero.css";
 import "./dash.css";
+import "./interact.css";
 
 /** Which hero treatment shows: ?hero=a|b|c|d, set on <html> before first paint. */
 const DEFAULT_HERO = "e";

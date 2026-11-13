@@ -5,7 +5,7 @@ import MapView from "./MapView";
 import { Coach } from "./Coach";
 import { DownloadButton } from "./DownloadButton";
 import { useDash } from "./DashContext";
-import { kpiItems } from "./kpi";
+import { kpiItems, showingLine } from "./kpi";
 import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
 import { US_STATES } from "@/lib/us-states.generated";
 import type { DSite } from "@/lib/mapdata";
@@ -13,9 +13,13 @@ import type { DSite } from "@/lib/mapdata";
 const nf = (n: number) => n.toLocaleString("en-US");
 const NS = "not stated";
 
+/** CSS variables that place the sliding selection thumb under the chosen segment. */
+const thumb = (i: number, n: number) => ({ ["--i" as string]: Math.max(0, i), ["--n" as string]: n }) as React.CSSProperties;
+
 function Seg<T extends string | number>({ value, opts, onChange, label }: { value: T; opts: [T, string][]; onChange: (v: T) => void; label: string }) {
   return (
-    <div className="dz-seg" role="group" aria-label={label}>
+    <div className="dz-seg th" role="group" aria-label={label} style={thumb(opts.findIndex(([v]) => v === value), opts.length)}>
+      <i className="thumb" aria-hidden="true" />
       {opts.map(([v, t]) => (
         <button key={String(v)} type="button" aria-pressed={v === value} onClick={() => onChange(v)}>
           {t}
@@ -60,12 +64,12 @@ export function PhaseBar() {
     ["both", "Both", phaseCounts.both],
   ];
   // "Showing" always equals the Sites total in the strip beside it: both count the same filtered list
-  const total = f.phase === "both" ? regionSites.length : regionSites.filter((s) => s.phase === f.phase).length;
-  const what = f.phase === "both" ? "sites" : `${f.phase} sites`;
-  const showing = active > 0 ? `Showing ${nf(visible.length)} of ${nf(total)} ${what}` : `Showing ${nf(visible.length)} ${what}`;
+  const regionTotal = { open: regionSites.filter((s) => s.phase === "open").length, upcoming: regionSites.filter((s) => s.phase === "upcoming").length, both: regionSites.length };
+  const showing = showingLine(f, regionTotal, visible.length, active);
   return (
     <div className="dz-master" role="group" aria-label="Which sites to show: open, upcoming or both">
-      <div className="dz-mseg">
+      <div className="dz-mseg th" style={thumb(opts.findIndex(([v]) => v === f.phase), 3)}>
+        <i className="thumb" aria-hidden="true" />
         {opts.map(([v, t, n]) => (
           <button key={v} type="button" aria-pressed={f.phase === v} data-phase={v} onClick={() => set({ phase: v })}>
             <span>{t}</span>
@@ -79,7 +83,7 @@ export function PhaseBar() {
 }
 
 function Rail({ onClose }: { onClose?: () => void }) {
-  const { f, set, reset, active, data, regionSites, color } = useDash();
+  const { f, set, reset, active, data, regionSites, color, since } = useDash();
   const ops = data.operatorOrder.filter((o) => regionSites.some((s) => s.operator === o && s.phase === "open"));
   const top = ops.slice(0, 5);
   const count = (o: string) => regionSites.filter((s) => s.operator === o && s.phase === "open").length;
@@ -168,7 +172,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
         Wrapped stalls
       </Toggle>
       <Toggle on={f.isNew} onClick={() => set({ isNew: !f.isNew })} swatch={<em className="dz-newdot" />}>
-        New since last check
+        {since ? `New since ${since}` : "Changed in the latest pull"}
       </Toggle>
     </div>
   );
@@ -191,16 +195,16 @@ function Fact({ k, v }: { k: string; v: React.ReactNode }) {
 }
 
 function Panel({ s }: { s: DSite }) {
-  const { select, color, data } = useDash();
+  const { select, color, data, since } = useDash();
   const ht = data.hostTypes.find((h) => h.key === s.hostType)?.label;
   const [pi, setPi] = useState(0);
   const [more, setMore] = useState(false);
   const track = useRef<HTMLDivElement>(null);
   const place = [s.address, s.city, s.state === "US" ? null : s.state].filter(Boolean).join(", ");
   const changeText: Record<string, string> = {
-    opened: "Opened since the last check",
-    new_open: "New on the map since the last check",
-    new_upcoming: "New upcoming site since the last check",
+    opened: since ? `Newly open since ${since}` : "Newly open",
+    new_open: since ? `New on the map since ${since}` : "New on the map",
+    new_upcoming: since ? `New upcoming site since ${since}` : "New upcoming site",
     reappeared: "Back on the map",
     back_to_upcoming: "Back to upcoming",
     ownership_changed: "Ownership changed",
@@ -281,7 +285,7 @@ function Panel({ s }: { s: DSite }) {
             <Fact key={k} k={k} v={v} />
           ))}
         </dl>
-        {missing.length > 0 && <p className="dz-fine">Not stated on Find Us: {missing.join(", ")}.</p>}
+        {missing.length > 0 && <p className="dz-fine">Not stated by Tesla: {missing.join(", ")}.</p>}
         {s.operator === FRANCIS && <p className="dz-note">One of the Francis Energy sites, a single network with many sites on the map.</p>}
 
         <h4 className="dz-sec">Read on EVwire</h4>
@@ -315,7 +319,7 @@ function Panel({ s }: { s: DSite }) {
           <p className="dz-fine">EVwire has not written about this site yet.</p>
         )}
         <a className="dz-tesla" href={s.url} target="_blank" rel="noopener">
-          Open on Tesla Find Us
+          Open on Tesla’s site
         </a>
       </div>
     </div>
@@ -344,7 +348,8 @@ function Legend() {
     <div className="dz-legend" aria-label="Legend">
       <div className="lg-by" role="group" aria-label="Colour the pins by">
         <span>Color by</span>
-        <div className="dz-seg">
+        <div className="dz-seg th" style={thumb(byOp ? 1 : 0, 2)}>
+          <i className="thumb" aria-hidden="true" />
           {([["status", "Status"], ["operator", "Operator"]] as const).map(([v, t]) => (
             <button key={v} type="button" aria-pressed={f.colorBy === v} onClick={() => set({ colorBy: v })}>
               {t}
@@ -412,7 +417,7 @@ export function DashFrame() {
           <Legend />
           <div className="dz-foot">
             <p className="dz-asof">
-              Tesla Find Us, open sites as of {asOf}; upcoming as of {data.asOf.upcoming}.
+              Source: Tesla, open sites as of {asOf}; upcoming as of {data.asOf.upcoming}.
             </p>
             <DownloadButton />
           </div>

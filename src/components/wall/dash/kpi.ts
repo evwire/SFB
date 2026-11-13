@@ -3,6 +3,12 @@ import type { Filters, Kpis } from "./DashContext";
 const nf = (n: number) => n.toLocaleString("en-US");
 const sym = (c: string | null) => (c === "GBP" ? "£" : c === "EUR" ? "€" : "$");
 const NS = "not stated";
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "2026-10-27" to "27 Oct" (or "27 Oct 2026"). Plain string work, so no time zone can shift the day. */
+export function dayShort(iso: string, year = false): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${Number(m[3])} ${MON[Number(m[2]) - 1]}${year ? ` ${m[1]}` : ""}` : iso;
+}
 
 export type KpiItem = { key: string; label: string; value: string; note: string; cls?: "rate" | "cov" };
 
@@ -38,8 +44,15 @@ export function kpiItems(kpi: Kpis, f: Filters): KpiItem[] {
       key: "covered",
       label: "Stories covered by EVwire",
       value: nf(kpi.covered),
-      note: `${kpi.covered === 1 ? "site" : "sites"} with a story${kpi.isNew ? `, ${kpi.isNew} new` : ""}`,
+      note: `${kpi.covered === 1 ? "site" : "sites"} with a story`,
       cls: "cov",
     },
   ];
+}
+
+/** "Showing 26 of 71 open sites": the same line the status switch prints, so the page and the picture agree. */
+export function showingLine(f: Filters, regionTotal: { open: number; both: number; upcoming: number }, shown: number, active: number): string {
+  const total = f.phase === "both" ? regionTotal.both : f.phase === "open" ? regionTotal.open : regionTotal.upcoming;
+  const what = f.phase === "both" ? "sites" : `${f.phase} sites`;
+  return active > 0 ? `Showing ${nf(shown)} of ${nf(total)} ${what}` : `Showing ${nf(shown)} ${what}`;
 }

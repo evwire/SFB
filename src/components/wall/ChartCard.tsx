@@ -15,7 +15,7 @@ export const DownloadIcon = () => (
 /** One chart: the card on the page, drawn at the width it has, and a Download PNG for the full-size image. */
 export default function ChartCard({ model, host }: { model: ChartModel; host: string }) {
   const art = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState(() => pageSize(580));
+  const [size, setSize] = useState(() => pageSize(1100));
   const [theme, setTheme] = useState<Theme>("light");
   const [busy, setBusy] = useState(false);
 
@@ -54,7 +54,7 @@ export default function ChartCard({ model, host }: { model: ChartModel; host: st
     <figure className="dz-chart" id={`chart-${model.id}`}>
       <div className="art" ref={art} dangerouslySetInnerHTML={{ __html: svg }} />
       <figcaption>
-        <span>{model.alt}</span>
+        <span>{model.source}</span>
         <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label={`Download PNG: ${model.title}`}>
           <DownloadIcon />
           {busy ? "Preparing…" : "Download PNG"}

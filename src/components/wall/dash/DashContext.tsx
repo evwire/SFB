@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DashData, DSite } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
+import { dayShort } from "./kpi";
 
 export type Filters = {
   region: "us" | "eu";
@@ -64,6 +65,8 @@ type Dash = {
   phaseCounts: { open: number; upcoming: number; both: number };
   /** the map's current zoom and pan, written by MapView, read by the image download */
   viewRef: React.MutableRefObject<MapViewState>;
+  /** the date of the earlier Tesla data pull the "new" markers compare against, e.g. "27 Oct"; null when not known */
+  since: string | null;
 };
 
 export type Tab = "dash" | "charts" | "hosts";
@@ -169,6 +172,6 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   const selected = sel ? byKey.get(sel) ?? null : null;
   const select = useCallback((id: string | null) => setSel(id), []);
 
-  const value: Dash = { data, f, set, reset, active, visible, regionSites, kpi, color, selected, select, byId, tab, phaseCounts, viewRef };
+  const value: Dash = { data, f, set, reset, active, visible, regionSites, kpi, color, selected, select, byId, tab, phaseCounts, viewRef, since: data.changesFrom ? dayShort(data.changesFrom) : null };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

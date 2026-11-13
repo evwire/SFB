@@ -56,9 +56,9 @@ export default function NewSinceFeed({
   return (
     <section id="new" className="newfeed glass" aria-labelledby="newfeed-title">
       <div className="newfeed-head">
-        <h2 id="newfeed-title">New since last check</h2>
+        <h2 id="newfeed-title">{_meta.from ? `New since ${fmtDay(_meta.from)}` : "Changed in the latest pull"}</h2>
         <span className="section-note">
-          {fmtDay(_meta.from)} → {fmtDay(_meta.to, true)} · Tesla Find Us
+          {fmtDay(_meta.from)} → {fmtDay(_meta.to, true)} · Source: Tesla
         </span>
       </div>
       {items.length > 0 ? (

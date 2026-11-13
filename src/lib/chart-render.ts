@@ -1,9 +1,10 @@
-import type { ChartModel, Cols, HBar, Line, Stack } from "./charts";
-import { CW, FONT_DISP, FONT_SANS, PAL, esc, fit, frame, n1, svgOpen, textW, type Box, type Pal, type Theme } from "./svgcard";
+import type { ChartModel, Cols, Lolli, Step, Tiles, Track } from "./charts";
+import { CW, FONT_DISP, FONT_SANS, PAL, esc, fit, frame, n1, svgOpen, textW, wrap, type Box, type Pal, type Theme } from "./svgcard";
 
 /**
  * One renderer for a chart card: the page draws it inline at the measured width, the download draws the same thing at
  * 1200 x 630 and rasterises it at 2x (2400 x 1260, the size of the social card). `k` scales type and spacing.
+ * A card carries a title, a subtitle, the chart, the data date and the wordmark with the URL. It never carries a source line.
  */
 export type RenderOpts = { W: number; H: number; k: number; theme: Theme; host: string };
 
@@ -12,14 +13,16 @@ export const EXPORT: Omit<RenderOpts, "theme" | "host"> = { W: 1200, H: 630, k: 
 /** Sizes for the page: the card is about as wide as its column, type stays readable down to a phone. */
 export function pageSize(width: number): Omit<RenderOpts, "theme" | "host"> {
   const W = Math.max(300, Math.round(width));
-  const k = Math.min(1, Math.max(0.56, W / 860));
-  const H = Math.round(W < 520 ? W * 1.22 : W * 0.66);
-  return { W, H, k };
+  if (W >= 900) return { W, H: Math.round(W * 0.525), k: Math.min(1.1, W / 1156) };
+  if (W >= 520) return { W, H: Math.round(W * 0.74), k: Math.max(0.72, Math.min(1, W / 860)) };
+  return { W, H: Math.round(W * 1.5), k: Math.max(0.7, Math.min(0.95, W / 500)) };
 }
 
-const t = (x: number, y: number, s: string, fs: number, fill: string, o: { w?: number; a?: "start" | "middle" | "end"; ls?: number; font?: string } = {}) =>
-  `<text x="${n1(x)}" y="${n1(y)}"${o.a ? ` text-anchor="${o.a}"` : ""} font-family="${o.font ?? FONT_SANS}" font-weight="${o.w ?? 500}" font-size="${n1(fs)}"${o.ls ? ` letter-spacing="${n1(o.ls * fs)}"` : ""} fill="${fill}" style="font-variant-numeric:tabular-nums">${esc(s)}</text>`;
+type TOpts = { w?: number; a?: "start" | "middle" | "end"; ls?: number; font?: string; op?: number; italic?: boolean };
+const t = (x: number, y: number, s: string, fs: number, fill: string, o: TOpts = {}) =>
+  `<text x="${n1(x)}" y="${n1(y)}"${o.a ? ` text-anchor="${o.a}"` : ""} font-family="${o.font ?? FONT_SANS}" font-weight="${o.w ?? 500}" font-size="${n1(fs)}"${o.ls ? ` letter-spacing="${n1(o.ls * fs)}"` : ""}${o.op != null ? ` opacity="${o.op}"` : ""}${o.italic ? ` font-style="italic"` : ""} fill="${fill}" style="font-variant-numeric:tabular-nums">${esc(s)}</text>`;
 
+/** Rectangle with rounded corners; `top` rounds only the top two (a column). */
 const rr = (x: number, y: number, w: number, h: number, r: number, fill: string, top = false) => {
   r = Math.max(0, Math.min(r, w / 2, h / 2));
   if (w <= 0 || h <= 0) return "";
@@ -27,149 +30,388 @@ const rr = (x: number, y: number, w: number, h: number, r: number, fill: string,
   return `<path d="M${n1(x)} ${n1(y + h)}V${n1(y + r)}Q${n1(x)} ${n1(y)} ${n1(x + r)} ${n1(y)}H${n1(x + w - r)}Q${n1(x + w)} ${n1(y)} ${n1(x + w)} ${n1(y + r)}V${n1(y + h)}Z" fill="${fill}"/>`;
 };
 
-function hbar(spec: HBar, b: Box, k: number, p: Pal): string {
-  const rows = spec.rows;
-  const fs = Math.min(21 * k, (b.h / rows.length) * 0.5);
-  const rh = Math.min(b.h / rows.length, 56 * k);
-  const top = b.y + (b.h - rh * rows.length) / 2;
-  const max = Math.max(1, ...rows.map((r) => r.value));
-  const vw = textW(String(max), fs, CW.sansBold) + 14 * k;
-  const lw = Math.min(b.w * 0.5, Math.max(...rows.map((r) => textW(r.label, fs, CW.sans))) + 6 * k);
-  const x0 = b.x + lw + 16 * k;
+/** Gridline ticks: 3 to 5 round numbers up to at least `max`. */
+function ticks(max: number): number[] {
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  const step = steps.find((s) => max / s <= 5) ?? 1000;
+  const top = Math.ceil(max / step) * step;
+  const out: number[] = [];
+  for (let v = 0; v <= top + 1e-9; v += step) out.push(v);
+  return out;
+}
+
+const initials = (name: string) => {
+  const w = name.replace(/[^A-Za-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+  if (w.length >= 2) return (w[0][0] + w[1][0]).toUpperCase();
+  const s = w[0] ?? "?";
+  const caps = s.match(/[A-Z]/g);
+  return caps && caps.length >= 2 ? caps[0] + caps[1] : s.slice(0, 2).toUpperCase();
+};
+
+/** A call-out: a dot on the thing, a bold line and a quiet line beside it. Returns markup and the box the text takes. */
+function callout(x: number, y: number, lines: [string, string], k: number, p: Pal, o: { a?: "start" | "end"; maxW?: number } = {}): { s: string; w: number; h: number } {
+  const hfs = 16 * k;
+  const sfs = 13.5 * k;
+  const maxW = o.maxW ?? 230 * k;
+  const sub = wrap(lines[1], maxW, sfs, CW.sans, 2);
+  const w = Math.min(maxW, Math.max(textW(lines[0], hfs, CW.sansBold), ...sub.map((l) => textW(l, sfs, CW.sans))));
+  const a = o.a ?? "start";
+  let s = t(x, y + hfs * 0.85, lines[0], hfs, p.acc, { w: 700, a });
+  sub.forEach((l, i) => (s += t(x, y + hfs * 0.85 + (i + 1) * sfs * 1.4 + 2 * k, l, sfs, p.mut, { a })));
+  return { s, w, h: hfs + sub.length * sfs * 1.4 + 6 * k };
+}
+
+const defs = (uid: string, p: Pal) =>
+  `<defs><linearGradient id="bar${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.acc}"/><stop offset="1" stop-color="${p.deep}"/></linearGradient>` +
+  `<linearGradient id="hbar${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${p.deep}"/><stop offset="1" stop-color="${p.acc}"/></linearGradient>` +
+  `<linearGradient id="ar${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.acc}" stop-opacity="0.34"/><stop offset="1" stop-color="${p.acc}" stop-opacity="0.02"/></linearGradient></defs>`;
+
+const BAR = { light: "#C9D6D1", dark: "#34414C" };
+
+/* ---------- ranked lollipops: operators ---------- */
+function lolli(spec: Lolli, b: Box, k: number, p: Pal, theme: Theme): string {
+  const n = spec.rows.length;
+  const narrowL0 = b.w < 460;
+  const fs = Math.min((narrowL0 ? 17 : 19) * k, 22 * k);
+  const gap = 15 * k;
+  const dotsPerLine = Math.max(8, Math.floor(b.w / gap));
+  const dotLines = spec.ones > 0 ? Math.ceil(spec.ones / dotsPerLine) : 0;
+  const noteH = narrowL0 && spec.note ? 66 * k : 0;
+  const onesH = (spec.ones > 0 ? 30 * k + dotLines * 17 * k : 0) + noteH;
+  const rows = b.h - onesH;
+  const rh = Math.min(rows / n, 54 * k);
+  const top = b.y;
+  const badge = Math.min(15 * k, rh * 0.36);
+  const labelX = b.x + badge * 2 + 12 * k;
+  const max = Math.max(1, ...spec.rows.map((r) => r.value));
+  const narrowL = b.w < 460;
+  const lw = Math.min(b.w * (narrowL ? 0.42 : 0.34), Math.max(...spec.rows.map((r) => textW(r.label, fs, CW.sans))) + 4 * k);
+  const x0 = labelX + lw + 16 * k;
+  const vw = textW(String(max), fs, CW.sansBold) + 18 * k;
   const bw = b.x + b.w - x0 - vw;
   let s = "";
-  rows.forEach((r, i) => {
+  let hiDot: { x: number; y: number } | null = null;
+  spec.rows.forEach((r, i) => {
     const cy = top + i * rh + rh / 2;
-    const h = Math.min(rh * 0.58, 30 * k);
-    const w = Math.max(3 * k, (r.value / max) * bw);
-    s += t(b.x, cy + fs * 0.35, fit(r.label, lw, fs), fs, r.hi ? p.fg : p.mut, { w: r.hi ? 700 : 500 });
-    s += rr(x0, cy - h / 2, w, h, Math.min(8 * k, h / 2), r.hi ? p.acc : r.soft ? p.barSoft : p.bar);
-    s += t(x0 + w + 10 * k, cy + fs * 0.36, String(r.value), fs, r.hi ? p.acc : p.fg, { w: 700 });
+    const x = x0 + Math.max(2 * k, (r.value / max) * bw);
+    s += `<circle cx="${n1(b.x + badge)}" cy="${n1(cy)}" r="${n1(badge)}" fill="${r.hi ? p.acc : p.track}"/>`;
+    s += t(b.x + badge, cy + badge * 0.36, initials(r.label), badge * 0.92, r.hi ? (theme === "dark" ? "#06210F" : "#FFFFFF") : p.mut, { a: "middle", w: 700 });
+    s += t(labelX, cy + fs * 0.34, fit(r.label, lw, fs), fs, r.hi ? p.fg : p.mut, { w: r.hi ? 700 : 500 });
+    s += `<line x1="${n1(x0)}" x2="${n1(x)}" y1="${n1(cy)}" y2="${n1(cy)}" stroke="${r.hi ? p.acc : BAR[theme]}" stroke-width="${n1(4 * k)}" stroke-linecap="round"/>`;
+    s += `<circle cx="${n1(x)}" cy="${n1(cy)}" r="${n1((r.hi ? 9 : 7) * k)}" fill="${r.hi ? p.acc : p.slate}" stroke="${p.bg}" stroke-width="${n1(2.5 * k)}"/>`;
+    s += t(x + 14 * k, cy + fs * 0.35, String(r.value), fs * (r.hi ? 1.1 : 1), r.hi ? p.acc : p.fg, { w: 700 });
+    if (r.hi) hiDot = { x, y: cy };
   });
-  return s;
-}
-
-function stack(spec: Stack, b: Box, k: number, p: Pal): string {
-  const rows = spec.rows;
-  const lfs = Math.min(20 * k, (b.h / (rows.length + 1.4)) * 0.5);
-  const legendH = 28 * k;
-  const area = { ...b, y: b.y + legendH, h: b.h - legendH };
-  const rh = Math.min(area.h / rows.length, 44 * k);
-  const top = area.y + (area.h - rh * rows.length) / 2;
-  const max = Math.max(1, ...rows.map((r) => r.a + r.b));
-  const lw = Math.min(b.w * 0.34, Math.max(...rows.map((r) => textW(r.label, lfs, CW.sans))) + 6 * k);
-  const x0 = b.x + lw + 14 * k;
-  const bw = b.x + b.w - x0 - textW(String(max), lfs, CW.sansBold) - 14 * k;
-  let s = "";
-  // legend: the two series are named in words, never by colour alone
-  let lx = b.x;
-  for (const [name, col] of [[spec.aName, p.acc], [spec.bName, p.bar]] as const) {
-    s += `<circle cx="${n1(lx + 6 * k)}" cy="${n1(b.y + 10 * k)}" r="${n1(6 * k)}" fill="${col}"/>`;
-    s += t(lx + 18 * k, b.y + 10 * k + lfs * 0.35, name, lfs * 0.9, p.mut, { w: 600 });
-    lx += 18 * k + textW(name, lfs * 0.9, CW.sans) + 26 * k;
+  if (spec.note && narrowL) {
+    const co = callout(b.x, top + rh * n + 8 * k, [spec.note.head, spec.note.sub], k, p, { maxW: b.w });
+    s += co.s;
+  } else if (spec.note && hiDot && n >= 4) {
+    const hd = hiDot as { x: number; y: number };
+    const lx = hd.x;
+    const ay = top + rh * 2.5;
+    const tx = lx - 30 * k;
+    const co = callout(tx, ay - 14 * k, [spec.note.head, spec.note.sub], k, p, { a: "end", maxW: Math.min(280 * k, tx - x0 - 20 * k) });
+    s += co.s;
+    s += `<path d="M${n1(lx)} ${n1(hd.y + 15 * k)}V${n1(ay - 8 * k)}Q${n1(lx)} ${n1(ay)} ${n1(lx - 8 * k)} ${n1(ay)}H${n1(lx - 20 * k)}" fill="none" stroke="${p.acc}" stroke-width="${n1(1.6 * k)}" stroke-linecap="round" opacity="0.75"/>`;
   }
-  rows.forEach((r, i) => {
-    const cy = top + i * rh + rh / 2;
-    const h = Math.min(rh * 0.6, 26 * k);
-    const aw = (r.a / max) * bw;
-    const bwid = (r.b / max) * bw;
-    s += t(b.x, cy + lfs * 0.35, fit(r.label, lw, lfs), lfs, p.fg, { w: 600 });
-    const g = 2 * k;
-    s += rr(x0, cy - h / 2, Math.max(r.a ? 3 * k : 0, aw), h, Math.min(6 * k, h / 2), p.acc);
-    s += rr(x0 + (r.a ? Math.max(3 * k, aw) + g : 0), cy - h / 2, Math.max(r.b ? 3 * k : 0, bwid), h, Math.min(6 * k, h / 2), p.bar);
-    const end = x0 + (r.a ? Math.max(3 * k, aw) + g : 0) + (r.b ? Math.max(3 * k, bwid) : 0);
-    s += t(end + 10 * k, cy + lfs * 0.36, String(r.a + r.b), lfs, p.fg, { w: 700 });
+  if (spec.ones > 0) {
+    const y = top + rh * n + noteH + 16 * k;
+    s += `<line x1="${n1(b.x)}" x2="${n1(b.x + b.w)}" y1="${n1(y - 14 * k)}" y2="${n1(y - 14 * k)}" stroke="${p.grid}" stroke-width="${n1(Math.max(1, k))}"/>`;
+    s += t(b.x, y + 6 * k, spec.onesLabel, 15 * k, p.mut, { w: 600 });
+    let i = 0;
+    for (let l = 0; l < dotLines; l++) {
+      for (let c = 0; c < dotsPerLine && i < spec.ones; c++, i++) {
+        s += `<circle cx="${n1(b.x + 5 * k + c * gap)}" cy="${n1(y + 22 * k + l * 17 * k)}" r="${n1(5 * k)}" fill="${p.slate}" opacity="0.8"/>`;
+      }
+    }
+  }
+  return s;
+}
+
+/* ---------- track bars: host types ---------- */
+function track(spec: Track, b: Box, k: number, p: Pal, theme: Theme): string {
+  const n = spec.rows.length;
+  const stacked = b.w < 460;
+  const rh = Math.min(b.h / n, (stacked ? 60 : 52) * k);
+  const top = b.y + Math.max(0, (b.h - rh * n) / 2) * 0.3;
+  const fs = Math.min((stacked ? 15 : 18) * k, rh * 0.4);
+  const max = Math.max(1, ...spec.rows.map((r) => r.value));
+  const valW = textW("00", fs, CW.sansBold) + textW("100%", fs * 0.85, CW.sans) + 26 * k;
+  const lw = stacked ? 0 : Math.min(b.w * 0.42, Math.max(...spec.rows.map((r) => textW(r.label, fs, CW.sans))) + 4 * k);
+  const x0 = b.x + (stacked ? 0 : lw + 16 * k);
+  const bw = b.x + b.w - x0 - valW;
+  const th = Math.min(stacked ? 12 * k : 16 * k, rh * 0.3);
+  let s = "";
+  spec.rows.forEach((r, i) => {
+    const y = top + i * rh;
+    const cy = stacked ? y + rh - th / 2 - 6 * k : y + rh / 2;
+    const w = Math.max(th, (r.value / max) * bw);
+    if (stacked) s += t(b.x, y + fs * 1.05, fit(r.label, b.w - valW, fs), fs, r.hi ? p.fg : p.mut, { w: r.hi ? 700 : 500 });
+    else s += t(b.x, cy + fs * 0.34, fit(r.label, lw, fs), fs, r.hi ? p.fg : p.mut, { w: r.hi ? 700 : 500 });
+    s += rr(x0, cy - th / 2, bw, th, th / 2, p.track);
+    s += rr(x0, cy - th / 2, w, th, th / 2, r.hi ? `url(#hbar${"{U}"})` : r.soft ? "none" : BAR[theme]);
+    if (r.soft) s += `<rect x="${n1(x0 + 0.75 * k)}" y="${n1(cy - th / 2 + 0.75 * k)}" width="${n1(w - 1.5 * k)}" height="${n1(th - 1.5 * k)}" rx="${n1(th / 2)}" fill="none" stroke="${p.slate}" stroke-width="${n1(1.5 * k)}" stroke-dasharray="${n1(4 * k)} ${n1(3 * k)}"/>`;
+    const vx = b.x + b.w;
+    s += t(vx - textW(r.pct, fs * 0.85, CW.sans) - 8 * k, cy + fs * 0.34, String(r.value), fs, r.hi ? p.acc : p.fg, { w: 700, a: "end" });
+    s += t(vx, cy + fs * 0.32, r.pct, fs * 0.85, p.faint, { a: "end" });
   });
   return s;
 }
 
-function cols(spec: Cols, b: Box, k: number, p: Pal): string {
+/* ---------- columns: stalls, rate, stories ---------- */
+function cols(spec: Cols, b: Box, k: number, p: Pal, theme: Theme, uid: string): string {
   const rows = spec.rows;
   const n = rows.length;
-  const fs = 19 * k;
-  const axisH = spec.axis ? 30 * k : 0;
+  const fs = 17 * k;
+  const vfs = 18 * k;
+  const xNameH = spec.xName ? 28 * k : 0;
   const labelH = fs + 14 * k;
-  const valH = fs + 8 * k;
-  const plotTop = b.y + valH;
-  const plotBottom = b.y + b.h - labelH - axisH;
+  const reserve = spec.marker ? 56 * k : 26 * k;
+  const plotTop = b.y + reserve;
+  const plotBottom = b.y + b.h - labelH - xNameH;
   const max = Math.max(1, ...rows.map((r) => r.value));
-  const cw = b.w / n;
-  const bw = Math.min(cw * 0.66, 120 * k);
-  // skip every other x label when they would touch
+  const tk = ticks(max);
+  const topV = tk[tk.length - 1];
+  const yw = textW(String(topV), 13 * k, CW.sans) + 14 * k;
+  const left = b.x + yw;
+  const cw = (b.x + b.w - left) / n;
+  const bw = Math.min(cw * 0.64, 92 * k);
+  const Y = (v: number) => plotBottom - (v / topV) * (plotBottom - plotTop);
+  let s = "";
+  for (const v of tk) {
+    s += `<line x1="${n1(left)}" x2="${n1(b.x + b.w)}" y1="${n1(Y(v))}" y2="${n1(Y(v))}" stroke="${v === 0 ? p.hair : p.grid}" stroke-width="${n1(Math.max(1, (v === 0 ? 1.5 : 1) * k))}"/>`;
+    s += t(left - 10 * k, Y(v) + 4.5 * k, String(v), 13 * k, p.faint, { a: "end" });
+  }
+  s += t(b.x, b.y + 10 * k, spec.yName, 13 * k, p.faint, { w: 600 });
   const longest = Math.max(...rows.map((r) => textW(r.label, fs, CW.sans)));
   const every = longest + 8 * k > cw ? Math.ceil((longest + 8 * k) / cw) : 1;
-  let s = `<line x1="${n1(b.x)}" x2="${n1(b.x + b.w)}" y1="${n1(plotBottom)}" y2="${n1(plotBottom)}" stroke="${p.hair}" stroke-width="${n1(Math.max(1, 1.5 * k))}"/>`;
+  const tops: { x0: number; x1: number; y: number }[] = [];
   rows.forEach((r, i) => {
-    const cx = b.x + cw * i + cw / 2;
-    const h = r.value ? Math.max(3 * k, (r.value / max) * (plotBottom - plotTop)) : 0;
-    s += rr(cx - bw / 2, plotBottom - h, bw, h, Math.min(8 * k, bw / 2), r.hi ? p.acc : p.bar, true);
-    const showVal = n <= 14 || r.hi || r.value === max;
-    if (showVal) s += t(cx, plotBottom - h - 8 * k, String(r.value), fs, r.hi ? p.acc : p.fg, { a: "middle", w: 700 });
-    if (i % every === 0) s += t(cx, plotBottom + labelH - 4 * k, r.label, fs, r.hi ? p.fg : p.mut, { a: "middle", w: r.hi ? 700 : 500 });
+    const cx = left + cw * i + cw / 2;
+    const h = r.value ? Math.max(4 * k, ((plotBottom - plotTop) * r.value) / topV) : 0;
+    const rad = Math.min(bw * 0.3, 12 * k);
+    if (r.value) s += rr(cx - bw / 2, plotBottom - h, bw, h, rad, r.hi ? `url(#bar${uid})` : BAR[theme], true);
+    else s += `<circle cx="${n1(cx)}" cy="${n1(plotBottom - 3 * k)}" r="${n1(2.4 * k)}" fill="${p.slate}" opacity="0.7"/>`;
+    tops.push({ x0: cx - bw / 2, x1: cx + bw / 2, y: plotBottom - h - (n <= 14 || r.hi ? vfs + 6 * k : 0) });
+    if (n <= 14 || r.hi) s += t(cx, plotBottom - h - 9 * k, String(r.value), vfs, r.hi ? p.acc : p.fg, { a: "middle", w: 700 });
+    if (i % every === 0) s += t(cx, plotBottom + labelH - 5 * k, r.label, fs, r.hi ? p.fg : p.mut, { a: "middle", w: r.hi ? 700 : 500 });
   });
-  if (spec.axis) s += t(b.x + b.w / 2, b.y + b.h - 2 * k, spec.axis, fs * 0.92, p.faint, { a: "middle", w: 500 });
+  if (spec.xName) s += t(left + (b.x + b.w - left) / 2, b.y + b.h - 4 * k, spec.xName, 14 * k, p.faint, { a: "middle", w: 500 });
+  if (spec.marker) {
+    const x = left + spec.marker.pos * cw;
+    s += `<line x1="${n1(x)}" x2="${n1(x)}" y1="${n1(b.y + 6 * k)}" y2="${n1(plotBottom)}" stroke="${p.fg}" stroke-width="${n1(1.6 * k)}" stroke-dasharray="${n1(2 * k)} ${n1(4 * k)}" stroke-linecap="round" opacity="0.55"/>`;
+    s += `<circle cx="${n1(x)}" cy="${n1(b.y + 6 * k)}" r="${n1(4 * k)}" fill="${p.fg}"/>`;
+    const co = callout(x + 14 * k, b.y - 2 * k, [spec.marker.head, spec.marker.sub], k, p, { maxW: b.x + b.w - x - 20 * k });
+    s += co.s;
+  }
+  if (spec.note) {
+    const i = spec.note.i;
+    const cx = left + cw * i + cw / 2;
+    const hi = rows[i].value;
+    const topY = plotBottom - ((plotBottom - plotTop) * hi) / topV;
+    const nm = Math.min(200 * k, b.w * 0.34);
+    const sub = callout(0, 0, [spec.note.head, spec.note.sub], k, p, { maxW: nm });
+    const boxW = sub.w + 6 * k;
+    const free = (x0: number, x1: number, y1: number) => tops.every((q) => q.x1 < x0 || q.x0 > x1 || q.y > y1 + 4 * k);
+    const rx = cx + bw / 2 + 18 * k;
+    const lx = cx - bw / 2 - 18 * k - boxW;
+    const y0 = topY - 4 * k;
+    let place: { x: number; y: number; a: "start" | "end"; side: 1 | -1 } | null = null;
+    if (rx + boxW < b.x + b.w && free(rx - 4 * k, rx + boxW, y0 + sub.h)) place = { x: rx, y: y0, a: "start", side: 1 };
+    else if (lx > left && free(lx - 4 * k, lx + boxW + 4 * k, y0 + sub.h)) place = { x: lx + boxW, y: y0, a: "end", side: -1 };
+    if (place) {
+      s += callout(place.x, place.y, [spec.note.head, spec.note.sub], k, p, { a: place.a, maxW: nm }).s;
+      const ax = cx + (place.side * bw) / 2 + place.side * 3 * k;
+      s += `<path d="M${n1(ax)} ${n1(topY + 4 * k)}H${n1(place.x - (place.side === 1 ? 6 * k : -6 * k))}" stroke="${p.acc}" stroke-width="${n1(1.5 * k)}" stroke-linecap="round" opacity="0.7"/>`;
+    }
+  }
   return s;
 }
 
-function line(spec: Line, b: Box, k: number, p: Pal, uid: string): string {
+/* ---------- stepped area: growth ---------- */
+function step(spec: Step, b: Box, k: number, p: Pal, uid: string): string {
   const pts = spec.points;
-  const fs = 19 * k;
-  const padL = 8 * k;
-  const padR = 34 * k;
-  const labelH = fs + 14 * k;
-  const top = b.y + fs + 14 * k;
+  const narrow = b.w < 460;
+  const fs = 17 * k;
+  const labelH = fs + 16 * k;
+  const rightM = narrow ? 92 * k : 168 * k;
+  const plotTop = b.y + 32 * k;
   const bottom = b.y + b.h - labelH;
+  const maxV = Math.max(...pts.map((q) => q.value));
+  const tk = ticks(maxV * 1.1);
+  const topV = tk[tk.length - 1];
+  const yw = textW(String(topV), 13 * k, CW.sans) + 14 * k;
+  const left = b.x + yw + 8 * k;
+  const right = b.x + b.w - rightM;
   const t0 = pts[0].t;
   const t1 = pts[pts.length - 1].t;
-  const maxV = Math.max(...pts.map((q) => q.value));
-  const yMax = Math.ceil((maxV * 1.12) / 10) * 10;
-  const X = (tt: number) => b.x + padL + ((tt - t0) / Math.max(1, t1 - t0)) * (b.w - padL - padR);
-  const Y = (v: number) => bottom - (v / yMax) * (bottom - top);
+  const X = (v: number) => left + ((v - t0) / Math.max(1, t1 - t0)) * (right - left);
+  const Y = (v: number) => bottom - (v / topV) * (bottom - plotTop);
   let s = "";
-  // zero line and one reference line, so the scale is honest about starting at zero
-  s += `<line x1="${n1(b.x)}" x2="${n1(b.x + b.w)}" y1="${n1(bottom)}" y2="${n1(bottom)}" stroke="${p.hair}" stroke-width="${n1(Math.max(1, 1.5 * k))}"/>`;
-  const mid = yMax / 2;
-  s += `<line x1="${n1(b.x)}" x2="${n1(b.x + b.w)}" y1="${n1(Y(mid))}" y2="${n1(Y(mid))}" stroke="${p.hair}" stroke-width="${n1(Math.max(1, k))}" stroke-dasharray="${n1(4 * k)} ${n1(6 * k)}"/>`;
-  s += t(b.x + b.w, Y(mid) - 6 * k, String(mid), fs * 0.9, p.faint, { a: "end" });
-  s += t(b.x + b.w, bottom - 6 * k, "0", fs * 0.9, p.faint, { a: "end" });
-  const path = pts.map((q, i) => `${i ? "L" : "M"}${n1(X(q.t))} ${n1(Y(q.value))}`).join("");
-  const area = `${path}L${n1(X(t1))} ${n1(bottom)}L${n1(X(t0))} ${n1(bottom)}Z`;
-  s += `<defs><linearGradient id="ar${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.acc}" stop-opacity="0.26"/><stop offset="1" stop-color="${p.acc}" stop-opacity="0"/></linearGradient></defs>`;
-  s += `<path d="${area}" fill="url(#ar${uid})"/>`;
-  s += `<path d="${path}" fill="none" stroke="${p.acc}" stroke-width="${n1(4 * k)}" stroke-linejoin="round" stroke-linecap="round"/>`;
-  const every = pts.length > 8 ? 2 : 1;
+  for (const v of tk) {
+    s += `<line x1="${n1(left - 6 * k)}" x2="${n1(b.x + b.w)}" y1="${n1(Y(v))}" y2="${n1(Y(v))}" stroke="${v === 0 ? p.hair : p.grid}" stroke-width="${n1(Math.max(1, (v === 0 ? 1.5 : 1) * k))}"/>`;
+    s += t(left - 14 * k, Y(v) + 4.5 * k, String(v), 13 * k, p.faint, { a: "end" });
+  }
+  s += t(b.x, b.y + 10 * k, spec.unit, 13 * k, p.faint, { w: 600 });
+  // the line is a step: a count holds from one pull until the next
+  let d = `M${n1(X(pts[0].t))} ${n1(Y(pts[0].value))}`;
+  for (let i = 1; i < pts.length; i++) d += `H${n1(X(pts[i].t))}V${n1(Y(pts[i].value))}`;
+  s += `<path d="${d}V${n1(bottom)}H${n1(X(pts[0].t))}Z" fill="url(#ar${uid})"/>`;
+  s += `<path d="${d}" fill="none" stroke="${p.acc}" stroke-width="${n1(3.4 * k)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const lfs = fs * 0.94;
+  const shown: boolean[] = pts.map(() => false);
+  let edge = -1e9;
+  pts.forEach((q, i) => {
+    const w = textW(q.label, lfs, CW.sans);
+    const x = X(q.t);
+    const l = i === 0 ? x : x - w / 2;
+    if (l >= edge + 8 * k) { shown[i] = true; edge = l + w; }
+  });
+  {
+    const li = pts.length - 1;
+    const lw = textW(pts[li].label, lfs, CW.sans);
+    const ll = X(pts[li].t) - lw;
+    shown[li] = true;
+    for (let i = li - 1; i >= 0; i--) {
+      const w = textW(pts[i].label, lfs, CW.sans);
+      const r = (i === 0 ? X(pts[i].t) + w : X(pts[i].t) + w / 2);
+      if (shown[i] && r + 8 * k > ll) shown[i] = false; else if (shown[i]) break;
+    }
+  }
   pts.forEach((q, i) => {
     const x = X(q.t);
     const y = Y(q.value);
     const last = i === pts.length - 1;
-    s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1((last ? 8 : 6) * k)}" fill="${p.bg}" stroke="${p.acc}" stroke-width="${n1(3.5 * k)}"/>`;
-    if (last) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(3.5 * k)}" fill="${p.acc}"/>`;
-    s += t(x, y - 16 * k, String(q.value), fs * (last ? 1.1 : 1), last ? p.acc : p.fg, { a: i === 0 ? "start" : "middle", w: 700 });
-    if (i % every === 0 || last) s += t(x, bottom + labelH - 4 * k, q.label, fs * 0.95, p.mut, { a: i === 0 ? "start" : last ? "end" : "middle" });
+    s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1((last ? 7.5 : 5.5) * k)}" fill="${p.bg}" stroke="${p.acc}" stroke-width="${n1(3 * k)}"/>`;
+    if (last) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(3 * k)}" fill="${p.acc}"/>`;
+    s += t(x, y - 15 * k, String(q.value), fs * (last ? 1.12 : 1), last ? p.acc : p.fg, { a: i === 0 ? "start" : "middle", w: 700 });
+    if (shown[i]) s += t(x, bottom + labelH - 5 * k, q.label, lfs, p.mut, { a: i === 0 ? "start" : last ? "end" : "middle" });
   });
+  // the change, bracketed on the right
+  const yA = Y(pts[0].value);
+  const yB = Y(pts[pts.length - 1].value);
+  const bx = right + 26 * k;
+  if (Math.abs(yA - yB) > 6 * k) {
+    s += `<path d="M${n1(X(pts[0].t))} ${n1(yA)}H${n1(bx)}" stroke="${p.acc}" stroke-width="${n1(1.3 * k)}" stroke-dasharray="${n1(2 * k)} ${n1(4 * k)}" stroke-linecap="round" opacity="0.8"/>`;
+    s += `<path d="M${n1(bx - 5 * k)} ${n1(yB)}H${n1(bx + 5 * k)}M${n1(bx)} ${n1(yB)}V${n1(yA)}M${n1(bx - 5 * k)} ${n1(yA)}H${n1(bx + 5 * k)}" fill="none" stroke="${p.acc}" stroke-width="${n1(2 * k)}" stroke-linecap="round"/>`;
+    const ty = (yA + yB) / 2;
+    const hs = (narrow ? 22 : 34) * k;
+    s += t(bx + 14 * k, ty + hs * 0.2, spec.delta.head, hs, p.acc, { font: FONT_DISP, w: 700, ls: -0.03 });
+    wrap(spec.delta.sub, narrow ? 80 * k : 130 * k, 14.5 * k, CW.sans, 2).forEach((l, i) => (s += t(bx + 14 * k, ty + hs * 0.2 + 22 * k + i * 19 * k, l, 14.5 * k, p.mut)));
+  }
+  return s;
+}
+
+/* ---------- US tile map: sites by state ---------- */
+const TILE_POS: Record<string, [number, number]> = {
+  AK: [0, 0], ME: [10, 0], VT: [9, 1], NH: [10, 1],
+  WA: [0, 2], ID: [1, 2], MT: [2, 2], ND: [3, 2], MN: [4, 2], IL: [5, 2], WI: [6, 2], MI: [7, 2], NY: [8, 2], RI: [9, 2], MA: [10, 2],
+  OR: [0, 3], NV: [1, 3], WY: [2, 3], SD: [3, 3], IA: [4, 3], IN: [5, 3], OH: [6, 3], PA: [7, 3], NJ: [8, 3], CT: [9, 3],
+  CA: [0, 4], UT: [1, 4], CO: [2, 4], NE: [3, 4], MO: [4, 4], KY: [5, 4], WV: [6, 4], VA: [7, 4], MD: [8, 4], DE: [9, 4],
+  AZ: [1, 5], NM: [2, 5], KS: [3, 5], AR: [4, 5], TN: [5, 5], NC: [6, 5], SC: [7, 5], DC: [8, 5],
+  OK: [3, 6], LA: [4, 6], MS: [5, 6], AL: [6, 6], GA: [7, 6],
+  HI: [0, 7], TX: [3, 7], FL: [8, 7],
+};
+
+function tiles(spec: Tiles, b: Box, k: number, p: Pal, theme: Theme): string {
+  const by = new Map(spec.rows.map((r) => [r.abbr, r]));
+  const wide = b.w >= 700;
+  const gap = 4 * k;
+  const legendH = 34 * k;
+  const gridMaxW = wide ? b.w * 0.56 : b.w;
+  const ts = Math.min((gridMaxW - gap * 10) / 11, (b.h - legendH - gap * 7) / 8);
+  const gw = ts * 11 + gap * 10;
+  const gh = ts * 8 + gap * 7;
+  const gx = b.x + (wide ? 0 : (b.w - gw) / 2);
+  const gy = b.y + 2 * k;
+  const max = Math.max(1, ...spec.rows.map((r) => r.open + r.up));
+  const step = (v: number) => (v <= 0 ? -1 : Math.min(4, Math.floor(((v - 1) / Math.max(1, max - 1)) * 4.999)));
+  // sqrt-ish spread so one big state does not wash everything else out
+  const level = (v: number) => (v <= 0 ? -1 : Math.min(4, Math.max(0, Math.round(Math.sqrt((v - 1) / Math.max(1, max - 1)) * 4))));
+  void step;
+  let s = "";
+  const nfs = Math.max(9 * k, ts * 0.42);
+  const afs = Math.max(8 * k, ts * 0.27);
+  for (const [abbr, [c, r]] of Object.entries(TILE_POS)) {
+    const x = gx + c * (ts + gap);
+    const y = gy + r * (ts + gap);
+    const row = by.get(abbr);
+    const v = row ? row.open + row.up : 0;
+    const lv = level(v);
+    if (lv < 0) {
+      s += `<rect x="${n1(x + 0.5 * k)}" y="${n1(y + 0.5 * k)}" width="${n1(ts - k)}" height="${n1(ts - k)}" rx="${n1(ts * 0.16)}" fill="none" stroke="${p.hair}" stroke-width="${n1(k)}"/>`;
+      s += t(x + ts / 2, y + ts / 2 + afs * 0.36, abbr, afs, p.faint, { a: "middle", w: 600 });
+      continue;
+    }
+    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(ts)}" height="${n1(ts)}" rx="${n1(ts * 0.16)}" fill="${p.seq[lv]}"/>`;
+    s += t(x + ts * 0.12, y + ts * 0.31, abbr, afs, p.seqText[lv], { w: 700, op: 0.92 });
+    s += t(x + ts / 2, y + ts * 0.8, String(v), nfs, p.seqText[lv], { a: "middle", w: 700 });
+    if (row && row.open > 0) s += `<circle cx="${n1(x + ts - ts * 0.17)}" cy="${n1(y + ts * 0.2)}" r="${n1(Math.max(2.2 * k, ts * 0.065))}" fill="${p.seqText[lv]}"/>`;
+  }
+  // key: the scale and what the dot means
+  const ky = gy + gh + 24 * k;
+  const kw = Math.min(140 * k, gw * 0.4);
+  p.seq.forEach((c, i) => (s += `<rect x="${n1(gx + (kw / 5) * i)}" y="${n1(ky - 9 * k)}" width="${n1(kw / 5 + 0.5)}" height="${n1(9 * k)}" fill="${c}" ${i === 0 ? `rx="${n1(3 * k)}"` : ""}/>`));
+  s += t(gx, ky + 14 * k, "1", 12.5 * k, p.faint);
+  s += t(gx + kw, ky + 14 * k, `${max} sites`, 12.5 * k, p.faint, { a: "end" });
+  const dx = gx + kw + 26 * k;
+  s += `<circle cx="${n1(dx)}" cy="${n1(ky - 4.5 * k)}" r="${n1(3 * k)}" fill="${p.mut}"/>`;
+  s += t(dx + 10 * k, ky - 0.5 * k, "has an open site", 13 * k, p.mut);
+  if (wide) {
+    // right: the five biggest, as small stacked bars with their names
+    const px = gx + gw + 56 * k;
+    const pw = b.x + b.w - px;
+    s += t(px, b.y + 14 * k, "Most sites", 13 * k, p.faint, { w: 600, ls: 0.04 });
+    const rh = Math.min(50 * k, (b.h - 120 * k) / 5);
+    const topN = spec.top.length;
+    const mx = Math.max(...spec.top.map((r) => r.open + r.up));
+    const nfsz = 18 * k;
+    const vw = textW(String(mx), nfsz, CW.sansBold) + 26 * k;
+    const lw = Math.min(pw * 0.38, Math.max(...spec.top.map((r) => textW(r.name, nfsz, CW.sans))) + 6 * k);
+    const x0 = px + lw + 12 * k;
+    const bw = px + pw - x0 - vw;
+    spec.top.forEach((r, i) => {
+      const cy = b.y + 44 * k + i * rh + rh / 2 - 8 * k;
+      const wa = (r.open / mx) * bw;
+      const wb = (r.up / mx) * bw;
+      s += t(px, cy + nfsz * 0.34, fit(r.name, lw, nfsz), nfsz, i === 0 ? p.fg : p.mut, { w: i === 0 ? 700 : 500 });
+      const h = 14 * k;
+      s += rr(x0, cy - h / 2, bw, h, h / 2, p.track);
+      if (r.open) s += rr(x0, cy - h / 2, Math.max(h, wa), h, h / 2, p.acc);
+      if (r.up) s += rr(x0 + (r.open ? Math.max(h, wa) - h / 2 : 0), cy - h / 2, Math.max(h, wb) + (r.open ? h / 2 : 0), h, h / 2, BAR[theme]);
+      s += t(x0 + (r.open ? Math.max(h, wa) : 0) + (r.up ? Math.max(h, wb) : 0) + 10 * k, cy + nfsz * 0.34, String(r.open + r.up), nfsz, i === 0 ? p.acc : p.fg, { w: 700 });
+    });
+    // direct key for the two colours
+    const ly = b.y + 44 * k + topN * rh + 12 * k;
+    s += `<circle cx="${n1(px + 5 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${p.acc}"/>` + t(px + 16 * k, ly + 4.5 * k, "open", 14 * k, p.mut, { w: 600 });
+    s += `<circle cx="${n1(px + 78 * k)}" cy="${n1(ly)}" r="${n1(5 * k)}" fill="${BAR[theme]}"/>` + t(px + 89 * k, ly + 4.5 * k, "upcoming", 14 * k, p.mut, { w: 600 });
+  }
   return s;
 }
 
 /** The whole card as an SVG string. `uid` keeps gradient ids apart when several cards share a page. */
 export function renderChart(m: ChartModel, o: RenderOpts): string {
   const p = PAL[o.theme];
-  const f = frame({ W: o.W, H: o.H, k: o.k, theme: o.theme, title: m.title, subtitle: m.subtitle, credit: m.credit, host: o.host, uid: m.id });
+  const f = frame({ W: o.W, H: o.H, k: o.k, theme: o.theme, title: m.title, hl: m.hl, subtitle: m.subtitle, asOf: m.asOf, host: o.host, uid: m.id });
   let body = "";
   switch (m.spec.kind) {
-    case "hbar":
-      body = hbar(m.spec, f.body, o.k, p);
+    case "lolli":
+      body = lolli(m.spec, f.body, o.k, p, o.theme);
       break;
-    case "stack":
-      body = stack(m.spec, f.body, o.k, p);
+    case "track":
+      body = track(m.spec, f.body, o.k, p, o.theme).replace(/\{U\}/g, m.id);
       break;
     case "cols":
-      body = cols(m.spec, f.body, o.k, p);
+      body = cols(m.spec, f.body, o.k, p, o.theme, m.id);
       break;
-    case "line":
-      body = line(m.spec, f.body, o.k, p, m.id);
+    case "step":
+      body = step(m.spec, f.body, o.k, p, m.id);
+      break;
+    case "tiles":
+      body = tiles(m.spec, f.body, o.k, p, o.theme);
       break;
   }
-  return svgOpen(o.W, o.H, m.alt) + f.svg + body + "</svg>";
+  return svgOpen(o.W, o.H, m.alt) + defs(m.id, p) + f.svg + body + "</svg>";
 }
 
 export { FONT_DISP };

@@ -122,7 +122,7 @@ export default async function Page() {
               </li>
             </ul>
             <p className="w-note">
-              Customer-owned Superchargers on Tesla&apos;s public Find Us map: open sites as of {st.openAsOf}, coming
+              Source: Tesla. Customer-owned Superchargers on Tesla&apos;s public map: open sites as of {st.openAsOf}, coming
               soon as of {st.upcomingAsOf}. Tesla publishes no official list of Supercharger for Business sites, so
               treat these as a floor. EVwire has written about {st.covered} of the {st.openSites} open sites.
             </p>
@@ -246,7 +246,7 @@ export default async function Page() {
             </h2>
             <p className="w-lede">
               {d.cards.length} sites across {d.totalStories} published stories. Stall counts and prices come from
-              Tesla&apos;s Find Us map (the price is for non-Tesla drivers). Another {d.otherStories} stories cover the
+              Tesla&apos;s public map (the price is for non-Tesla drivers). Another {d.otherStories} stories cover the
               programme, the market and the money.{" "}
               <a href="https://evwire.com/t/tesla-third-party-superchargers" target="_blank" rel="noopener">
                 All of them on evwire.com
@@ -340,7 +340,7 @@ export default async function Page() {
             </a>
           </nav>
           <p>
-            Site data: Tesla Find Us, open sites as of {st.openAsOf}.
+            Source: Tesla, open sites as of {st.openAsOf}.
           </p>
         </div>
       </footer>

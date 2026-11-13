@@ -12,8 +12,8 @@ export default function FindUsPricingBlock({ pricing }: { pricing: FindUsPricing
   const views = present && pricing ? pricingViews(pricing) : [];
 
   return (
-    <section className="findus-pricing" aria-label="Find Us pricing">
-      <h3>Find Us pricing</h3>
+    <section className="findus-pricing" aria-label="Tesla pricing">
+      <h3>Tesla pricing</h3>
       {!present ? (
         <p className="price-missing"><em>not stated</em></p>
       ) : (
@@ -46,10 +46,10 @@ export default function FindUsPricingBlock({ pricing }: { pricing: FindUsPricing
             </div>
           ))}
           {pricing?.capture === "screenshot" && pricing.captured_on && (
-            <p className="price-note">Captured {fmtDate(pricing.captured_on)} from a Tesla Find Us page. Not a live pull.</p>
+            <p className="price-note">Captured {fmtDate(pricing.captured_on)} from a Tesla page. Not a live pull.</p>
           )}
           {pricing?.capture === "live" && pricing.pulled_at && (
-            <p className="price-note">Pulled {fmtDate(pricing.pulled_at.slice(0, 10))} from Tesla Find Us.</p>
+            <p className="price-note">Pulled {fmtDate(pricing.pulled_at.slice(0, 10))} from Tesla.</p>
           )}
           {pricing?.capture_note && <p className="price-note">{pricing.capture_note}</p>}
         </>

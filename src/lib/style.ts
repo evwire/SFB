@@ -95,7 +95,7 @@ export function humanisePublicCopy(text: string): string {
     .replace(/\bownershipType\s*=\s*CUSTOMER_OWNED\b/gi, "")
     .replace(/\bownership_type\s*=\s*Customer Owned\b/gi, "")
     .replace(/\bmapOwnershipType\s*=\s*Customer Owned\b/gi, "")
-    .replace(/\bget-location-details\b/gi, "Tesla Find Us")
+    .replace(/\bget-location-details\b/gi, "Tesla")
     .replace(/\bbrandName\b/g, "operator name")
     .replace(/\bCUSTOMER_OWNED\b/gi, "customer-owned")
     .replace(/\s{2,}/g, " ")

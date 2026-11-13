@@ -48,7 +48,7 @@ export async function GET() {
     lines.push(`- **${s.name}**, ${loc}. ${bits.join("; ")}. ${s.summary} Source: ${s.sourceUrl}`);
     if (s.milestone) lines.push(`  - Milestone: ${s.milestone}`);
     const pricing = pricingPlain(s.findusPricing);
-    if (pricing) lines.push(`  - Find Us pricing (per site, not the programme fee): ${pricing}`);
+    if (pricing) lines.push(`  - Tesla pricing (per site, not the programme fee): ${pricing}`);
     if (s.unstated.length) lines.push(`  - Our coverage did not state: ${s.unstated.join(", ")}`);
   }
   lines.push("");

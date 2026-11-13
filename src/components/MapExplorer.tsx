@@ -473,7 +473,7 @@ export default function MapExplorer({
                   tabIndex={0}
                   role="button"
                   data-slug={s.slug}
-                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.${isNew ? ` New since ${newSince ?? "last check"}.` : ""}`}
+                  aria-label={`${s.name}, ${s.city ?? s.state}. ${style.label}.${covered ? ` ${COVERED_STYLE.label}.` : ""}${isFrancis ? " Francis Energy." : ""} ${s.stalls ?? "unknown number of"} stalls.${isNew ? ` New since ${newSince ?? "the previous Tesla pull"}.` : ""}`}
                 >
                   {isArea && <circle className="halo" r={r + 7} style={{ stroke: pinColor }} />}
                   {isNew && <circle className="new-ring" r={r + 5} />}
@@ -617,7 +617,7 @@ export default function MapExplorer({
                   rel="noopener"
                 >
                   {selected.sourceUrl.includes("tesla.com/findus")
-                    ? "Open on Tesla Find Us"
+                    ? "Open on Tesla’s site"
                     : selected.articles?.length
                       ? "Open source link"
                       : "Read the EVwire story"}

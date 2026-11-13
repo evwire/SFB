@@ -480,7 +480,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             <h2>Every site, in full</h2>
             <p className="section-note">
               {sites.length} records
-              {isTesla ? " · links open on Tesla Find Us" : ""}
+              {isTesla ? " · links open on Tesla" : ""}
               {isUpcoming || isBoth ? " · operator not shown on upcoming until open" : ""}
             </p>
           </div>
@@ -515,7 +515,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
             {isTesla ? (
               isBoth ? (
                 <>
-                  Open and upcoming customer-owned Superchargers from Tesla Find Us. Upcoming
+                  Open and upcoming customer-owned Superchargers from Tesla. Upcoming
                   sites show no operator until they open. Spotted a mismatch?{" "}
                   <a
                     className="link"
@@ -539,7 +539,7 @@ export default function RegionApp({ us, europe, usUpcoming, europeUpcoming, sciC
                 </>
               ) : (
                 <>
-                  Open sites come from Tesla Find Us, limited to Superchargers listed as
+                  Open sites come from Tesla, limited to Superchargers listed as
                   customer-owned. US and Europe are tracked separately. Spotted a mismatch?{" "}
                   <a
                     className="link"

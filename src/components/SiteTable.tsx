@@ -39,7 +39,7 @@ export default function SiteTable({ sites, areaNoun = "states", upcoming = false
               <tr key={s.slug}>
                 <th scope="row">
                   <a className="link" href={s.sourceUrl} target="_blank" rel="noopener">{s.name}</a>
-                  {newIds?.has(s.slug) && <span className="new-tag" title={newSince ? `New since ${newSince}` : "New since last check"}>New</span>}
+                  {newIds?.has(s.slug) && <span className="new-tag" title={newSince ? `New since ${newSince}` : "New since the previous Tesla pull"}>New</span>}
                   <span className="cell-sub">
                     {s.city ? `${s.city}, ${s.state}` : `${s.state}, exact town not stated`}
                     {s.siteClass === "Heavy-duty" && " · heavy-duty MCS"}
@@ -60,7 +60,7 @@ export default function SiteTable({ sites, areaNoun = "states", upcoming = false
       </table>
       <p className="table-foot">
         <span className="mono">n/s</span> means Tesla did not publish that figure. Links open the
-        Tesla Find Us page.{" "}
+        Tesla page.{" "}
         {upcoming
           ? "Operator isn’t shown on upcoming sites until they open."
           : "Operator names come from Tesla."}

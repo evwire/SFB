@@ -106,7 +106,7 @@ export default async function SizePage() {
             <img className="foot-brand-logo" src="/evwire-wordmark.png" alt="EVwire" />
           </a>
           <p>
-            Stall counts are from Tesla Find Us for open US customer-owned Superchargers.
+            Stall counts are from Tesla for open US customer-owned Superchargers.
             Upcoming sites have no stall count until they open. Spotted a mismatch?{" "}
             <a
               className="link"

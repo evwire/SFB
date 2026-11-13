@@ -1,7 +1,7 @@
 import type { Region, SciCompare } from "@/lib/types";
 
 /**
- * Side-by-side Tesla Find Us Tesla’s list vs SCI [Operator] bracket heuristic.
+ * Side-by-side Tesla Tesla’s list vs SCI [Operator] bracket heuristic.
  * Numbers come from data/sci-compare.json (refreshed SCI + Tesla files). Not Tesla’s list for SCI.
  */
 export default function SciComparePanel({
@@ -18,7 +18,7 @@ export default function SciComparePanel({
     <section id="compare" className="sci-compare glass">
       <div className="sci-compare-head">
         <div>
-          <h2>Tesla Find Us vs Supercharge.info</h2>
+          <h2>Tesla’s list vs Supercharge.info</h2>
           <p className="section-note">
             {regionLabel} · snapshot {compare.snapshot_label}
           </p>
@@ -41,7 +41,7 @@ export default function SciComparePanel({
             Status
           </div>
           <div role="columnheader" className="sci-cell">
-            Tesla Find Us
+            Tesla
             <span className="sci-sub">Tesla’s list</span>
           </div>
           <div role="columnheader" className="sci-cell">

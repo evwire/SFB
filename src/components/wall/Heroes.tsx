@@ -97,7 +97,7 @@ export default function Heroes({
         <div className="c-band">
           <div className="c-kicker">
             <span>Supercharger for Business</span>
-            <span className="c-date">Tesla Find Us, open sites as of {asOf}</span>
+            <span className="c-date">Source: Tesla, open sites as of {asOf}</span>
           </div>
           <div className="c-main">
             <div className="c-head">

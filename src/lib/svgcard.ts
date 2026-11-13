@@ -24,6 +24,13 @@ export const PAL = {
     landline: "#CFD9D5",
     auraA: ["#1B9152", 0.16],
     auraB: ["#388ADD", 0.12],
+    blue: "#3D7EC4",
+    slate: "#8EA29B",
+    grid: "rgba(11,17,22,0.07)",
+    track: "rgba(11,17,22,0.055)",
+    seq: ["#E4F2EA", "#BEE2CE", "#82C9A0", "#3DAA70", "#1B9152"],
+    seqText: ["#15693E", "#15693E", "#0B3A22", "#FFFFFF", "#FFFFFF"],
+    pane: "rgba(255,255,255,0.72)",
   },
   dark: {
     bg: "#06080B",
@@ -42,6 +49,13 @@ export const PAL = {
     landline: "#0A0F13",
     auraA: ["#2FD17A", 0.2],
     auraB: ["#388ADD", 0.16],
+    blue: "#6AA6E8",
+    slate: "#5C6B76",
+    grid: "rgba(255,255,255,0.08)",
+    track: "rgba(255,255,255,0.06)",
+    seq: ["#16281F", "#1B4630", "#216C46", "#2AA568", "#5FE39A"],
+    seqText: ["#7FD3A6", "#A5E6C4", "#E6FBEF", "#06210F", "#06210F"],
+    pane: "rgba(16,21,27,0.78)",
   },
 } as const;
 export type Pal = (typeof PAL)[Theme];
@@ -96,28 +110,29 @@ export type FrameOpts = {
   k: number;
   theme: Theme;
   title: string;
+  /** a phrase inside the title that gets the brand colour */
+  hl?: string;
   subtitle?: string;
-  /** bottom-left credit: what the data is and its date */
-  credit: string;
+  /** bottom-left: when the data is from ("Data as of 12 Nov 2026"). Never a source line. */
+  asOf: string;
   host: string;
   /** keeps gradient ids unique when several cards share one page */
   uid?: string;
-  /** the picture used as the page background of a card is drawn by the caller when false */
   aura?: boolean;
 };
 
 /** The wordmark: the glowing dot, then EVwire.com, with the site's host under it. Anchored bottom right. */
 export function wordmark(o: { k: number; host: string }, p: Pal, right: number, base: number) {
   const k = o.k;
-  const fs = 24 * k;
+  const fs = 22 * k;
   const nameW = textW("EVwire.com", fs, CW.sansBold);
-  const dotR = 5.5 * k;
+  const dotR = 5 * k;
   const dotX = right - nameW - 14 * k;
   return (
-    `<circle cx="${n1(dotX)}" cy="${n1(base - fs * 0.34)}" r="${n1(dotR * 2.4)}" fill="${p.acc}" opacity="0.22"/>` +
+    `<circle cx="${n1(dotX)}" cy="${n1(base - fs * 0.34)}" r="${n1(dotR * 2.4)}" fill="${p.acc}" opacity="0.2"/>` +
     `<circle cx="${n1(dotX)}" cy="${n1(base - fs * 0.34)}" r="${n1(dotR)}" fill="${p.acc}"/>` +
     `<text x="${n1(right)}" y="${n1(base)}" text-anchor="end" font-family="${FONT_SANS}" font-weight="700" font-size="${n1(fs)}" letter-spacing="${n1(-0.03 * fs)}" fill="${p.fg}">EVwire.com</text>` +
-    `<text x="${n1(right)}" y="${n1(base + 19 * k)}" text-anchor="end" font-family="${FONT_SANS}" font-weight="500" font-size="${n1(14 * k)}" fill="${p.mut}">${esc(o.host)}</text>`
+    `<text x="${n1(right)}" y="${n1(base + 18 * k)}" text-anchor="end" font-family="${FONT_SANS}" font-weight="500" font-size="${n1(13.5 * k)}" fill="${p.mut}">${esc(o.host)}</text>`
   );
 }
 
@@ -134,45 +149,57 @@ export function auraBg(o: { W: number; H: number; theme: Theme; uid?: string }):
   );
 }
 
-/** Background, headline, optional subtitle and the footer. Returns the markup and the free area for the chart. */
+/** Background, eyebrow, headline, subtitle and footer. Returns the markup and the free area for the chart. */
 export function frame(o: FrameOpts): { svg: string; body: Box; footerTop: number } {
   const p = PAL[o.theme];
   const k = o.k;
-  const pad = 44 * k;
-  const titleFs = 38 * k;
-  const maxTitleLines = o.W < 520 ? 4 : 2;
-  const titleLines = wrap(o.title, o.W - pad * 2, titleFs, CW.disp, maxTitleLines);
-  let y = pad + titleFs * 0.82;
+  const narrow = o.W < 520;
+  const pad = 48 * k;
+  let y = 40 * k;
   let head = "";
+  // eyebrow
+  const efs = 12.5 * k;
+  head += `<circle cx="${n1(pad + 4 * k)}" cy="${n1(y + efs * 0.4)}" r="${n1(4 * k)}" fill="${p.acc}"/>`;
+  head += `<text x="${n1(pad + 16 * k)}" y="${n1(y + efs * 0.78)}" font-family="${FONT_SANS}" font-weight="700" font-size="${n1(efs)}" letter-spacing="${n1(0.12 * efs)}" fill="${p.acc}">SUPERCHARGER FOR BUSINESS</text>`;
+  y += efs + 14 * k;
+  const titleFs = (narrow ? 34 : 40) * k;
+  const titleLines = wrap(o.title, o.W - pad * 2, titleFs, CW.disp, narrow ? 4 : 2);
+  let ty = y + titleFs * 0.86;
   for (const line of titleLines) {
-    head += `<text x="${n1(pad)}" y="${n1(y)}" font-family="${FONT_DISP}" font-weight="700" font-size="${n1(titleFs)}" letter-spacing="${n1(-0.02 * titleFs)}" fill="${p.fg}">${esc(line)}</text>`;
-    y += titleFs * 1.12;
+    let inner = esc(line);
+    if (o.hl && line.includes(o.hl)) {
+      const [a, b] = line.split(o.hl);
+      inner = `${esc(a)}<tspan fill="${p.acc}">${esc(o.hl)}</tspan>${esc(b ?? "")}`;
+    }
+    head += `<text x="${n1(pad)}" y="${n1(ty)}" font-family="${FONT_DISP}" font-weight="700" font-size="${n1(titleFs)}" letter-spacing="${n1(-0.028 * titleFs)}" fill="${p.fg}">${inner}</text>`;
+    ty += titleFs * 1.08;
   }
-  y -= titleFs * 1.12;
+  y = ty - titleFs * 1.08 + titleFs * 0.2;
   if (o.subtitle) {
-    const sfs = 19 * k;
-    const sub = wrap(o.subtitle, o.W - pad * 2, sfs, CW.sans, o.W < 520 ? 3 : 2);
-    y += 12 * k;
+    const sfs = (narrow ? 15.5 : 18) * k;
+    const sub = wrap(o.subtitle, o.W - pad * 2, sfs, CW.sans, narrow ? 3 : 2);
+    y += 8 * k;
     for (const line of sub) {
-      y += sfs * 1.32;
-      head += `<text x="${n1(pad)}" y="${n1(y)}" font-family="${FONT_SANS}" font-weight="500" font-size="${n1(sfs)}" fill="${p.mut}">${esc(line)}</text>`;
+      y += sfs * 1.36;
+      head += `<text x="${n1(pad)}" y="${n1(y)}" font-family="${FONT_SANS}" font-weight="450" font-size="${n1(sfs)}" fill="${p.mut}">${esc(line)}</text>`;
     }
   }
-  // footer: credit on the left (wraps), wordmark on the right
-  const footH = 76 * k;
+  // footer: hairline, the data date on the left, the wordmark and URL on the right
+  const footH = 70 * k;
   const footTop = o.H - footH;
-  const cfs = 14.5 * k;
-  const credW = o.W - pad * 2 - (o.W < 520 ? 150 * k : 230 * k);
-  const credit = wrap(o.credit, credW, cfs, CW.sans, 3);
-  let foot = "";
-  const baseY = o.H - pad * 0.55 - 19 * k;
-  const firstY = baseY - (credit.length - 1) * cfs * 1.35;
-  credit.forEach((line, i) => {
-    foot += `<text x="${n1(pad)}" y="${n1(firstY + i * cfs * 1.35 + 19 * k)}" font-family="${FONT_SANS}" font-weight="500" font-size="${n1(cfs)}" fill="${p.mut}">${esc(line)}</text>`;
-  });
+  let foot = `<line x1="${n1(pad)}" x2="${n1(o.W - pad)}" y1="${n1(footTop)}" y2="${n1(footTop)}" stroke="${p.hair}" stroke-width="${n1(Math.max(1, k))}"/>`;
+  const baseY = o.H - 34 * k;
+  {
+    const avail = o.W - pad * 2 - (o.W < 520 ? 160 : 190) * k;
+    const lines = wrap(o.asOf, avail, 14.5 * k, CW.sans, 3);
+    lines.forEach((ln, i) => {
+      const yy = lines.length > 1 ? baseY - (lines.length === 3 ? 17 : 8) * k + i * (lines.length === 3 ? 17 : 19) * k : baseY;
+      foot += `<text x="${n1(pad)}" y="${n1(yy)}" font-family="${FONT_SANS}" font-weight="500" font-size="${n1(14.5 * k)}" fill="${p.mut}">${esc(ln)}</text>`;
+    });
+  }
   foot += wordmark(o, p, o.W - pad, baseY);
-  const bodyTop = y + 22 * k;
-  const body = { x: pad, y: bodyTop, w: o.W - pad * 2, h: Math.max(40, footTop - bodyTop - 4 * k) };
+  const bodyTop = y + 26 * k;
+  const body = { x: pad, y: bodyTop, w: o.W - pad * 2, h: Math.max(40, footTop - bodyTop - 14 * k) };
   return { svg: (o.aura === false ? "" : auraBg(o)) + head + foot, body, footerTop: footTop };
 }
 

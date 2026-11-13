@@ -1,0 +1,141 @@
+/* Interaction layer for the dashboard, Charts and Hosts tabs.
+ *
+ * Every control answers with the same few moves, so the page feels like one product:
+ *   hover    a calm tint, and a 1px lift on things that are buttons
+ *   pressed  settles back down and shrinks to 97%
+ *   selected an EVwire-green glow (a soft ring plus a long, low shadow), never a neon outline
+ *   focus    the same green, as a ring that clears the element so it is visible in light and dark
+ *   motion   150 to 200 ms with one easing curve; the segmented controls slide their thumb (about 280 ms)
+ * Hover lifts only run on devices that can hover, and prefers-reduced-motion switches every movement off.
+ */
+.w {
+  --gl: 27, 145, 82; /* the brand green as r, g, b so one colour makes every tint */
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --spring: cubic-bezier(0.3, 1.5, 0.5, 1);
+  --tint: rgba(var(--gl), 0.08);
+  --tint-strong: rgba(var(--gl), 0.14);
+  --glow-ring: 0 0 0 3px rgba(var(--gl), 0.2);
+  --glow-sel: 0 0 0 1px rgba(var(--gl), 0.34), 0 8px 22px -10px rgba(var(--gl), 0.55);
+  --focus: 0 0 0 2px var(--card), 0 0 0 4px rgba(var(--gl), 0.7);
+}
+html.dark .w {
+  --gl: 95, 227, 154;
+  --tint: rgba(var(--gl), 0.09);
+  --tint-strong: rgba(var(--gl), 0.16);
+  --glow-ring: 0 0 0 3px rgba(var(--gl), 0.22);
+  --glow-sel: 0 0 0 1px rgba(var(--gl), 0.4), 0 8px 24px -10px rgba(var(--gl), 0.5);
+  --focus: 0 0 0 2px var(--card), 0 0 0 4px rgba(var(--gl), 0.75);
+}
+
+/* focus: one ring for every control. Pointer clicks never show it; the keyboard always does. */
+.w button:focus-visible,
+.w select:focus-visible,
+.w a:focus-visible,
+.w [role="button"]:focus-visible { outline: none; box-shadow: var(--focus); }
+.w .dz-seg button:focus-visible,
+.w .dz-mseg button:focus-visible { box-shadow: var(--focus); }
+.w .dz-tog:focus-visible, .w .dz-bars button:focus-visible, .w .dz-arts a:focus-visible { box-shadow: inset 0 0 0 2px rgba(var(--gl), 0.75), var(--glow-ring); }
+.w .dz-st h4 a:focus-visible { box-shadow: none; }
+.w .pin:focus-visible { outline: none; box-shadow: none; }
+
+/* ---- segmented controls: the thumb slides, the labels cross-fade ---- */
+.dz-seg.th, .dz-mseg.th { position: relative; isolation: isolate; }
+.dz-seg.th { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.dz-seg.th > button, .dz-mseg.th > button { position: relative; z-index: 1; background: transparent !important; box-shadow: none !important; transition: color 0.18s var(--ease), transform 0.15s var(--ease); }
+.dz-seg.th .thumb, .dz-mseg.th .thumb {
+  position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px;
+  width: calc((100% - 6px - (var(--n) - 1) * 2px) / var(--n));
+  transform: translateX(calc(var(--i) * (100% + 2px)));
+  transition: transform 0.28s var(--ease), box-shadow 0.2s var(--ease), background-color 0.2s;
+  pointer-events: none;
+}
+.dz-seg.th .thumb { border-radius: var(--r-in); background: var(--card); box-shadow: 0 0 0 1px var(--hair), 0 1px 3px rgba(11, 17, 22, 0.12), 0 6px 14px -8px rgba(var(--gl), 0.7); }
+.dz-mseg.th .thumb { border-radius: var(--r-in); background: var(--fg); box-shadow: 0 8px 18px -8px rgba(var(--gl), 0.75), 0 0 0 1px rgba(var(--gl), 0.12); }
+.dz-seg.th > button[aria-pressed="true"] { color: var(--fg); }
+.dz-mseg.th > button[aria-pressed="true"] { color: var(--bg); }
+.dz-seg.th > button:not([aria-pressed="true"]):hover, .dz-mseg.th > button:not([aria-pressed="true"]):hover { color: var(--fg); background: var(--field-hover) !important; }
+.dz-seg.th > button:active, .dz-mseg.th > button:active { transform: scale(0.97); }
+
+/* ---- top tabs: the same thumb, measured ---- */
+.w-tabs { position: relative; isolation: isolate; }
+.w-thumb { position: absolute; z-index: 0; top: 0; bottom: 0; left: 0; width: var(--tw, 0px); transform: translateX(var(--tx, 0px)); border-radius: var(--r-pill); background: var(--fg); box-shadow: 0 8px 18px -8px rgba(var(--gl), 0.7); opacity: 0; pointer-events: none; }
+.w-tabs[data-ready="1"] .w-thumb { opacity: 1; transition: transform 0.3s var(--ease), width 0.3s var(--ease), opacity 0.2s; }
+.w-tabs .w-tab { position: relative; z-index: 1; transition: color 0.18s var(--ease), transform 0.15s var(--ease); }
+.w-tabs[data-ready="1"] .w-tab[aria-pressed="true"] { background: transparent; color: var(--bg); }
+.w-tab:active { transform: scale(0.97); }
+
+/* ---- checkboxes (the filter rows) ---- */
+.dz-tog { transition: background-color 0.16s var(--ease), transform 0.15s var(--ease); }
+.dz-tog > i { transition: background-color 0.16s var(--ease), box-shadow 0.18s var(--ease), transform 0.2s var(--spring); }
+.dz-tog:hover > i { box-shadow: inset 0 0 0 1.5px var(--acc); }
+.dz-tog:active { background: var(--field-hover); }
+.dz-tog:active > i { transform: scale(0.86); }
+.dz-tog[aria-pressed="true"] { background: var(--tint); }
+.dz-tog[aria-pressed="true"]:hover { background: var(--tint-strong); }
+.dz-tog[aria-pressed="true"] > i { background: var(--acc); box-shadow: var(--glow-ring); animation: dz-pop 0.28s var(--spring); }
+@keyframes dz-pop { 0% { transform: scale(0.7); } 100% { transform: scale(1); } }
+
+/* ---- chips, links, buttons ---- */
+.dz-chips button { transition: box-shadow 0.18s var(--ease), transform 0.15s var(--ease), filter 0.18s; box-shadow: 0 6px 14px -9px rgba(var(--gl), 0.7); }
+.dz-chip { transition: background-color 0.18s var(--ease), color 0.18s, box-shadow 0.18s var(--ease), transform 0.15s var(--ease); }
+.dz-link { transition: background-color 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.15s var(--ease), color 0.18s; }
+.dz-dl, .dz-morebtn, .dz-tesla, .w-theme, .dz-zoom button, .dz-x { transition: background-color 0.18s var(--ease), color 0.18s, box-shadow 0.2s var(--ease), transform 0.15s var(--ease), opacity 0.2s; }
+.dz-chips button:active, .dz-chip:active, .dz-link:active, .dz-dl:active, .dz-morebtn:active, .dz-tesla:active, .w-theme:active, .dz-x:active { transform: scale(0.97); }
+.dz-zoom button:active:not(:disabled) { background: var(--field-hover); }
+.dz-link:hover { background: var(--tint-strong); }
+.dz-dl:hover:not(:disabled) { background: var(--fg); color: var(--bg); box-shadow: 0 10px 22px -10px rgba(var(--gl), 0.8); }
+.dz-dl:disabled { opacity: 0.6; cursor: progress; }
+.dz-chip:hover { background: var(--tint-strong); color: var(--fg); box-shadow: inset 0 0 0 1px rgba(var(--gl), 0.35), 0 6px 14px -9px rgba(var(--gl), 0.6); }
+.dz-morebtn:hover, .dz-tesla:hover { box-shadow: 0 10px 22px -12px rgba(var(--gl), 0.7); }
+.w-theme:hover { background: var(--tint); box-shadow: inset 0 0 0 1px rgba(var(--gl), 0.3); }
+.dz-zoom button:hover:not(:disabled) { background: var(--tint); color: var(--acc); }
+.dz-coach-btn:hover { box-shadow: 0 0 0 1px rgba(var(--gl), 0.4), 0 10px 24px -12px rgba(var(--gl), 0.7); }
+
+/* ---- dropdowns ---- */
+.dz-rail select, .dz-sections select, .dz-sbar select { transition: background-color 0.18s var(--ease), box-shadow 0.18s var(--ease); box-shadow: inset 0 0 0 1px transparent; }
+.dz-rail select:hover, .dz-sections select:hover, .dz-sbar select:hover { box-shadow: inset 0 0 0 1px rgba(var(--gl), 0.28); }
+.dz-rail select:focus-visible, .dz-sections select:focus-visible, .dz-sbar select:focus-visible { box-shadow: inset 0 0 0 1px rgba(var(--gl), 0.6), var(--glow-ring); }
+
+/* ---- list rows ---- */
+.dz-bars button { transition: background-color 0.16s var(--ease), transform 0.15s var(--ease); }
+.dz-bars button:hover { background: var(--tint); }
+.dz-bars button:hover .t i { filter: brightness(1.08) saturate(1.1); }
+.dz-bars button:active { background: var(--tint-strong); transform: scale(0.992); }
+.dz-arts a { transition: background-color 0.16s var(--ease), transform 0.15s var(--ease); }
+.dz-arts a:hover { background: var(--tint); }
+.dz-arts a:active { transform: scale(0.99); }
+.dz-feed li { transition: background-color 0.16s var(--ease); }
+.dz-thumbs button { transition: opacity 0.15s, border-color 0.15s, box-shadow 0.18s var(--ease), transform 0.15s var(--ease); }
+.dz-thumbs button:hover { box-shadow: 0 6px 14px -8px rgba(var(--gl), 0.7); }
+.dz-thumbs button[aria-pressed="true"] { border-color: var(--acc); box-shadow: var(--glow-ring); }
+
+/* ---- map pins ---- */
+.pin-dot { transition: transform 0.18s var(--ease), stroke 0.15s, fill-opacity 0.15s, filter 0.18s var(--ease); }
+.pin:hover .pin-dot, .pin:focus-visible .pin-dot { transform: scale(1.35); filter: drop-shadow(0 0 4px rgba(var(--gl), 1)) drop-shadow(0 0 9px rgba(var(--gl), 0.7)); }
+.pin.sel .pin-dot { filter: drop-shadow(0 0 6px rgba(var(--gl), 0.95)); }
+.pin.has-photo { transition: filter 0.2s var(--ease); }
+.pin.has-photo .pin-ring { transform-box: fill-box; transform-origin: center; transition: transform 0.2s var(--spring); }
+.pin.has-photo:hover .pin-ring, .pin.has-photo:focus-visible .pin-ring { transform: scale(1.12); }
+.pin.has-photo:hover, .pin.has-photo:focus-visible, .pin.has-photo.sel { filter: drop-shadow(0 0 7px rgba(var(--gl), 0.7)) drop-shadow(0 5px 8px rgba(0, 0, 0, 0.35)); }
+
+/* ---- story cards, chart cards, the cards on the Hosts tab ---- */
+.dz-st, .dz-chart, .w-cards > li { transition: transform 0.24s var(--ease), box-shadow 0.24s var(--ease); }
+.dz-st:hover, .dz-st:focus-within { box-shadow: 0 0 0 1px rgba(var(--gl), 0.32), 0 18px 34px -20px rgba(var(--gl), 0.5); }
+.dz-st:active { transform: translateY(-1px) scale(0.995); }
+.dz-chart:hover { box-shadow: 0 0 0 1px rgba(var(--gl), 0.26), 0 24px 44px -28px rgba(var(--gl), 0.5); }
+.w-cards > li:hover { transform: translateY(-3px); }
+.w-cards > li:active { transform: translateY(-1px) scale(0.995); }
+.w-card-body li a { transition: color 0.16s; }
+.w-bar { transition: transform 0.2s var(--ease); }
+
+@media (hover: none) {
+  .dz-st:hover, .dz-chart:hover, .w-cards > li:hover { transform: none; }
+}
+
+/* reduced motion: state changes stay, movement goes */
+@media (prefers-reduced-motion: reduce) {
+  .w *, .w *::before, .w *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  .dz-st:hover, .dz-chart:hover, .w-cards > li:hover, .pin:hover .pin-dot, .pin.has-photo:hover .pin-ring { transform: none !important; }
+  .dz-tog > i, .dz-seg.th .thumb, .dz-mseg.th .thumb, .w-thumb { transition: none !important; animation: none !important; }
+}
+.w-cards > li:hover { box-shadow: 0 0 0 1px rgba(var(--gl), 0.32), 0 20px 36px -22px rgba(var(--gl), 0.5); }

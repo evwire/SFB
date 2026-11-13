@@ -29,7 +29,7 @@ export default async function Page() {
     "@graph": [
       {
         "@type": "Dataset",
-        name: "Tesla customer-owned Superchargers (Find Us) — US & Europe",
+        name: "Tesla customer-owned Superchargers — US & Europe",
         description:
           "Open Superchargers Tesla lists as customer-owned, plus upcoming third-party Superchargers Tesla marks as coming soon.",
         creator: { "@type": "Organization", name: "EVwire", url: "https://evwire.com" },

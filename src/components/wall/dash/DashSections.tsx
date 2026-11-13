@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useDash } from "./DashContext";
 import { FRANCIS } from "@/lib/opcolor";
+import { dayShort } from "./kpi";
 import { US_STATES } from "@/lib/us-states.generated";
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -10,7 +11,8 @@ const NS = "not stated";
 
 function Metric({ v, set }: { v: "sites" | "stalls"; set: (v: "sites" | "stalls") => void }) {
   return (
-    <div className="dz-seg" role="group" aria-label="Metric">
+    <div className="dz-seg th" role="group" aria-label="Metric" style={{ ["--i" as string]: v === "sites" ? 0 : 1, ["--n" as string]: 2 } as React.CSSProperties}>
+      <i className="thumb" aria-hidden="true" />
       {(["sites", "stalls"] as const).map((m) => (
         <button key={m} type="button" aria-pressed={v === m} onClick={() => set(m)}>
           {m === "sites" ? "Sites" : "Stalls"}
@@ -116,7 +118,7 @@ function StateBars() {
 }
 
 function Changes() {
-  const { data, select } = useDash();
+  const { data, select, since } = useDash();
   const kinds: Record<string, string> = {
     opened: "Opened",
     new_open: "New on the map",
@@ -127,10 +129,10 @@ function Changes() {
   };
   const ok = (id: string) => data.sites.some((s) => s.id === id);
   return (
-    <section className="dz-card" aria-label="New since the last check">
+    <section className="dz-card" aria-label={since ? `New since ${since}` : "Changed in the latest pull"}>
       <header>
-        <h3>New since the last check</h3>
-        <span className="dz-pill">{data.changesFrom && data.changesTo ? `${data.changesFrom} to ${data.changesTo}` : "dates not stated"}</span>
+        <h3>{since ? `New since ${since}` : "Changed in the latest pull"}</h3>
+        <span className="dz-pill">{data.changesFrom && data.changesTo ? `${dayShort(data.changesFrom)} to ${dayShort(data.changesTo, true)}` : "dates not stated"}</span>
       </header>
       <ul className="dz-feed">
         {data.changes.map((c) => (
@@ -154,7 +156,7 @@ function Changes() {
         ))}
         {!data.changes.length && <li className="dz-fine">Nothing changed in this window.</li>}
       </ul>
-      <p className="dz-fine">From our weekly diff of Tesla Find Us. The map marks these sites with a green dot.</p>
+      <p className="dz-fine">We compare Tesla’s site list between our data pulls{data.changesFrom && data.changesTo ? `, here ${dayShort(data.changesFrom)} and ${dayShort(data.changesTo, true)}` : ""}. The map marks these sites with a green dot.</p>
     </section>
   );
 }
@@ -430,7 +432,7 @@ function Table() {
         </button>
       )}
       <p className="dz-fine">
-        Counts and fields come from Tesla Find Us ({data.asOf.us}). Opening dates are {NS} on Tesla&apos;s map, so we do not show them. Tesla publishes no official list of Supercharger for Business sites, so treat these as a floor.
+        Source: Tesla ({data.asOf.us}). Counts and fields are as Tesla lists them. Opening dates are {NS} on Tesla&apos;s map, so we do not show them. Tesla publishes no official list of Supercharger for Business sites, so treat these as a floor.
       </p>
     </section>
   );
@@ -451,7 +453,7 @@ export default function DashSections() {
               <h3>What you are looking at</h3>
             </header>
             <p>
-              Every pin is one customer-owned Supercharger on Tesla&apos;s public Find Us map: a business or a network owns the site, Tesla supplies the hardware and the network. Open sites and upcoming sites come from two weekly pulls.
+              Every pin is one customer-owned Supercharger on Tesla&apos;s public map: a business or a network owns the site, Tesla supplies the hardware and the network. Open sites and upcoming sites come from two weekly pulls.
             </p>
             <p>
               Photos come from our own stories. Where a field is missing on Tesla&apos;s map we say &quot;not stated&quot; and never guess: no opening dates on any open site, and no operator or stall count on the upcoming sites.
