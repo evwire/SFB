@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "geo": "node scripts/build-geo.mjs && node scripts/simplify-geo.mjs",
-    "prebuild": "node scripts/build-geo.mjs && node scripts/simplify-geo.mjs",
+    "prebuild": "node scripts/build-geo.mjs && node scripts/simplify-geo.mjs && node scripts/check-quotes.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -12,7 +12,8 @@
     "watch:box": "bash scripts/box-pull/run-weekly.sh",
     "pricing:test": "node --test scripts/findus-pricing.test.mjs",
     "pricing:apply": "node scripts/pull-findus-pricing.mjs --fixtures",
-    "pricing:pull": "node scripts/pull-findus-pricing.mjs --live"
+    "pricing:pull": "node scripts/pull-findus-pricing.mjs --live",
+    "check:quotes": "node scripts/check-quotes.mjs"
   },
   "dependencies": {
     "@fontsource-variable/funnel-display": "^5.3.0",

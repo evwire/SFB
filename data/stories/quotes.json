@@ -1,0 +1,962 @@
+{
+ "_meta": {
+  "rule": "Every text and speaker is an exact substring of the article as published on evwire.com (data/stories/articles-text.json, fetched 2026-11-17). The build fails if one is not. Nothing paraphrased.",
+  "built": "2026-11-17",
+  "count": 58
+ },
+ "quotes": [
+  {
+   "id": "q01",
+   "stop": "suncoast-lol",
+   "label": "Suncoast",
+   "n": 99,
+   "text": "The very first third-party-owned Tesla Superchargers in North America have now been installed by Suncoast Charging, in Land O’ Lakes, Florida.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "472503"
+   ],
+   "photos": [
+    157
+   ]
+  },
+  {
+   "id": "q02",
+   "stop": "suncoast-lol",
+   "label": "Suncoast",
+   "n": 99,
+   "text": "Tesla Superchargers with your logo on it? Yes, now possible.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "472503"
+   ],
+   "photos": [
+    157
+   ]
+  },
+  {
+   "id": "q03",
+   "stop": "francis",
+   "label": "Francis Energy",
+   "n": 1,
+   "text": "Not only is this the first time we see an otherwise direct competitor to the Tesla charging network deploy Tesla’s hardware on their network",
+   "speaker": null,
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": true,
+   "sites": [
+    "484160"
+   ],
+   "photos": [
+    62
+   ]
+  },
+  {
+   "id": "q04",
+   "stop": "francis",
+   "label": "Francis Energy",
+   "n": 12,
+   "text": "Francis Energy has commissioned 100 Tesla Supercharger stalls across 17 sites in Oklahoma through the Tesla Superchargers for Business program.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": true,
+   "sites": [
+    "484160"
+   ],
+   "photos": [
+    62
+   ]
+  },
+  {
+   "id": "q05",
+   "stop": "francis",
+   "label": "Francis Energy",
+   "n": 12,
+   "text": "This is what the charging network build-out looks like when it's done well. Not ribbon cuttings without reliability. Real infrastructure, real utilization, real outcomes.",
+   "speaker": "Seth Christ",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": true,
+   "sites": [
+    "484160"
+   ],
+   "photos": [
+    62
+   ]
+  },
+  {
+   "id": "q06",
+   "stop": "alpharetta",
+   "label": "Alpharetta",
+   "n": 2,
+   "text": "Alpharetta City, Georgia, goes down in history as the first US public body (and first in the world, really) to deploy Tesla Superchargers through their third-party Supercharger for Business program.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481260"
+   ],
+   "photos": [
+    28
+   ]
+  },
+  {
+   "id": "q07",
+   "stop": "alpharetta",
+   "label": "Alpharetta",
+   "n": 2,
+   "text": "The police officer told Rocco that the chargers were actually ready to use already two days before the announcement.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481260"
+   ],
+   "photos": [
+    28
+   ]
+  },
+  {
+   "id": "q08",
+   "stop": "courtyard",
+   "label": "Courtyard FBG TX",
+   "n": 3,
+   "text": "It even includes a dog park, adding a convenient and fun on-site amenity for drivers during charging sessions.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481359"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q09",
+   "stop": "courtyard",
+   "label": "Courtyard FBG TX",
+   "n": 3,
+   "text": "The real win? We clicked so well with Tesla, they’ve already got us lined up for more.",
+   "speaker": "Digital Stylist President James K Doster",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481359"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q10",
+   "stop": "dbrl",
+   "label": "Diamonds by Raymond Lee",
+   "n": 4,
+   "text": "Custom-branded Tesla Supercharger stations are being installed at a luxury retail site in Boca Raton, Florida.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "484317"
+   ],
+   "photos": [
+    26
+   ]
+  },
+  {
+   "id": "q11",
+   "stop": "ac-customs",
+   "label": "AC Customs",
+   "n": 5,
+   "text": "It was some of the last V3s being sold at a discount to move stock.",
+   "speaker": "AC Customs, the site owner",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [],
+   "photos": [
+    33
+   ]
+  },
+  {
+   "id": "q12",
+   "stop": "genoa",
+   "label": "Genoa Golf Club",
+   "n": 7,
+   "text": "Genoa Golf Club in Genoa, Nevada, has launched one of the first privately owned Tesla Supercharger sites in the western US, and it’s a destination all on its own — founded in 1851, Genoa is Nevada’s oldest settlement.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "463680"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q13",
+   "stop": "evio",
+   "label": "EVIO",
+   "n": 8,
+   "text": "Incredibly proud to be opening the first privately owned Tesla Supercharger in the Northeast. With more sites currently in development, this is just the beginning.",
+   "speaker": "Jake Berdugo",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487202"
+   ],
+   "photos": [
+    48
+   ]
+  },
+  {
+   "id": "q14",
+   "stop": "evio",
+   "label": "EVIO",
+   "n": 11,
+   "text": "Tesla is now using EVIO Charging's Nanuet Town Centre Supercharger in New York as a self-serve demo drive location.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487202"
+   ],
+   "photos": [
+    48
+   ]
+  },
+  {
+   "id": "q15",
+   "stop": "chargedev",
+   "label": "ChargedEV Hubs",
+   "n": 9,
+   "text": "We want to make Supercharger ownership accessible to all.",
+   "speaker": "Jeremy Watrous",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487103"
+   ],
+   "photos": [
+    135,
+    134
+   ]
+  },
+  {
+   "id": "q16",
+   "stop": "chargedev",
+   "label": "ChargedEV Hubs",
+   "n": 9,
+   "text": "Instead, we doubled our goal and hit a 2MWh/day run rate in our first fully operational day.",
+   "speaker": "Jeremy Watrous",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487103"
+   ],
+   "photos": [
+    135,
+    134
+   ]
+  },
+  {
+   "id": "q17",
+   "stop": "chargedev",
+   "label": "ChargedEV Hubs",
+   "n": 33,
+   "text": "Eligible U.S. investors can invest in Energea's U.S. Energy Infrastructure portfolio for as little as $100.",
+   "speaker": "Watrous",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487103"
+   ],
+   "photos": [
+    135,
+    134
+   ]
+  },
+  {
+   "id": "q18",
+   "stop": "suncoast-wc",
+   "label": "Suncoast",
+   "n": 13,
+   "text": "The four designs feature the gopher tortoise, the Florida scrub jay, the eastern indigo snake, and the longleaf pine, each stamped with a \"Preserve and Protect\" seal.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490113"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q19",
+   "stop": "suncoast-wc",
+   "label": "Suncoast",
+   "n": 13,
+   "text": "Really, more fast chargers should look like this.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490113"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q20",
+   "stop": "ev-auto",
+   "label": "EV Auto",
+   "n": 14,
+   "text": "Get ready for a national explosion of EV Auto branded Tesla Superchargers. […] Our overall plan? 1,000+ nationwide.",
+   "speaker": "EV Auto co-founder and CEO Alex Lawrence",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490806"
+   ],
+   "photos": [
+    107,
+    68
+   ]
+  },
+  {
+   "id": "q21",
+   "stop": "ev-auto",
+   "label": "EV Auto",
+   "n": 25,
+   "text": "EV Auto has given its Tesla Supercharger for Business site in Brentwood, Tennessee a Nashville-worthy makeover: all eight stalls now carry custom wraps featuring guitars of eight legendary artists.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490806"
+   ],
+   "photos": [
+    107,
+    68
+   ]
+  },
+  {
+   "id": "q22",
+   "stop": "ppr",
+   "label": "PPR Energy Solutions",
+   "n": 15,
+   "text": "Whether you’re stopping for food, grabbing coffee, visiting nearby shops, or heading toward the waterfront, this site makes it easy to top off your battery while enjoying everything the community has to offer.",
+   "speaker": "PPR",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "488570"
+   ],
+   "photos": [
+    70,
+    72
+   ]
+  },
+  {
+   "id": "q23",
+   "stop": "ppr",
+   "label": "PPR Energy Solutions",
+   "n": 15,
+   "text": "Great work Michael and rest of PPR Team! This one being super local to me, will be visiting for sure!",
+   "speaker": "Nihal Hussain",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "488570"
+   ],
+   "photos": [
+    70,
+    72
+   ]
+  },
+  {
+   "id": "q24",
+   "stop": "little-general",
+   "label": "Little General",
+   "n": 16,
+   "text": "Beyond the Supercharger stalls, the location includes an on-site kitchen for made-to-order burritos, BBQ, burgers, and pizza, a barista counter, a 350-square-foot beer cave, an ice cream counter, a gift shop, a playground, and a dog park.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "489205"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q25",
+   "stop": "hion",
+   "label": "HiON",
+   "n": 17,
+   "text": "The company is targeting roughly $500 million in capital raised through franchise area developers, with a goal of 1,000 locations and more than 4,000 Tesla Supercharger ports over the next five years.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481259"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q26",
+   "stop": "victron",
+   "label": "Victron Energy",
+   "n": 19,
+   "text": "A new Tesla Supercharger opened in Midlothian, Texas on July 23, and it wears its host's branding instead of Tesla's.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "495547"
+   ],
+   "photos": [
+    84,
+    85
+   ]
+  },
+  {
+   "id": "q27",
+   "stop": "island-center",
+   "label": "Island Center",
+   "n": 21,
+   "text": "Each Supercharger cabinet features a custom wrap created by LINGEO Sign, showcasing artwork inspired by Isle of Palms and marking the location as South Carolina's first Supercharger for Business site.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "499203"
+   ],
+   "photos": [
+    89,
+    91,
+    92,
+    93,
+    94
+   ]
+  },
+  {
+   "id": "q28",
+   "stop": "island-center",
+   "label": "Island Center",
+   "n": 21,
+   "text": "South Carolina needs more fast charging stations, especially in Charleston area.",
+   "speaker": "Scott Runyon",
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "499203"
+   ],
+   "photos": [
+    89,
+    91,
+    92,
+    93,
+    94
+   ]
+  },
+  {
+   "id": "q29",
+   "stop": "island-center",
+   "label": "Island Center",
+   "n": 21,
+   "text": "Their wraps are truly something.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "499203"
+   ],
+   "photos": [
+    89,
+    91,
+    92,
+    93,
+    94
+   ]
+  },
+  {
+   "id": "q30",
+   "stop": "roam",
+   "label": "Roam Energy",
+   "n": 27,
+   "text": "Hinkley posted a photo of the completed station with the caption \"Well done team Roam.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "491102",
+    "496877"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q31",
+   "stop": "ucn",
+   "label": "United Chargers Network",
+   "n": 24,
+   "text": "Our vision was simple. Create welcoming spaces where drivers can step inside, grab a snack or drink, get some work done, relax, and recharge.",
+   "speaker": "Anthony Tracey",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [],
+   "photos": [
+    103
+   ]
+  },
+  {
+   "id": "q32",
+   "stop": "electric-son",
+   "label": "Electric Son",
+   "n": 28,
+   "text": "I'm building Electric Son around the customer experience. Reliable charging is the foundation, but I want this to be somewhere people enjoy stopping.",
+   "speaker": "Electric Son founder and Project Lead Matt Simpson",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490457"
+   ],
+   "photos": [
+    121,
+    115,
+    116
+   ]
+  },
+  {
+   "id": "q33",
+   "stop": "electric-son",
+   "label": "Electric Son",
+   "n": 28,
+   "text": "Quite notably, the site also hosts an (electric) coffee truck on weekdays.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490457"
+   ],
+   "photos": [
+    121,
+    115,
+    116
+   ]
+  },
+  {
+   "id": "q34",
+   "stop": "evgo",
+   "label": "EVgo",
+   "n": 35,
+   "text": "EVgo has opened its first EVgo Supercharger site, a 12-stall station near downtown Chicago.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "58992"
+   ],
+   "photos": [
+    142,
+    143,
+    145
+   ]
+  },
+  {
+   "id": "q35",
+   "stop": "evgo",
+   "label": "EVgo",
+   "n": 35,
+   "text": "we’re doubling EVgo’s addressable market",
+   "speaker": "EVgo CEO Badar Khan",
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "58992"
+   ],
+   "photos": [
+    142,
+    143,
+    145
+   ]
+  },
+  {
+   "id": "q36",
+   "stop": "evgo",
+   "label": "EVgo",
+   "n": 22,
+   "text": "EVgo, with 1,200+ stations across 47 states and publicly traded, is by far the largest CPO to do so.",
+   "speaker": null,
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "58992"
+   ],
+   "photos": [
+    142,
+    143,
+    145
+   ]
+  },
+  {
+   "id": "q37",
+   "stop": "evods",
+   "label": "EVODS",
+   "n": 34,
+   "text": "Here’s a close-up of one of the location’s Supercharger stalls, complete with EVODS’ custom design, which is a pretty cool nod to Wenatchee being known as the “Apple Capital of the World.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "499626"
+   ],
+   "photos": [
+    138
+   ]
+  },
+  {
+   "id": "q38",
+   "stop": "resound",
+   "label": "Resound Energy",
+   "n": 36,
+   "text": "We've been building these types of charging sites for our customers for years, and owning and operating them ourselves gives us firsthand experience that helps us better understand the needs of our customers and continue improving the turnkey services we provide.",
+   "speaker": "Resound founder Neil Sainsbury-Carter",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490529"
+   ],
+   "photos": [
+    150,
+    149,
+    154
+   ]
+  },
+  {
+   "id": "q39",
+   "stop": "ucn",
+   "label": "United Chargers Network",
+   "n": 23,
+   "text": "As a Charge Point Operator (CPO), UCN will develop, own, operate, and maintain DC fast charging infrastructure.",
+   "speaker": "Anthony Tracey",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [],
+   "photos": [
+    103
+   ]
+  },
+  {
+   "id": "q40",
+   "stop": "genoa",
+   "label": "Genoa Golf Club",
+   "n": 23,
+   "text": "He helped bring it online while at Trout Electric, and EVwire covered its debut",
+   "speaker": null,
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "463680"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q41",
+   "stop": "suncoast-wc",
+   "label": "Suncoast",
+   "n": 13,
+   "text": "an immersive experience connecting you to the natural world around you.",
+   "speaker": "Samantha Penrod",
+   "excerpt": true,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490113"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q42",
+   "stop": "chargedev",
+   "label": "ChargedEV Hubs",
+   "n": 9,
+   "text": "Core in our beliefs is achieving the claims we make and so we waited for the first MWh/day to go public.",
+   "speaker": "Jeremy Watrous",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "487103"
+   ],
+   "photos": [
+    135,
+    134
+   ]
+  },
+  {
+   "id": "q43",
+   "stop": "dbrl",
+   "label": "Diamonds by Raymond Lee",
+   "n": 4,
+   "text": "The Superchargers feature exclusive branding tailored to the retailer, Diamonds by Raymond Lee (DBRL).",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "484317"
+   ],
+   "photos": [
+    26
+   ]
+  },
+  {
+   "id": "q44",
+   "stop": "hion",
+   "label": "HiON",
+   "n": 17,
+   "text": "HiON describes itself as an electric vehicle charging station owner-operator committed to providing low-to-no capex turnkey charging solutions.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "481259"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q45",
+   "stop": "victron",
+   "label": "Victron Energy",
+   "n": 19,
+   "text": "The station sits at a Texas Best Smokehouse travel center just off US-287, with eight V4 stalls rated up to 325 kW and one accessible stall.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "495547"
+   ],
+   "photos": [
+    84,
+    85
+   ]
+  },
+  {
+   "id": "q46",
+   "stop": "evods",
+   "label": "EVODS",
+   "n": 34,
+   "text": "Its six stalls are rated at up to 325 kW, are available 24/7 and are open to all EVs, with Tesla drivers and other EV owners paying the same $0.37/kWh (and congestion fees of up to $1.00/min when applicable).",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "499626"
+   ],
+   "photos": [
+    138
+   ]
+  },
+  {
+   "id": "q47",
+   "stop": "resound",
+   "label": "Resound Energy",
+   "n": 36,
+   "text": "We also see these sites as a strong long-term investment, with the potential to generate recurring revenue while expanding access to public EV Charging.",
+   "speaker": "Neil Sainsbury-Carter",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "490529"
+   ],
+   "photos": [
+    150,
+    149,
+    154
+   ]
+  },
+  {
+   "id": "q48",
+   "stop": "little-general",
+   "label": "Little General",
+   "n": 16,
+   "text": "Whether you drive a Tesla or another compatible electric vehicle, you can now stop by Little General to power up before getting back on the road.",
+   "speaker": "Little General",
+   "excerpt": false,
+   "chapter": null,
+   "francisCallout": false,
+   "sites": [
+    "489205"
+   ],
+   "photos": []
+  },
+  {
+   "id": "q49",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 6,
+   "text": "We found simplicity and transparency to be a problem in this industry.",
+   "speaker": "Tesla",
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q50",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 10,
+   "text": "Tesla launched Supercharger for Business in September 2025, initially US-only, and expanded to multiple countries across Europe, the Middle East, and beyond within months.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q51",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 26,
+   "text": "The company will showcase the program at ICNC26 (Intercharge Network Conference) in Berlin from Sept. 1-3, with Tesla representatives set to meet potential business customers near the Innovation Zone.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q52",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 29,
+   "text": "A feature we hope you never need.",
+   "speaker": "Max de Zegher",
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q53",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 30,
+   "text": "We almost anti-sell Supercharger for Business and now walk buyers through why it might not be right for them.",
+   "speaker": "Max de Zegher",
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q54",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 32,
+   "text": "The goal is to offer Charging for Business in every market where Tesla runs charging, 55+ countries and growing, with the same hardware, software and service we use ourselves.",
+   "speaker": "Livio Caputo",
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q55",
+   "stop": "programme",
+   "label": "The programme",
+   "n": 37,
+   "text": "The two additions are the program's first markets in Latin America, and they bring Supercharger for Business to 37 countries, as per EVwire’s count of Tesla's live SfB country pages.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "programme",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q56",
+   "stop": "market",
+   "label": "The market",
+   "n": 18,
+   "text": "During Q2, Tesla averaged 12.1 charging ports per station, compared with 4.4 ports per station across non-Tesla operators.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "market",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q57",
+   "stop": "market",
+   "label": "The market",
+   "n": 20,
+   "text": "Tesla and Verdek's message to Washington: Superchargers, now orderable off the GSA schedule.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "market",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  },
+  {
+   "id": "q58",
+   "stop": "market",
+   "label": "The market",
+   "n": 31,
+   "text": "Tesla added 1,287 new ports, or 31.3% of the quarter's total, rising to 34.4% when counting 124 ports at Supercharger for Business sites.",
+   "speaker": null,
+   "excerpt": false,
+   "chapter": "market",
+   "francisCallout": false,
+   "sites": [],
+   "photos": []
+  }
+ ]
+}

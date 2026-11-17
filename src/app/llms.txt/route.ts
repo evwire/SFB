@@ -1,5 +1,6 @@
 import { getDashData, type DSite } from "@/lib/mapdata";
 import { storyCounts } from "@/lib/storycounts";
+import { getProfiles, llmsLine } from "@/lib/operators";
 import seed from "../../../data/sites.seed.json";
 
 export const revalidate = 300;
@@ -76,6 +77,14 @@ export async function GET() {
   L.push("");
   L.push(...region("United States", "states", pick("us", "open"), pick("us", "upcoming"), d.asOf.us, d.asOf.upcoming));
   L.push(...region("Europe", "countries", pick("eu", "open"), pick("eu", "upcoming"), d.asOf.eu, d.asOf.upcoming));
+  const profiles = getProfiles(d);
+  L.push(`## Operators (${nf(profiles.length)})`);
+  L.push("");
+  L.push(
+    `One page per operator on Tesla's map, with its sites, stalls and prices (Source: Tesla) and the EVwire stories about it, at https://sfb.evwire.com/operators. Names are as Tesla's map lists them; the name our stories use follows in brackets when it differs.`
+  );
+  for (const p of profiles) L.push(llmsLine(p));
+  L.push("");
   L.push(`## EVwire stories (${nf(c.articles)})`);
   L.push("");
   L.push(
