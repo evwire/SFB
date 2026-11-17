@@ -153,7 +153,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
                     <PlayIcon />
                   </span>
                   <span>
-                    Watch their story
+                    Watch the story
                     <small>
                       {plural(p.quotes, "quote")} · {plural(p.stories.length, "article")}
                     </small>

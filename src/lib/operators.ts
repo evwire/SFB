@@ -151,7 +151,8 @@ export function getProfiles(dash: DashData): Profile[] {
       stories,
       quotes: stories.reduce((a, s) => a + s.quotes.length, 0),
       photos: photosOf(raw, st),
-      stack: lead && name !== FRANCIS && !lead.francis ? lead.key : null,
+      // its own stack, else the stack of the story told at its site (Lakh Enterprises -> Roam Energy)
+      stack: name === FRANCIS ? null : (lead && !lead.francis ? lead : st.find((x) => !x.francis))?.key ?? null,
       related: [],
       vb: crop(sites, region),
     };
