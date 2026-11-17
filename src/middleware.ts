@@ -4,14 +4,14 @@ import { PREVIEW_COOKIE } from "@/lib/preview-gate";
 function loginPage(error?: string): NextResponse {
   const msg = error
     ? `<p class="err" role="alert">${error}</p>`
-    : `<p class="hint">This soft-launch map is password-protected while we finish it.</p>`;
+    : `<p class="hint">An early look for EVwire Insiders and friends. True EV geeks only.</p>`;
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>EVwire SfB preview</title>
+  <title>EVwire · SfB</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center;
@@ -32,9 +32,9 @@ function loginPage(error?: string): NextResponse {
 </head>
 <body>
   <form method="POST" action="/api/preview-auth">
-    <h1>EVwire · SfB preview</h1>
+    <h1>EVwire · SfB</h1>
     ${msg}
-    <label for="pw">Preview password</label>
+    <label for="pw">Password</label>
     <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus />
     <button type="submit">Enter</button>
   </form>
