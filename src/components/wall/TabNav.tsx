@@ -6,7 +6,7 @@ import type { Tab } from "./dash/DashContext";
 
 const HOST_HASHES = ["hosts", "builders", "strategies", "stories", "coming"];
 
-/** Three views on one page: the map dashboard, the charts, and the host-type stories. The choice lives on <html data-tab>. */
+/** Three views on one page: the map dashboard, the charts and the story stacks, plus a link to the operator pages. The choice lives on <html data-tab>. */
 export default function TabNav() {
   const [tab, setTab] = useState<Tab>("dash");
   const nav = useRef<HTMLElement>(null);
@@ -53,7 +53,7 @@ export default function TabNav() {
 
   const go = (t: Tab) => {
     document.documentElement.dataset.tab = t;
-    history.replaceState(null, "", t === "hosts" ? "#hosts" : t === "charts" ? "#charts" : location.pathname + location.search);
+    history.replaceState(null, "", t === "hosts" ? "#stories" : t === "charts" ? "#charts" : location.pathname + location.search);
     setTab(t);
     window.dispatchEvent(new Event("dz-tab"));
     window.scrollTo(0, 0);
@@ -70,9 +70,12 @@ export default function TabNav() {
           Charts
         </button>
         <button type="button" className="w-tab" aria-pressed={tab === "hosts"} onClick={() => go("hosts")}>
-          <span className="tl">Hosts &amp; stories</span>
-          <span className="ts">Hosts</span>
+          <span className="tl">Story stacks</span>
+          <span className="ts">Stories</span>
         </button>
+        <a className="w-tab w-tab-link" href="/operators">
+          Operators
+        </a>
       </nav>
       <ThemeSwitch />
     </>

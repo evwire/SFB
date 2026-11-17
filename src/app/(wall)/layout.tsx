@@ -8,6 +8,8 @@ import "./hero.css";
 import "./dash.css";
 import "./interact.css";
 import "./records.css";
+import "./stacks.css";
+import "@fontsource/fraunces/400-italic.css";
 
 /** Which hero treatment shows: ?hero=a|b|c|d, set on <html> before first paint. */
 const DEFAULT_HERO = "e";

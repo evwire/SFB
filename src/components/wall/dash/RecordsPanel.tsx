@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDash } from "./DashContext";
 import { computeRecords, placeOf, rateRange, type RecAction, type RecordCard } from "./records";
 import { US_STATES } from "@/lib/us-states.generated";
+import { opHref } from "@/lib/slug";
 import { EUROPE_COUNTRIES } from "@/lib/europe-countries.generated";
 import { FRANCIS, OTHER_COLOR } from "@/lib/opcolor";
 import type { DSite } from "@/lib/mapdata";
@@ -523,6 +524,25 @@ function Changes({ eu, jump }: { eu: boolean; jump: ReturnType<typeof useJump> }
   );
 }
 
+/** The biggest operators by stalls, each to its profile page, then the index. */
+function OpLinks({ open }: { open: DSite[] }) {
+  const m = new Map<string, number>();
+  for (const s of open) if (s.operator) m.set(s.operator, (m.get(s.operator) ?? 0) + (s.stalls ?? 0));
+  const top = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 4);
+  return (
+    <p className="rb-oplinks">
+      {top.map(([op]) => (
+        <a key={op} href={opHref(op)}>
+          {op}
+        </a>
+      ))}
+      <a href="/operators" className="all">
+        All {m.size} operators <span aria-hidden="true">→</span>
+      </a>
+    </p>
+  );
+}
+
 /* ---------- the panel ---------- */
 
 export default function RecordsPanel() {
@@ -602,6 +622,7 @@ export default function RecordsPanel() {
         <div>
           <h3 className="mt">Stalls by operator <small>area = stalls</small></h3>
           <Treemap open={open} color={color} jump={jump} />
+          <OpLinks open={open} />
         </div>
         <div>
           {!eu && upcoming.length > 0 ? (

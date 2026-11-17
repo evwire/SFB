@@ -8,6 +8,7 @@ import { useDash } from "./DashContext";
 import { kpiItems, showingLine } from "./kpi";
 import { FRANCIS, OTHER_COLOR, UNKNOWN_COLOR } from "@/lib/opcolor";
 import { US_STATES } from "@/lib/us-states.generated";
+import { opHref } from "@/lib/slug";
 import type { DSite } from "@/lib/mapdata";
 
 const nf = (n: number) => n.toLocaleString("en-US");
@@ -320,6 +321,11 @@ function Panel({ s }: { s: DSite }) {
           </>
         ) : (
           <p className="dz-fine">EVwire has not written about this site yet.</p>
+        )}
+        {s.operator && s.phase === "open" && (
+          <a className="dz-oplink" href={opHref(s.operator)}>
+            {s.operator}: operator page <span aria-hidden="true">→</span>
+          </a>
         )}
         <a className="dz-tesla" href={s.url} target="_blank" rel="noopener">
           Open on Tesla’s site
