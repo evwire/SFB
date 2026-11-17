@@ -1,0 +1,180 @@
+/* Direction B: the map-led records panel and the compact lower panel under the landed map. */
+.rb {
+  --rb-ink: #0b1116;
+  --rb-steel: #4f86b5;
+  --rb-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55));
+  --rb-inset: 0 1px 0 #fff inset;
+  --rb-shadow: 0 18px 40px -26px rgba(11, 17, 22, 0.35);
+  --rb-land: rgba(11, 17, 22, 0.07);
+  --rb-landline: rgba(255, 255, 255, 0.95);
+  --rb-lit: rgba(27, 145, 82, 0.22);
+  --rb-up: rgba(11, 17, 22, 0.28);
+  --rb-open: rgba(21, 105, 62, 0.45);
+  --rb-pinline: #fff;
+  --rb-track: rgba(11, 17, 22, 0.08);
+  --rb-bar: rgba(11, 17, 22, 0.2);
+  --rb-tile: 11, 17, 22;
+  --rb-small: #c9d2cf;
+  --rb-thumb: #e4ebe8;
+  --rb-num: var(--fg);
+  display: grid;
+  gap: 14px;
+}
+html.dark .rb {
+  --rb-ink: #f2f5f4;
+  --rb-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  --rb-inset: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --rb-shadow: 0 18px 40px -26px rgba(0, 0, 0, 0.8);
+  --rb-land: rgba(255, 255, 255, 0.07);
+  --rb-landline: rgba(6, 8, 11, 0.9);
+  --rb-lit: rgba(95, 227, 154, 0.2);
+  --rb-up: rgba(242, 245, 244, 0.32);
+  --rb-open: rgba(95, 227, 154, 0.5);
+  --rb-pinline: #06080b;
+  --rb-track: rgba(255, 255, 255, 0.1);
+  --rb-bar: rgba(255, 255, 255, 0.24);
+  --rb-tile: 242, 245, 244;
+  --rb-small: rgba(255, 255, 255, 0.16);
+  --rb-thumb: #17212a;
+}
+.rb-panel { background: var(--rb-glass); border-radius: var(--r-panel); box-shadow: 0 0 0 1px var(--hair), var(--rb-inset), var(--rb-shadow); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.rb .n { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: var(--rb-ink); color: var(--bg); font: 700 9px/1 var(--sans); letter-spacing: 0; flex: none; }
+.rb .lab { font: 600 10px/1 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--mut); }
+
+/* top: map + records */
+.rb-rec { display: grid; grid-template-columns: minmax(0, 4.1fr) minmax(0, 7.9fr); padding: 12px 20px 12px 14px; align-items: center; }
+.rb-mapcol { padding-right: 14px; }
+.rb-map { display: block; width: 100%; height: auto; }
+.rb-map .land path { fill: var(--rb-land); stroke: var(--rb-landline); }
+.rb-map .land path.lit { fill: var(--rb-lit); }
+.rb-map .up { fill: var(--rb-up); stroke: var(--rb-pinline); }
+.rb-map .up.lit { fill: var(--signal); }
+.rb-map .open { fill: var(--rb-open); stroke: var(--rb-pinline); }
+.rb-map .op { stroke: var(--rb-pinline); }
+.rb-map .ring { fill: none; stroke: var(--signal); }
+.rb-map .rp circle { fill: var(--rb-ink); stroke: var(--rb-pinline); transition: r 0.2s var(--enter); }
+.rb-map .rp line { stroke: var(--rb-ink); opacity: 0.55; }
+.rb-map .rp text { fill: var(--bg); font-weight: 700; text-anchor: middle; font-family: var(--sans); pointer-events: none; }
+.rb-map .rp.live { cursor: pointer; }
+.rb-map .rp.hot circle, .rb-map .rp.live:focus-visible circle { fill: var(--signal); }
+.rb-map .rp:focus { outline: none; }
+
+.rb-right { display: grid; gap: 10px; min-width: 0; }
+.rb-four { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); }
+.rb-cell { all: unset; box-sizing: border-box; padding: 2px 14px; border-left: 1px solid var(--hair); min-width: 0; display: flex; flex-direction: column; gap: 6px; min-height: 100px; border-radius: 4px; }
+.rb-cell:first-child { border-left: 0; padding-left: 0; }
+button.rb-cell { cursor: pointer; }
+button.rb-cell:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+.rb-cell .lab { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rb-cell .num { font: 600 36px/1 "Fraunces", Georgia, serif; letter-spacing: -0.03em; color: var(--rb-num); font-variant-numeric: lining-nums tabular-nums; }
+.rb-cell .num small { font: 600 11px var(--sans); letter-spacing: 0; color: var(--mut); margin-left: 4px; }
+.rb-cell .sub { font: 400 11px/1.3 var(--sans); color: var(--mut); overflow-wrap: anywhere; }
+.rb-cell .viz { margin-top: auto; color: var(--signal); display: block; }
+button.rb-cell:hover .num, .rb-cell.hot .num { color: var(--acc); }
+.rb-posts { display: flex; align-items: flex-end; gap: 6px; }
+.rb-posts svg { display: block; fill: var(--signal); }
+.rb-posts .sc { fill: #000; opacity: 0.28; }
+.rb-posts small { font: 600 10px var(--mono); color: var(--mut); }
+.rb-share { display: grid; gap: 4px; }
+.rb-share .t { display: block; height: 9px; border-radius: 5px; background: var(--rb-track); overflow: hidden; }
+.rb-share .t i { display: block; height: 100%; border-radius: 5px; }
+.rb-share small { font: 400 11px var(--sans); color: var(--mut); }
+.rb-states { display: grid; gap: 2px; color: var(--fg); }
+.rb-states > span { display: grid; grid-template-columns: 18px 1fr 22px; gap: 5px; align-items: center; font: 9px var(--mono); }
+.rb-states b { font-weight: 600; }
+.rb-states i { display: block; height: 5px; border-radius: 3px; background: var(--rb-bar); }
+.rb-states i.lead { background: var(--signal); }
+.rb-states em { font-style: normal; text-align: right; }
+.rb-cpos { display: flex; align-items: center; }
+.rb-cpos .mono { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font: 700 12px/1 var(--sans); letter-spacing: -0.02em; box-shadow: 0 0 0 2.5px var(--bg); }
+.rb-cpos .mono { background: var(--rb-ink); }
+/* Francis keeps its steel, a shade deeper so the white letters stay readable */
+.rb-cpos .mono.fr { background: #3f729e; color: #fff; }
+html.dark .rb-cpos .mono:not(.fr) { color: #06080b; }
+.rb-cpos .mono + .mono { margin-left: -3px; }
+
+/* price strip */
+.rb-pr { border-top: 1px solid var(--hair); padding-top: 8px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.rb-pr .lab { display: flex; flex-direction: column; gap: 6px; }
+.rb-pr .nn { display: flex; gap: 6px; align-items: center; }
+.rb-pr .cap { font: 400 10.5px/1.2 var(--sans); letter-spacing: 0; text-transform: none; color: var(--mut); }
+.rb-strip { min-width: 0; }
+.rb-strip svg { display: block; overflow: visible; }
+.rb-strip .axis { stroke: var(--hair); }
+.rb-strip .tick { font: 9px var(--mono); fill: var(--faint); }
+.rb-strip .med { stroke: var(--fg); stroke-dasharray: 2 3; opacity: 0.45; }
+.rb-strip .medt { font: 600 9.5px var(--mono); fill: var(--fg); }
+.rb-strip .dot { fill: var(--acc); opacity: 0.55; cursor: pointer; }
+.rb-strip .dot:hover { opacity: 1; }
+.rb-strip .dot.ext { fill: var(--signal); opacity: 1; stroke: var(--bg); stroke-width: 1.4; }
+.rb-strip .lab line { stroke: var(--signal); }
+.rb-strip .lab text { font: 700 11px var(--sans); fill: var(--acc); letter-spacing: 0; text-transform: none; }
+.rb-strip .lab.live { cursor: pointer; }
+.rb-strip .lab.live:hover text { text-decoration: underline; }
+
+/* lower panel */
+.rb-lower { display: grid; grid-template-columns: 1.15fr 0.9fr 1fr; }
+.rb-lower > div { padding: 14px 18px 12px; border-left: 1px solid var(--hair); min-width: 0; }
+.rb-lower > div:first-child { border-left: 0; }
+.rb .mt { font: 600 12.5px/1.2 "Fraunces", Georgia, serif; letter-spacing: -0.01em; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--fg); }
+.rb .mt small { font: 400 10px var(--mono); color: var(--faint); letter-spacing: 0.04em; white-space: nowrap; }
+.rb-tree { display: block; width: 100%; height: auto; }
+.rb-tree .tile { cursor: pointer; }
+.rb-tree .tile rect { opacity: 0.92; transition: opacity 0.2s; }
+.rb-tree .tile rect.sm { fill: var(--rb-small); opacity: 1; }
+.rb-tree .tile:hover rect, .rb-tree .tile:focus-visible rect { opacity: 1; filter: brightness(1.08); }
+.rb-tree .tile:focus { outline: none; }
+.rb-tree text { fill: #fff; font-family: var(--sans); pointer-events: none; }
+.rb-tree .nm { font-size: 10.5px; font-weight: 700; }
+.rb-tree .vl { font-size: 10px; opacity: 0.88; }
+.rb-tiles { display: block; width: 100%; max-width: 290px; height: auto; }
+.rb-tiles rect { fill: rgba(var(--rb-tile), var(--t)); }
+.rb-tiles text { font: 700 6.8px var(--sans); text-anchor: middle; fill: rgba(var(--rb-tile), 0.7); pointer-events: none; }
+.rb-tiles text.inv { fill: var(--bg); }
+.rb-tiles .o { fill: var(--signal); stroke: var(--bg); stroke-width: 1.2; }
+.rb-tiles .st.live { cursor: pointer; }
+.rb-tiles .st.live:hover rect, .rb-tiles .st.live:focus-visible rect { fill: var(--signal); }
+.rb-tiles .st.live:hover text, .rb-tiles .st.live:focus-visible text { fill: #fff; }
+.rb-tiles .st:focus { outline: none; }
+.rb-size { display: flex; align-items: flex-end; gap: 10px; height: 120px; padding: 8px 6px 0; max-width: 300px; }
+.rb-size > div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.rb-size i { display: block; width: 100%; max-width: 26px; border-radius: 5px 5px 2px 2px; background: var(--signal); min-height: 3px; }
+.rb-size em { font: 600 10px var(--mono); font-style: normal; color: var(--fg); }
+.rb-size b { font: 500 9.5px var(--mono); color: var(--mut); }
+.rb-chg { display: flex; flex-direction: column; }
+.rb-chg .r { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 0; cursor: pointer; }
+.rb-chg .r + .r { border-top: 1px solid var(--hair); }
+.rb-chg .r:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; border-radius: 8px; }
+.rb-chg .r:hover b { color: var(--acc); }
+.rb-chg .th { width: 62px; height: 40px; border-radius: 9px; overflow: hidden; background: var(--rb-thumb); display: grid; place-items: center; }
+.rb-chg .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rb-chg .th svg { width: 100%; height: 100%; padding: 2px; }
+.rb-chg .th svg path { fill: var(--rb-land); stroke: var(--rb-landline); stroke-width: 3; }
+.rb-chg .th .halo { fill: var(--signal); opacity: 0.22; }
+.rb-chg .th .pt { fill: var(--signal); stroke: var(--bg); stroke-width: 10; }
+.rb-chg .th .cc { font: 700 15px "Fraunces", Georgia, serif; color: var(--faint); }
+.rb-chg b { display: block; font: 600 12px/1.15 var(--sans); color: var(--fg); }
+.rb-chg small { font: 400 10.5px var(--sans); color: var(--mut); }
+.rb-chg .tag { font: 600 9px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc); display: flex; gap: 6px; align-items: center; }
+.rb-chg .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 3px rgba(27, 145, 82, 0.18); }
+.rb-none { font: 400 12px/1.4 var(--sans); color: var(--mut); margin: 0; }
+.rb-src { font: 10px var(--mono); color: var(--mut); letter-spacing: 0.04em; margin: -4px 0 0 4px; }
+
+@media (max-width: 900px) {
+  .rb-cell .num { font-size: 30px; }
+  .rb-lower { grid-template-columns: 1fr 1fr; }
+  .rb-lower > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--hair); }
+}
+@media (max-width: 700px) {
+  .rb-rec { grid-template-columns: 1fr; padding: 12px; }
+  .rb-mapcol { padding: 0 0 6px; }
+  .rb-four { grid-template-columns: 1fr 1fr; row-gap: 12px; }
+  .rb-cell:nth-child(3) { border-left: 0; padding-left: 0; }
+  .rb-cell { min-height: 0; }
+  .rb-cell .viz { display: none; }
+  .rb-pr { grid-template-columns: 1fr; gap: 4px; }
+  .rb-pr .lab { flex-direction: row; justify-content: space-between; align-items: center; }
+  .rb-lower { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; scrollbar-width: none; }
+  .rb-lower::-webkit-scrollbar { display: none; }
+  .rb-lower > div, .rb-lower > div:nth-child(3) { flex: 0 0 84%; scroll-snap-align: start; border: 0; border-radius: var(--r-panel); background: var(--rb-glass); box-shadow: 0 0 0 1px var(--hair) inset; grid-column: auto; }
+}

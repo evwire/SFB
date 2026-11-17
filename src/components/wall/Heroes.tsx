@@ -172,7 +172,7 @@ export default function Heroes({
               {nfm(openSites)} open sites · {nfm(stalls)} stalls · {nfm(operators)} operators · {nfm(upcoming)} sites upcoming
             </p>
             <div className="e-links">
-              <a className="e-cue" href="#dashboard" aria-label="Scroll down to the map of every site">
+              <a className="e-cue" href="#dashboard">
                 <span className="e-mouse" aria-hidden="true">
                   <b />
                 </span>

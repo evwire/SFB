@@ -30,7 +30,7 @@ function region(label: string, areaWord: string, open: DSite[], upcoming: DSite[
   out.push(`## ${label}`);
   out.push("");
   out.push(
-    `${nf(open.length)} open sites with ${nf(stalls)} stalls run by ${nf(ops)} operators (as of ${asOf}), and ${nf(upcoming.length)} upcoming sites (as of ${upAsOf}), in ${nf(areas)} ${areaWord}.`
+    `${nf(open.length)} open sites with ${nf(stalls)} stalls run by ${nf(ops)} operators (as of ${asOf}), and ${nf(upcoming.length)} upcoming sites (as of ${upAsOf}), in ${nf(areas)} ${areas === 1 ? areaWord.replace(/(ies|s)$/, (m) => (m === "ies" ? "y" : "")) : areaWord}.`
   );
   const byArea = new Map<string, number>();
   for (const s of upcoming) if (s.state && s.state !== "US") byArea.set(s.state, (byArea.get(s.state) ?? 0) + 1);
