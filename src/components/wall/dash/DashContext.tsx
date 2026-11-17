@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { DashData, DSite } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
 import { dayShort } from "./kpi";
+import { US_STATES } from "@/lib/us-states.generated";
 
 export type Filters = {
   region: "us" | "eu";
@@ -48,12 +49,26 @@ export type Kpis = {
   isNew: number;
 };
 
+/** one thing that narrows the view, with the undo for just that one */
+export type Chip = { key: string; label: string; off: () => void };
+
 type Dash = {
   data: DashData;
   f: Filters;
   set: (p: Partial<Filters>) => void;
+  /** internal: filters back to defaults, keeping region and the Open / Upcoming switch (used by record jumps) */
   reset: () => void;
+  /** THE active-filter source for the map's Clear bar, the rail's Clear and the Filters (n) button: one chip per filter,
+   * a non-default Open / Upcoming switch, a picked site, or a fly-to-one-site jump. Region is a place, not a filter. */
+  chips: Chip[];
   active: number;
+  /** clear every chip: filters and Open / Upcoming to defaults (region kept), close the site panel, zoom back out */
+  clearAll: () => void;
+  /** the map flew to one site; MapView sets it and drops it once the map is back at its home view */
+  jumped: boolean;
+  setJumped: (v: boolean) => void;
+  /** MapView puts its "ease back to the home view" here so Clear can zoom out from anywhere */
+  homeRef: React.MutableRefObject<() => void>;
   visible: DSite[];
   regionSites: DSite[];
   kpi: Kpis;
@@ -95,6 +110,8 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
   const [sel, setSel] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("dash");
   const viewRef = useRef<MapViewState>({ k: 1, x: 0, y: 0 });
+  const [jumped, setJumped] = useState(false);
+  const homeRef = useRef<() => void>(() => {});
   const color = useMemo(() => makeOpColor(data.operatorOrder), [data.operatorOrder]);
   const byId = useMemo(() => new Map(data.sites.map((s) => [s.id + s.phase + s.region, s])), [data.sites]);
   const byKey = useMemo(() => new Map(data.sites.map((s) => [s.id, s])), [data.sites]);
@@ -115,6 +132,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
     // Scrolling back above the landed map puts the map back where the photos fly to.
     const un = () => {
       setSel(null);
+      setJumped(false);
       setF(DEFAULTS); // above the landed map the pins are the photos' landing spots again, so no filter or zoom may linger
     };
     window.addEventListener("dz-unland", un);
@@ -167,13 +185,30 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
     };
   }, [visible]);
 
-  const active =
-    f.operators.length + (f.host ? 1 : 0) + (f.state ? 1 : 0) + (f.minStalls ? 1 : 0) +
-    (f.covered ? 1 : 0) + (f.wrapped ? 1 : 0) + (f.isNew ? 1 : 0);
-
   const selected = sel ? byKey.get(sel) ?? null : null;
   const select = useCallback((id: string | null) => setSel(id), []);
+  const since = data.changesFrom ? dayShort(data.changesFrom) : null;
 
-  const value: Dash = { data, f, set, reset, active, visible, regionSites, kpi, color, selected, select, byId, tab, phaseCounts, viewRef, since: data.changesFrom ? dayShort(data.changesFrom) : null };
+  const chips: Chip[] = [];
+  for (const op of f.operators)
+    chips.push({ key: `op-${op}`, label: op, off: () => setF((o) => { const rest = o.operators.filter((x) => x !== op); return { ...o, operators: rest, ...(rest.length ? null : { colorBy: "status" as const }) }; }) });
+  if (f.state) chips.push({ key: "state", label: f.region === "eu" ? f.state : f.state === "US" ? "State not stated" : US_STATES.find((x) => x.abbr === f.state)?.name ?? f.state, off: () => set({ state: null }) });
+  if (f.host) chips.push({ key: "host", label: data.hostTypes.find((h) => h.key === f.host)?.label ?? f.host, off: () => set({ host: null }) });
+  if (f.minStalls) chips.push({ key: "min", label: `${f.minStalls}+ stalls`, off: () => set({ minStalls: 0 }) });
+  if (f.covered) chips.push({ key: "covered", label: "Covered by EVwire", off: () => set({ covered: false }) });
+  if (f.wrapped) chips.push({ key: "wrapped", label: "Wrapped stalls", off: () => set({ wrapped: false }) });
+  if (f.isNew) chips.push({ key: "new", label: since ? `New since ${since}` : "New", off: () => set({ isNew: false }) });
+  if (f.phase !== DEFAULTS.phase) chips.push({ key: "phase", label: f.phase === "open" ? "Open" : "Upcoming", off: () => set({ phase: DEFAULTS.phase }) });
+  if (selected) chips.push({ key: "sel", label: selected.name, off: () => setSel(null) });
+  else if (jumped) chips.push({ key: "jump", label: "Zoomed to a site", off: () => { setJumped(false); homeRef.current(); } });
+  const active = chips.length;
+  const clearAll = useCallback(() => {
+    setF((o) => ({ ...DEFAULTS, region: o.region }));
+    setSel(null);
+    setJumped(false);
+    homeRef.current();
+  }, []);
+
+  const value: Dash = { data, f, set, reset, chips, active, clearAll, jumped, setJumped, homeRef, visible, regionSites, kpi, color, selected, select, byId, tab, phaseCounts, viewRef, since };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

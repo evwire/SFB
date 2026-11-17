@@ -87,7 +87,7 @@ export function PhaseBar() {
 }
 
 function Rail({ onClose }: { onClose?: () => void }) {
-  const { f, set, reset, active, data, regionSites, color, since } = useDash();
+  const { f, set, clearAll, active, data, regionSites, color, since } = useDash();
   const ops = data.operatorOrder.filter((o) => regionSites.some((s) => s.operator === o && s.phase === "open"));
   const top = ops.slice(0, 5);
   const count = (o: string) => regionSites.filter((s) => s.operator === o && s.phase === "open").length;
@@ -100,7 +100,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
       <div className="dz-rail-h">
         <b>Filters</b>
         {active > 0 && (
-          <button type="button" className="dz-link" onClick={reset}>
+          <button type="button" className="dz-link" onClick={clearAll} aria-label={`Clear all ${active} ${active === 1 ? "filter" : "filters"} and zoom the map back out`}>
             Clear {active}
           </button>
         )}
@@ -430,8 +430,10 @@ export function DashFrame() {
             </p>
             <DownloadButton />
           </div>
-          <button type="button" className="dz-filterbtn" onClick={() => setSheet(true)}>
-            Filters{active ? ` (${active})` : ""}
+          <button type="button" className="dz-filterbtn" onClick={() => setSheet(true)} aria-label={active ? `Filters, ${active} active` : "Filters"}>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            Filters
+            {active > 0 && <span className="n" aria-hidden="true">{active}</span>}
           </button>
         </div>
         <aside className="dz-panel" aria-label="Site details" aria-live="polite">

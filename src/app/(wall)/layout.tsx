@@ -9,6 +9,7 @@ import "./dash.css";
 import "./interact.css";
 import "./records.css";
 import "./stacks.css";
+import "./glass.css";
 import "@fontsource/fraunces/400-italic.css";
 
 /** Which hero treatment shows: ?hero=a|b|c|d, set on <html> before first paint. */

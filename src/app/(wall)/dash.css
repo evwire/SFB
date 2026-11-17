@@ -174,9 +174,9 @@ html:not([data-tab="charts"]) .tab-charts { display: none; }
 .dz-zoom button:disabled { opacity: 0.35; cursor: default; }
 .dz-zoom button:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
 /* Clear bar: top centre of the map, only while something narrows the view. One chip per filter (its x removes it), then Clear. */
-.dz-clear { position: absolute; left: 50%; top: var(--s-3); z-index: 3; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; max-width: min(calc(100% - 300px), 760px); height: 40px; padding: 0 4px 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); box-shadow: 0 0 0 1px var(--hair), var(--float-fx); opacity: var(--cr, 0); animation: dz-clear-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.dz-chips { display: flex; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
-.dz-chips::-webkit-scrollbar { display: none; }
+.dz-clear { position: absolute; left: 50%; top: var(--s-3); z-index: 3; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; max-width: min(calc(100% - 136px), 760px); height: 40px; padding: 0 4px 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); box-shadow: 0 0 0 1px var(--hair), var(--float-fx); opacity: var(--cr, 0); animation: dz-clear-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.dz-fchips { display: flex; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.dz-fchips::-webkit-scrollbar { display: none; }
 .dz-chip { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 28px; max-width: 220px; padding: 0 9px 0 11px; border: 0; border-radius: 999px; background: var(--field, rgba(127, 127, 127, 0.1)); box-shadow: inset 0 0 0 1px var(--hair); color: var(--fg); font: 600 12.5px/1 var(--sans); white-space: nowrap; cursor: pointer; transition: background 0.15s; }
 .dz-chip span { overflow: hidden; text-overflow: ellipsis; }
 .dz-chip svg { flex: none; color: currentColor; opacity: 0.75; }
@@ -368,7 +368,7 @@ html:not([data-tab="charts"]) .tab-charts { display: none; }
   .dz-map { top: 56px; border-radius: 0; }
   .dz-zoom { top: var(--s-2); right: var(--s-2); }
   .dz-clear { top: var(--s-2); max-width: calc(100% - 72px); left: calc(50% - 24px); }
-  .dz-clear[data-many="1"] .dz-chips { display: none; }
+  .dz-clear[data-many="1"] .dz-fchips { display: none; }
   .dz-clear[data-many="1"] .dz-chipsum { display: inline; }
   .dz-legend { left: var(--s-2); right: var(--s-2); bottom: 46px; max-width: none; padding: var(--s-2) var(--s-3); gap: 6px; font-size: 11.5px; }
   .dz-legend p { gap: 3px 10px; }

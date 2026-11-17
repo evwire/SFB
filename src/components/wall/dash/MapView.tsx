@@ -32,7 +32,7 @@ const ease = (t: number) => {
  * scroll: it zooms only with ctrl+wheel (a trackpad pinch) or the buttons, and pans by dragging once zoomed.
  */
 export default function MapView() {
-  const { f, set, reset, visible, regionSites, color, selected, select, data, since, viewRef: ctxView } = useDash();
+  const { f, visible, regionSites, color, selected, select, data, chips, clearAll, jumped, setJumped, homeRef, viewRef: ctxView } = useDash();
   const eu = f.region === "eu";
   const vw = eu ? EU_VIEW_W : VIEW_W;
   const vh = eu ? EU_VIEW_H : VIEW_H;
@@ -60,8 +60,6 @@ export default function MapView() {
   ctxView.current = view;
   const anim = useRef(0);
   const goto = useRef<string | null>(null);
-  /** the map flew to one site (a records-panel card, a story chip, a table row): that narrows the view too */
-  const [jumped, setJumped] = useState(false);
 
   // Europe holds sites in only a few countries, so its home view frames them (the US home view is the whole map, where
   // the photo wall lands). The image download reads this view, so the picture is framed the same way.
@@ -163,30 +161,24 @@ export default function MapView() {
 
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
 
-  // Everything that narrows the view counts for the Clear pill: each filter, a non-default Open / Upcoming switch, a
-  // picked site, and a fly-to-one-site jump. The region (US / Europe) is a place, not a filter, so Clear keeps it.
+  // What counts as a filter lives in DashContext (chips), shared with the rail's Clear. Here: a fly-to jump stops
+  // counting once the map is back at its home view (the reset-zoom button, or zooming out by hand).
   const atHome = (() => {
     const h = home();
     return Math.abs(view.k - h.k) < 0.01 && Math.abs(view.x - h.x) < 1 && Math.abs(view.y - h.y) < 1;
   })();
-  // one chip per thing that narrows the view; each chip's x undoes just that one
-  const chips: { key: string; label: string; off: () => void }[] = [];
-  for (const op of f.operators) chips.push({ key: `op-${op}`, label: op, off: () => { const rest = f.operators.filter((o) => o !== op); set({ operators: rest, ...(rest.length ? null : { colorBy: "status" as const }) }); } });
-  if (f.state) chips.push({ key: "state", label: eu ? f.state : f.state === "US" ? "State not stated" : US_STATES.find((x) => x.abbr === f.state)?.name ?? f.state, off: () => set({ state: null }) });
-  if (f.host) chips.push({ key: "host", label: data.hostTypes.find((h) => h.key === f.host)?.label ?? f.host, off: () => set({ host: null }) });
-  if (f.minStalls) chips.push({ key: "min", label: `${f.minStalls}+ stalls`, off: () => set({ minStalls: 0 }) });
-  if (f.covered) chips.push({ key: "covered", label: "Covered by EVwire", off: () => set({ covered: false }) });
-  if (f.wrapped) chips.push({ key: "wrapped", label: "Wrapped stalls", off: () => set({ wrapped: false }) });
-  if (f.isNew) chips.push({ key: "new", label: since ? `New since ${since}` : "New", off: () => set({ isNew: false }) });
-  if (f.phase !== "both") chips.push({ key: "phase", label: f.phase === "open" ? "Open" : "Upcoming", off: () => set({ phase: "both" }) });
-  if (selected) chips.push({ key: "sel", label: selected.name, off: () => select(null) });
-  else if (jumped && !atHome) chips.push({ key: "jump", label: "Zoomed to a site", off: () => { setJumped(false); animateTo(home(), 600); } });
   const narrowCount = chips.length;
-  const clearAll = () => {
-    reset();
-    set({ phase: "both" });
-    select(null);
-    setJumped(false);
+  const leftHome = useRef(false);
+  useEffect(() => {
+    if (!jumped) leftHome.current = false;
+    else if (!atHome) leftHome.current = true;
+    else if (leftHome.current) {
+      leftHome.current = false;
+      setJumped(false);
+    }
+  }, [jumped, atHome, setJumped]);
+  // Clear (here, in the rail, or Esc) eases back to the home view through this
+  homeRef.current = () => {
     goto.current = null;
     animateTo(home(), 600);
   };
@@ -325,7 +317,7 @@ export default function MapView() {
 
       {narrowCount > 0 && (
         <div className="dz-clear" data-many={narrowCount > 2 ? "1" : "0"} role="group" aria-label={`${narrowCount} active ${narrowCount === 1 ? "filter" : "filters"}`}>
-          <span className="dz-chips">
+          <span className="dz-fchips">
             {chips.map((c) => (
               <button key={c.key} type="button" className="dz-chip" onClick={c.off} aria-label={`Remove filter: ${c.label}`} title={`Remove ${c.label}`}>
                 <span>{c.label}</span>

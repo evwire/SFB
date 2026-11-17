@@ -1,0 +1,68 @@
+/* Liquid glass for every control that floats on the map: the Clear bar and its chips, zoom, the phone Filters button and
+ * the legend. Frosted translucent fill, a 1px inner highlight, a soft shadow, neutral text; the accent is only a small
+ * count badge. One height (36px) and one radius family (pills, or 18px for stacked panels). Loaded last. */
+.dz {
+  --gx-fill: rgba(255, 255, 255, 0.66);
+  --gx-fill-hi: rgba(255, 255, 255, 0.84);
+  --gx-chip: rgba(11, 17, 22, 0.055);
+  --gx-chip-hi: rgba(11, 17, 22, 0.1);
+  --gx-edge: inset 0 0 0 1px rgba(255, 255, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(11, 17, 22, 0.12);
+  --gx-shadow: 0 10px 28px -12px rgba(11, 17, 22, 0.32), 0 2px 6px -2px rgba(11, 17, 22, 0.12);
+  --gx-blur: blur(22px) saturate(180%);
+  --gx-h: 36px;
+  --gx-ink: var(--fg);
+}
+html.dark .dz {
+  --gx-fill: rgba(30, 35, 42, 0.58);
+  --gx-fill-hi: rgba(44, 50, 58, 0.74);
+  --gx-chip: rgba(255, 255, 255, 0.08);
+  --gx-chip-hi: rgba(255, 255, 255, 0.14);
+  --gx-edge: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.5);
+  --gx-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.7), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+}
+
+.dz .dz-clear, .dz .dz-zoom, .dz .dz-filterbtn, .dz .dz-legend {
+  background: var(--gx-fill);
+  -webkit-backdrop-filter: var(--gx-blur);
+  backdrop-filter: var(--gx-blur);
+  box-shadow: var(--gx-edge), var(--gx-shadow);
+  color: var(--gx-ink);
+}
+
+/* Clear bar */
+.dz .dz-clear { height: calc(var(--gx-h) + 8px); padding: 0 4px; gap: 4px; }
+.dz .dz-chip { height: 28px; background: var(--gx-chip); box-shadow: none; color: var(--gx-ink); font-weight: 600; }
+.dz .dz-chip:hover { background: var(--gx-chip-hi); }
+.dz .dz-clearall { height: 28px; padding: 0 12px; background: transparent; color: var(--gx-ink); box-shadow: inset 0 0 0 1px var(--hair); font-weight: 650; }
+.dz .dz-clearall:hover { background: var(--gx-chip); opacity: 1; }
+.dz .dz-chipsum { color: var(--gx-ink); }
+
+/* zoom: one stacked glass panel, neutral glyphs */
+.dz .dz-zoom { border-radius: 18px; }
+.dz .dz-zoom button { width: var(--gx-h); height: var(--gx-h); color: var(--gx-ink); background: transparent; }
+.dz .dz-zoom button + button { border-top: 1px solid var(--hair); }
+.dz .dz-zoom button:hover:not(:disabled) { background: var(--gx-chip); color: var(--gx-ink); }
+.dz .dz-zoom button:active:not(:disabled) { background: var(--gx-chip-hi); }
+
+/* phone Filters button: glass pill, the count as the only accent */
+.dz .dz-filterbtn { height: var(--gx-h); padding: 0 14px 0 12px; border-radius: 999px; font: 600 13.5px/1 var(--sans); display: none; align-items: center; gap: 7px; }
+.dz .dz-filterbtn svg { width: 15px; height: 15px; opacity: 0.8; }
+.dz .dz-filterbtn .n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--acc); color: #fff; font: 700 11px/1 var(--sans); }
+html.dark .dz .dz-filterbtn .n { color: #06100b; }
+.dz .dz-filterbtn:hover { background: var(--gx-fill-hi); }
+.dz .dz-filterbtn:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+
+/* legend: same glass, its Status / Operator switch drawn as glass-on-glass */
+.dz .dz-legend { border-radius: 18px; }
+.dz .dz-legend .dz-seg { background: var(--gx-chip); }
+.dz .dz-legend .dz-seg.th .thumb { background: var(--gx-fill-hi); box-shadow: var(--gx-edge), 0 2px 6px -2px rgba(11, 17, 22, 0.2); }
+
+@media (max-width: 760px) {
+  .dz .dz-filterbtn { display: inline-flex; }
+  .dz .dz-legend { border-radius: 16px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dz .dz-clear, .dz .dz-zoom, .dz .dz-filterbtn, .dz .dz-legend { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+/* the zoom hint gives way to the Clear bar */
+.dz .dz-map:has(.dz-clear) .dz-zoomhint { display: none; }
