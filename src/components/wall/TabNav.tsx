@@ -6,7 +6,7 @@ import type { Tab } from "./dash/DashContext";
 
 const HOST_HASHES = ["hosts", "builders", "strategies", "stories", "coming"];
 
-/** Three views on one page: the map dashboard, the charts and the story stacks, plus a link to the operator pages. The choice lives on <html data-tab>. */
+/** Three views on one page: the map dashboard, the charts and the stories, plus a link to the operator pages. The choice lives on <html data-tab>. */
 export default function TabNav() {
   const [tab, setTab] = useState<Tab>("dash");
   const nav = useRef<HTMLElement>(null);
@@ -70,7 +70,7 @@ export default function TabNav() {
           Charts
         </button>
         <button type="button" className="w-tab" aria-pressed={tab === "hosts"} onClick={() => go("hosts")}>
-          <span className="tl">Story stacks</span>
+          <span className="tl">Stories</span>
           <span className="ts">Stories</span>
         </button>
         <a className="w-tab w-tab-link" href="/operators">

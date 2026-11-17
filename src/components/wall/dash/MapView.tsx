@@ -32,7 +32,7 @@ const ease = (t: number) => {
  * scroll: it zooms only with ctrl+wheel (a trackpad pinch) or the buttons, and pans by dragging once zoomed.
  */
 export default function MapView() {
-  const { f, visible, regionSites, color, selected, select, data, viewRef: ctxView } = useDash();
+  const { f, set, reset, visible, regionSites, color, selected, select, data, since, viewRef: ctxView } = useDash();
   const eu = f.region === "eu";
   const vw = eu ? EU_VIEW_W : VIEW_W;
   const vh = eu ? EU_VIEW_H : VIEW_H;
@@ -60,6 +60,8 @@ export default function MapView() {
   ctxView.current = view;
   const anim = useRef(0);
   const goto = useRef<string | null>(null);
+  /** the map flew to one site (a records-panel card, a story chip, a table row): that narrows the view too */
+  const [jumped, setJumped] = useState(false);
 
   // Europe holds sites in only a few countries, so its home view frames them (the US home view is the whole map, where
   // the photo wall lands). The image download reads this view, so the picture is framed the same way.
@@ -151,6 +153,7 @@ export default function MapView() {
       const site = id ? data.sites.find((x) => x.id === id) : null;
       if (!site) return;
       goto.current = site.id;
+      setJumped(true);
       window.setTimeout(() => (goto.current = null), 400);
       animateTo(frame([site], 0, 3.2), 900);
     };
@@ -159,6 +162,34 @@ export default function MapView() {
   });
 
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
+
+  // Everything that narrows the view counts for the Clear pill: each filter, a non-default Open / Upcoming switch, a
+  // picked site, and a fly-to-one-site jump. The region (US / Europe) is a place, not a filter, so Clear keeps it.
+  const atHome = (() => {
+    const h = home();
+    return Math.abs(view.k - h.k) < 0.01 && Math.abs(view.x - h.x) < 1 && Math.abs(view.y - h.y) < 1;
+  })();
+  // one chip per thing that narrows the view; each chip's x undoes just that one
+  const chips: { key: string; label: string; off: () => void }[] = [];
+  for (const op of f.operators) chips.push({ key: `op-${op}`, label: op, off: () => { const rest = f.operators.filter((o) => o !== op); set({ operators: rest, ...(rest.length ? null : { colorBy: "status" as const }) }); } });
+  if (f.state) chips.push({ key: "state", label: eu ? f.state : f.state === "US" ? "State not stated" : US_STATES.find((x) => x.abbr === f.state)?.name ?? f.state, off: () => set({ state: null }) });
+  if (f.host) chips.push({ key: "host", label: data.hostTypes.find((h) => h.key === f.host)?.label ?? f.host, off: () => set({ host: null }) });
+  if (f.minStalls) chips.push({ key: "min", label: `${f.minStalls}+ stalls`, off: () => set({ minStalls: 0 }) });
+  if (f.covered) chips.push({ key: "covered", label: "Covered by EVwire", off: () => set({ covered: false }) });
+  if (f.wrapped) chips.push({ key: "wrapped", label: "Wrapped stalls", off: () => set({ wrapped: false }) });
+  if (f.isNew) chips.push({ key: "new", label: since ? `New since ${since}` : "New", off: () => set({ isNew: false }) });
+  if (f.phase !== "both") chips.push({ key: "phase", label: f.phase === "open" ? "Open" : "Upcoming", off: () => set({ phase: "both" }) });
+  if (selected) chips.push({ key: "sel", label: selected.name, off: () => select(null) });
+  else if (jumped && !atHome) chips.push({ key: "jump", label: "Zoomed to a site", off: () => { setJumped(false); animateTo(home(), 600); } });
+  const narrowCount = chips.length;
+  const clearAll = () => {
+    reset();
+    set({ phase: "both" });
+    select(null);
+    setJumped(false);
+    goto.current = null;
+    animateTo(home(), 600);
+  };
 
   // ctrl+wheel only: a plain wheel scrolls the page. Needs a non-passive listener to cancel the browser zoom.
   useEffect(() => {
@@ -194,7 +225,7 @@ export default function MapView() {
       ref={wrap}
       data-zoomed={view.k > home().k + 0.05 ? "1" : "0"}
       onPointerDown={(e) => {
-        if (view.k <= home().k + 0.05 || (e.target as Element).closest(".dz-zoom")) return;
+        if (view.k <= home().k + 0.05 || (e.target as Element).closest(".dz-zoom, .dz-clear")) return;
         cancelAnimationFrame(anim.current);
         drag.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false };
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -206,6 +237,11 @@ export default function MapView() {
         const dy = (e.clientY - d.y) / fit;
         if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
         setView((v) => clamp({ ...v, x: d.vx + dx, y: d.vy + dy }));
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape" || !narrowCount || e.defaultPrevented) return;
+        e.preventDefault(); // the page-level Esc (close the site panel) must not also run
+        clearAll();
       }}
       onPointerUp={() => {
         const d = drag.current;
@@ -287,6 +323,24 @@ export default function MapView() {
         </g>
       </svg>
 
+      {narrowCount > 0 && (
+        <div className="dz-clear" data-many={narrowCount > 2 ? "1" : "0"} role="group" aria-label={`${narrowCount} active ${narrowCount === 1 ? "filter" : "filters"}`}>
+          <span className="dz-chips">
+            {chips.map((c) => (
+              <button key={c.key} type="button" className="dz-chip" onClick={c.off} aria-label={`Remove filter: ${c.label}`} title={`Remove ${c.label}`}>
+                <span>{c.label}</span>
+                <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
+              </button>
+            ))}
+          </span>
+          <span className="dz-chipsum" aria-hidden="true">
+            {narrowCount} {narrowCount === 1 ? "filter" : "filters"}
+          </span>
+          <button type="button" className="dz-clearall" onClick={clearAll} aria-label={`Clear all ${narrowCount} ${narrowCount === 1 ? "filter" : "filters"} and zoom the map back out (Escape)`}>
+            {narrowCount > 1 ? "Clear all" : "Clear"}
+          </button>
+        </div>
+      )}
       <div className="dz-zoom" role="group" aria-label="Zoom">
         <button type="button" aria-label="Zoom in" onClick={() => zoomAt(1.5, vw / 2, vh / 2)}>+</button>
         <button type="button" aria-label="Zoom out" onClick={() => zoomAt(1 / 1.5, vw / 2, vh / 2)}>−</button>

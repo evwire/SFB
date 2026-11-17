@@ -323,6 +323,8 @@ html[data-hero="b"]:not(.dark) .w-stage { background: color-mix(in srgb, #fbfcfc
 .e-glass { background: #f2f5f4; }
 html.dark .e-glass { background: #06080b; }
 .w-stage[data-gone="1"] .w-hero { visibility: hidden; }
+/* the page title stays in the accessibility tree once the hero has left (still invisible and unclickable) */
+.w-stage[data-gone="1"] .w-hero h1 { visibility: visible; opacity: 0; }
 /* the card stays put through the first third of the scroll; only the scroll cue leaves at once (see --hp) */
 
 /* mid-flight the headline fades ahead of the glass, so the card never reads as text on mush */

@@ -3,7 +3,7 @@ import type { DashData, DSite } from "./mapdata";
 import { getStops, storyArticleCount } from "./stories";
 import { getProfiles, FRANCIS } from "./operators";
 
-/** What the Story stacks tab needs, all serialisable: one stack per host/operator plus the two chapters, the road-trip route and the links. */
+/** What the Stories tab needs, all serialisable: one stack per host/operator plus the two chapters and the links. */
 export type StackQuote = { text: string; speaker: string | null; excerpt: boolean; date: string; n: number; url: string };
 export type StackArticle = { n: number; title: string; url: string; date: string; cover: string | null };
 export type StackPhoto = { src: string; alt: string; focus: string; credit: string };
@@ -22,7 +22,7 @@ export type Stack = {
   facts: StackFacts | null;
   links: { key: string; why: string }[];
 };
-export type StackPayload = { stacks: Stack[]; route: string[]; articles: number; francis: { slug: string; sites: number; stalls: number; xy: [number, number] | null } | null };
+export type StackPayload = { stacks: Stack[]; articles: number; francis: { slug: string; sites: number; stalls: number; xy: [number, number] | null } | null };
 
 export function getStackPayload(dash: DashData): StackPayload {
   const stops = getStops();
@@ -71,36 +71,10 @@ export function getStackPayload(dash: DashData): StackPayload {
     s.links = out.slice(0, 4);
   }
 
-  // the road trip: from the first story on the map, nearest next, then uncrossed (2-opt)
-  const pts = stacks.filter((s) => s.xy && !s.chapter).sort((a, b) => (a.quotes[0]?.date ?? "").localeCompare(b.quotes[0]?.date ?? ""));
-  const route: Stack[] = [];
-  if (pts.length) {
-    const left = [...pts];
-    route.push(left.shift()!);
-    while (left.length) {
-      const last = route[route.length - 1];
-      left.sort((a, b) => Math.hypot(a.xy![0] - last.xy![0], a.xy![1] - last.xy![1]) - Math.hypot(b.xy![0] - last.xy![0], b.xy![1] - last.xy![1]));
-      route.push(left.shift()!);
-    }
-    const d = (p: Stack, q: Stack) => Math.hypot(p.xy![0] - q.xy![0], p.xy![1] - q.xy![1]);
-    for (let improved = true; improved; ) {
-      improved = false;
-      for (let i = 1; i < route.length - 1; i++)
-        for (let k = i + 1; k < route.length; k++) {
-          const a = route[i - 1], b = route[i], c = route[k], e = route[k + 1];
-          if (d(a, c) + (e ? d(b, e) : 0) < d(a, b) + (e ? d(c, e) : 0) - 0.01) {
-            route.splice(i, k - i + 1, ...route.slice(i, k + 1).reverse());
-            improved = true;
-          }
-        }
-    }
-  }
-
   const fr = profiles.find((p) => p.name === FRANCIS);
   const frXY: [number, number] | null = fr && fr.sites.length ? [fr.sites.reduce((a, s) => a + s.x, 0) / fr.sites.length, fr.sites.reduce((a, s) => a + s.y, 0) / fr.sites.length] : null;
   return {
     stacks,
-    route: route.map((s) => s.key),
     articles: storyArticleCount(),
     francis: fr && fr.facts ? { slug: fr.slug, sites: fr.facts.sites, stalls: fr.facts.stalls, xy: frXY } : null,
   };

@@ -1,17 +1,12 @@
-/* Story stacks tab: X1 slides, the operator hand-off, and X3 "Play the journey". Light by default, dark via html.dark. */
+/* Stories tab: one slide stack per host or chapter and the hand-off to the operator pages. Light by default, dark via html.dark. */
 .ss { --serif: "Fraunces", Georgia, serif; --panel: linear-gradient(180deg, #f7faf9, #e7eeeb); --cell: rgba(255, 255, 255, 0.94); --land: #ffffff; --lines: #dbe3df; --ink2: var(--ink); --chip: #ffffff;
   width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 120px 0 40px; }
 html.dark .ss { --panel: linear-gradient(180deg, #121920, #0b1015); --cell: rgba(22, 29, 36, 0.96); --land: #18212a; --lines: #27323c; --ink2: #eef3f1; --chip: #141b22; }
-.ss-top, .ss-jtop { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.ss-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
 .ss-h1 { margin-top: 16px; font: 650 clamp(34px, 4.6vw, 60px)/0.98 var(--disp); letter-spacing: -0.045em; text-wrap: balance; max-width: 16em; }
 .ss-h1.sm { font-size: clamp(28px, 3vw, 40px); }
 .ss-h1 span { color: var(--acc); }
 .ss-count { margin-top: 12px; font: 500 14px/1.4 var(--sans); color: var(--mut); }
-.ss-play { display: inline-grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; text-align: left; border: 0; cursor: pointer; padding: 10px 20px 10px 10px; border-radius: 22px; background: var(--fg); color: var(--bg); font: 650 15px/1.15 var(--sans); }
-.ss-play span { grid-row: span 2; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--signal); color: #fff; }
-.ss-play span svg { width: 15px; height: 15px; }
-.ss-play small { font: 500 12px/1.2 var(--sans); opacity: 0.66; }
-.ss-play:hover { filter: brightness(1.1); }
 
 .ss-rings { display: flex; gap: 14px; overflow-x: auto; padding: 26px 4px 12px; margin-top: 10px; scrollbar-width: thin; scroll-snap-type: x proximity; }
 .ss-rings > span { flex: none; scroll-snap-align: center; }
@@ -127,61 +122,18 @@ html.dark .ss { --panel: linear-gradient(180deg, #121920, #0b1015); --cell: rgba
 .ss-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
 .ss-links > span { font: 600 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mut); margin-right: 4px; }
 
-/* journey */
-.ss-j { position: relative; outline: none; }
-.w .ss-j:focus, .w .ss-j:focus-visible { outline: none; }
-.ss-jprog { position: relative; height: 3px; background: var(--hair); border-radius: 3px; margin-bottom: 22px; overflow: hidden; }
-.ss-jprog i { display: block; height: 100%; background: var(--signal); transition: width 0.4s var(--enter); }
-.ss-jbody { display: grid; grid-template-columns: 1fr 372px; gap: 28px; align-items: start; margin-top: 18px; }
-.ss-jmap { border-radius: 26px; background: var(--panel); box-shadow: 0 0 0 1px var(--hair); padding: 18px 10px; }
-.ss-jmap svg { display: block; width: 100%; }
-.ss-route { fill: none; stroke: var(--ink2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.16; }
-.ss-route.done { stroke: var(--signal); opacity: 1; stroke-width: 2.6; }
-.ss-stop circle { fill: var(--land); stroke: var(--ink2); stroke-width: 1.6; }
-.ss-stop.done circle { fill: var(--signal); stroke: var(--land); stroke-width: 2; }
-.ss-stop.now circle.r { fill: var(--signal); opacity: 0.2; stroke: none; }
-.ss-stop.now > circle:not(.r) { fill: var(--signal); stroke: var(--land); }
-.ss-stop text { font: 600 11px var(--sans); fill: var(--mut); paint-order: stroke; stroke: var(--land); stroke-width: 4px; }
-.ss-stop.now text { fill: var(--ink2); font-size: 13px; }
-.ss-fdot circle { fill: var(--ink2); }
-.ss-fdot text { font: 700 9px var(--sans); fill: var(--land); }
-.ss-dock { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 10px 14px 10px 10px; border-radius: 22px; background: var(--glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 0 0 1px var(--hair); }
-.ss-pp { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--fg); color: var(--bg); display: grid; place-items: center; flex: none; cursor: pointer; }
-.ss-pp svg { width: 16px; height: 16px; }
-.ss-tl { flex: 1; display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 6px 4px; }
-.ss-tl button { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; padding: 0; background: var(--surface) center/cover; cursor: pointer; box-shadow: 0 0 0 2px var(--bg); display: grid; place-items: center; font: 650 13px/1 var(--disp); color: var(--acc); }
-.ss-tl button.done { opacity: 0.55; }
-.ss-tl button[aria-current="true"] { width: 44px; height: 44px; box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4.5px var(--signal); opacity: 1; }
-.ss-tl button.ch { width: auto; height: 30px; border-radius: 999px; padding: 0 12px; background: var(--fg); color: var(--bg); font: 600 10.5px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
-.ss-tl button.ch[aria-current="true"] { height: 34px; }
-.ss-tim { font: 600 12px/1 var(--sans); color: var(--mut); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ss-tim b { color: var(--fg); }
-.ss-note { margin-top: 12px; font: 500 12.5px/1.4 var(--sans); color: var(--mut); }
-
-@media (prefers-reduced-motion: reduce) { .ss-side, .ss-jprog i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ss-side { transition: none; } }
 @media (max-width: 1060px) { .ss-side { display: none; } }
 @media (max-width: 760px) {
   .ss { width: calc(100% - 28px); padding-top: 96px; }
   .ss-top { align-items: flex-start; }
-  .ss-play { width: 100%; }
   .ss-deck { height: auto; display: block; perspective: none; margin-top: 14px; }
   .ss-frame { width: 100%; height: auto; aspect-ratio: 9 / 15; border-radius: 22px; }
   .ss-main .ss-frame { min-height: 560px; }
   .ss-under { margin-top: 30px; }
-  .ss-jbody { grid-template-columns: 1fr; gap: 14px; }
-  .ss-jmap { padding: 6px 0; }
-  .ss-stop text { display: none; }
-  .ss-stop.now text { display: block; }
-  .ss-dock { position: sticky; bottom: 10px; padding: 8px; }
-  .ss-tim { display: none; }
-  .ss-pp { width: 40px; height: 40px; }
 }
 
 /* links into the operator pages from the dashboard */
 .w-tab-link { text-decoration: none; display: inline-block; }
 .dz-oplink { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: var(--fg); color: var(--bg); text-decoration: none; font: 600 14px/1.2 var(--sans); }
 .dz-oplink:hover { filter: brightness(1.12); }
-.rb-oplinks { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font: 500 12.5px/1.3 var(--sans); }
-.rb-oplinks a { color: var(--mut); text-decoration: none; border-bottom: 1px solid var(--hair); }
-.rb-oplinks a:hover { color: var(--fg); }
-.rb-oplinks a.all { color: var(--fg); font-weight: 600; border-bottom-color: currentColor; }

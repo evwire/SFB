@@ -320,20 +320,6 @@ export function SlideView({ s, sl, n, k, all, onGo, decorative = false }: { s: S
   );
 }
 
-/* ---------- reduced motion ---------- */
-
-function useReducedMotion() {
-  const [r, setR] = useState(false);
-  useEffect(() => {
-    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setR(m.matches);
-    const on = () => setR(m.matches);
-    m.addEventListener("change", on);
-    return () => m.removeEventListener("change", on);
-  }, []);
-  return r;
-}
-
 /* ---------- X1: the stacks ---------- */
 
 export default function StoryStacks({ data }: { data: StackPayload }) {
@@ -345,7 +331,6 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
   }, [stacks]);
   const [i, setI] = useState(() => Math.max(0, order.findIndex((s) => s.key === "electric-son")));
   const [j, setJ] = useState(0);
-  const [mode, setMode] = useState<"stacks" | "journey">("stacks");
   const rings = useRef<HTMLDivElement>(null);
   const deck = useRef<HTMLDivElement>(null);
   const s = order[i];
@@ -360,7 +345,6 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
         setI(k);
         setJ(0);
       }
-      if (new URLSearchParams(location.search).get("journey") === "1") setMode("journey");
     };
     pick();
     // read the URL once on arrival; later state changes must not re-apply it
@@ -417,28 +401,19 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
   const nb = (d: number) => order[(i + d + order.length) % order.length];
   const hostsCount = hosts.length;
 
-  if (mode === "journey") return <Journey data={data} onClose={(key) => { setMode("stacks"); if (key) goStack(key); }} />;
-
   return (
     <div className="ss">
       <div className="ss-top">
         <div>
-          <p className="w-eyebrow">Story stacks</p>
-          <h1 className="ss-h1">Every story, one stack at a time<span>.</span></h1>
+          <p className="w-eyebrow">Stories</p>
+          <h1 className="ss-h1">Every story, in their own words<span>.</span></h1>
           <p className="ss-count">
             {hostsCount} hosts and operators · 2 chapters · all {data.articles} articles · every quote is exact article text
           </p>
         </div>
-        <button type="button" className="ss-play" onClick={() => setMode("journey")}>
-          <span aria-hidden="true">
-            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z" /></svg>
-          </span>
-          Play the journey
-          <small>{data.route.length} stops on the map, with the chapters</small>
-        </button>
       </div>
 
-      <div className="ss-rings" ref={rings} role="list" aria-label="Stacks">
+      <div className="ss-rings" ref={rings} role="list" aria-label="Stories">
         {order.map((r, k) => {
           const f = face(r);
           return (
@@ -486,7 +461,7 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
       </div>
 
       <div className="ss-under">
-        <div className="ss-types" role="group" aria-label="Slides in this stack">
+        <div className="ss-types" role="group" aria-label="Slides in this story">
           {L.map((x, k) => (
             <button key={k} type="button" aria-pressed={k === jj} onClick={() => setJ(k)}>
               {KIND[x.type]}
@@ -510,7 +485,7 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
       </div>
       {s.links.length > 0 && (
         <div className="ss-links">
-          <span>Linked stacks</span>
+          <span>Related stories</span>
           {s.links.map((l) => {
             const o = stacks.find((x) => x.key === l.key)!;
             const f = face(o);
@@ -523,164 +498,6 @@ export default function StoryStacks({ data }: { data: StackPayload }) {
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-/* ---------- X3: play the journey ---------- */
-
-const SECS = 5;
-
-function Journey({ data, onClose }: { data: StackPayload; onClose: (key?: string) => void }) {
-  const byKey = useMemo(() => new Map(data.stacks.map((s) => [s.key, s])), [data.stacks]);
-  const seq = useMemo(() => ["programme", ...data.route, "market"].map((k) => byKey.get(k)).filter((s): s is Stack => !!s), [byKey, data.route]);
-  const R = useMemo(() => data.route.map((k) => byKey.get(k)!).filter((s) => s.xy), [byKey, data.route]);
-  const reduce = useReducedMotion();
-  const [a, setA] = useState(0); // the journey always starts at its beginning: the programme, then the oldest stop
-  const [b, setB] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  const tl = useRef<HTMLDivElement>(null);
-
-  // autoplay starts on its own unless the visitor asks for reduced motion; it is always pausable
-  useEffect(() => {
-    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (!m.matches) setPlaying(true);
-    box.current?.focus({ preventScroll: true });
-    box.current?.scrollIntoView({ block: "start" });
-  }, []);
-  useEffect(() => {
-    if (!playing) return;
-    const t = window.setTimeout(() => {
-      const L = slidesFor(seq[a]);
-      if (b + 1 < L.length) setB(b + 1);
-      else if (a + 1 < seq.length) { setA(a + 1); setB(0); }
-      else setPlaying(false);
-    }, SECS * 1000);
-    return () => window.clearTimeout(t);
-  }, [playing, a, b, seq]);
-  useEffect(() => {
-    const vis = () => document.hidden && setPlaying(false);
-    document.addEventListener("visibilitychange", vis);
-    return () => document.removeEventListener("visibilitychange", vis);
-  }, []);
-  useEffect(() => {
-    const el = tl.current?.querySelector<HTMLElement>('[aria-current="true"]');
-    const bx = tl.current;
-    if (el && bx) bx.scrollTo({ left: el.offsetLeft - bx.clientWidth / 2 + el.clientWidth / 2, behavior: reduce ? "auto" : "smooth" });
-  }, [a, reduce]);
-
-  const s = seq[a];
-  const L = slidesFor(s);
-  const bb = Math.min(b, L.length - 1);
-  const step = (d: number) => {
-    if (bb + d >= 0 && bb + d < L.length) return setB(bb + d);
-    const na = a + (d > 0 ? 1 : -1);
-    if (na < 0 || na >= seq.length) return;
-    setA(na);
-    setB(d > 0 ? 0 : slidesFor(seq[na]).length - 1);
-  };
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === " " || e.key === "k") { e.preventDefault(); setPlaying((p) => !p); }
-    else if (e.key === "ArrowRight") { e.preventDefault(); setPlaying(false); step(1); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); setPlaying(false); step(-1); }
-    else if (e.key === "Escape") { e.preventDefault(); onClose(s.key); }
-  };
-
-  const ri = R.indexOf(s);
-  const done = s.key === "market" ? R.length : ri < 0 ? 0 : ri + 1;
-  const path = (arr: Stack[]) => arr.map((o, k) => `${k ? "L" : "M"}${o.xy![0].toFixed(1)} ${o.xy![1].toFixed(1)}`).join(" ");
-  const total = seq.reduce((t, o) => t + slidesFor(o).length, 0);
-  const before = seq.slice(0, a).reduce((t, o) => t + slidesFor(o).length, 0) + bb;
-  const clock = (n: number) => `${Math.floor((n * SECS) / 60)}:${String((n * SECS) % 60).padStart(2, "0")}`;
-  // labels: the current stop always, others only when they do not crowd an earlier one
-  const hide = new Set<string>();
-  const kept: Stack[] = s.xy ? [s] : [];
-  for (const o of R) {
-    if (o === s) continue;
-    if (kept.some((q) => Math.hypot(o.xy![0] - q.xy![0], o.xy![1] - q.xy![1]) < 30)) hide.add(o.key);
-    else kept.push(o);
-  }
-
-  return (
-    <div className="ss ss-j" ref={box} tabIndex={-1} onKeyDown={onKey} role="region" aria-label="Play the journey. Space plays or pauses, arrows step, Escape goes back to the stacks.">
-      <div className="ss-jprog" aria-hidden="true">
-        <i style={{ width: `${((before + 1) / total) * 100}%` }} />
-      </div>
-      <div className="ss-jtop">
-        <div>
-          <p className="w-eyebrow">Story stacks</p>
-          <h1 className="ss-h1 sm">Play the journey<span>.</span></h1>
-          <p className="ss-count" aria-live="polite">
-            {s.chapter ? `Chapter: ${s.label}` : ri >= 0 ? `Stop ${ri + 1} of ${R.length} · ${s.label}${s.place ? `, ${s.place}` : ""}` : s.label}
-          </p>
-        </div>
-        <button type="button" className="ss-prof" onClick={() => onClose(s.key)}>
-          <Left /> Back to the stacks
-        </button>
-      </div>
-      <div className="ss-jbody">
-        <div className="ss-jmap">
-          <svg viewBox="40 20 900 560" role="img" aria-label={`Route through ${R.length} stops on the US map`}>
-            {LOWER48.map((x) => (
-              <path key={x.abbr} d={x.d} className="ss-land" />
-            ))}
-            <path className="ss-route" d={path(R)} />
-            {done > 1 && <path className="ss-route done" d={path(R.slice(0, done))} />}
-            {data.francis?.xy && (
-              <g transform={`translate(${data.francis.xy[0]},${data.francis.xy[1]})`} className="ss-fdot">
-                <circle r={9} />
-                <text y={3.5} textAnchor="middle">F</text>
-              </g>
-            )}
-            {R.map((o, k) => {
-              const cur = o === s;
-              const right = o.xy![0] > 790;
-              return (
-                <g key={o.key} className={`ss-stop${k < done - 1 || (k === done - 1 && !cur) ? " done" : ""}${cur ? " now" : ""}`} transform={`translate(${o.xy![0]},${o.xy![1]})`}>
-                  {cur && <circle className="r" r={26} />}
-                  <circle r={cur ? 9 : 5.5} />
-                  {(cur || !hide.has(o.key)) && (
-                    <text x={right ? (cur ? -14 : -9) : cur ? 14 : 9} y={4} textAnchor={right ? "end" : "start"}>
-                      {o.label}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-        <div className="ss-jcard">
-          <SlideView s={s} sl={L[bb]} n={L.length} k={bb} all={data.stacks} />
-        </div>
-      </div>
-      <div className="ss-dock">
-        <button type="button" className="ss-pp" onClick={() => setPlaying((p) => !p)} aria-pressed={playing} aria-label={playing ? "Pause the journey" : "Play the journey"}>
-          {playing ? (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" /></svg>
-          ) : (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>
-          )}
-        </button>
-        <div className="ss-tl" ref={tl}>
-          {seq.map((o, k) => {
-            const f = face(o);
-            return o.chapter ? (
-              <button key={o.key} type="button" className="ch" aria-current={k === a ? "true" : undefined} onClick={() => { setA(k); setB(0); }}>
-                {o.chapter === "programme" ? "Tesla" : "Market"}
-              </button>
-            ) : (
-              <button key={o.key} type="button" className={k < a ? "done" : undefined} aria-current={k === a ? "true" : undefined} aria-label={o.label} title={o.label} style={f.bg ? { backgroundImage: `url(${f.bg})` } : undefined} onClick={() => { setA(k); setB(0); }}>
-                {f.bg ? "" : f.letter}
-              </button>
-            );
-          })}
-        </div>
-        <span className="ss-tim">
-          <b>{clock(before)}</b> / {clock(total)}
-        </span>
-      </div>
-      {reduce && <p className="ss-note">Autoplay is off because your device asks for reduced motion. Press play to start, or step with the arrow keys.</p>}
     </div>
   );
 }

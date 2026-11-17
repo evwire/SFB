@@ -79,7 +79,7 @@ export default async function Page() {
           <nav aria-label="Footer">
             <a href="#dashboard">The map and dashboard</a>
             <a href="#charts">Charts</a>
-            <a href="#stories">Story stacks</a>
+            <a href="#stories">Stories</a>
             <a href="/operators">Operators</a>
             <a href="https://evwire.com/t/tesla-third-party-superchargers" target="_blank" rel="noopener">
               Our Supercharger stories

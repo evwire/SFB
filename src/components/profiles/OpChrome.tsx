@@ -22,7 +22,7 @@ export const PlayIcon = () => (
   </svg>
 );
 
-/** The same four places from every page: the dashboard, the charts, the story stacks and the operators. */
+/** The same four places from every page: the dashboard, the charts, the stories and the operators. */
 export function OpTop({ here }: { here: "operators" | "profile" }) {
   return (
     <header className="op-top">
@@ -34,7 +34,7 @@ export function OpTop({ here }: { here: "operators" | "profile" }) {
       <nav aria-label="Primary">
         <a href="/" className="hide-s">Dashboard</a>
         <a href="/#charts" className="hide-s">Charts</a>
-        <a href="/#stories">Story stacks</a>
+        <a href="/#stories">Stories</a>
         <a href="/operators" aria-current={here === "operators" ? "page" : undefined}>
           Operators
         </a>
@@ -53,7 +53,7 @@ export function OpFoot({ asOf, stories }: { asOf: string; stories: boolean }) {
       <nav aria-label="Footer">
         <a href="/">The map and dashboard</a>
         <a href="/#charts">Charts</a>
-        <a href="/#stories">Story stacks</a>
+        <a href="/#stories">Stories</a>
         <a href="/operators">All operators</a>
         <a href="https://evwire.com/subscribe" target="_blank" rel="noopener">Subscribe</a>
       </nav>

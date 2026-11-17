@@ -6,7 +6,7 @@ import { computeRecords, placeOf, rateRange, type RecAction, type RecordCard } f
 import { US_STATES } from "@/lib/us-states.generated";
 import { opHref } from "@/lib/slug";
 import { EUROPE_COUNTRIES } from "@/lib/europe-countries.generated";
-import { FRANCIS, OTHER_COLOR } from "@/lib/opcolor";
+import { FRANCIS } from "@/lib/opcolor";
 import type { DSite } from "@/lib/mapdata";
 
 /**
@@ -347,71 +347,45 @@ function PriceStrip({ recs, open, onSite }: { recs: RecordCard[]; open: DSite[];
 
 /* ---------- lower panel ---------- */
 
-function treemap<T extends { v: number }>(items: T[], W: number, H: number) {
-  items = items.filter((i) => i.v > 0).sort((a, b) => b.v - a.v);
-  const tot = items.reduce((a, i) => a + i.v, 0);
-  const out: (T & { x: number; y: number; w: number; h: number })[] = [];
-  const worst = (row: T[], side: number, scale: number) => {
-    const s = row.reduce((a, i) => a + i.v, 0) * scale;
-    const mx = Math.max(...row.map((i) => i.v * scale)), mn = Math.min(...row.map((i) => i.v * scale));
-    return Math.max((side * side * mx) / (s * s), (s * s) / (side * side * mn));
-  };
-  let x = 0, y = 0, w = W, h = H, rest = [...items];
-  const scale = (W * H) / (tot || 1);
-  while (rest.length) {
-    const side = Math.min(w, h);
-    const row = [rest[0]];
-    let i = 1;
-    while (i < rest.length && worst([...row, rest[i]], side, scale) <= worst(row, side, scale)) row.push(rest[i++]);
-    const th = (row.reduce((a, q) => a + q.v, 0) * scale) / side;
-    let off = 0;
-    for (const q of row) {
-      const len = (q.v * scale) / th;
-      out.push(w >= h ? { ...q, x, y: y + off, w: th, h: len } : { ...q, x: x + off, y, w: len, h: th });
-      off += len;
-    }
-    if (w >= h) { x += th; w -= th; } else { y += th; h -= th; }
-    rest = rest.slice(row.length);
-  }
-  return out;
-}
-
-function Treemap({ open, color, jump }: { open: DSite[]; color: (op: string | null) => string; jump: ReturnType<typeof useJump> }) {
-  const items = useMemo(() => {
+/** Every operator named: a ranked list of stalls with a thin bar to scale. A row filters the map; the arrow opens its page. */
+function OpRank({ open, jump }: { open: DSite[]; jump: ReturnType<typeof useJump> }) {
+  const all = useMemo(() => {
     const m = new Map<string, { v: number; sites: number }>();
     for (const s of open) {
-      if (!s.operator || s.stalls == null) continue;
+      if (!s.operator) continue;
       const r = m.get(s.operator) ?? { v: 0, sites: 0 };
-      r.v += s.stalls;
+      r.v += s.stalls ?? 0;
       r.sites++;
       m.set(s.operator, r);
     }
-    return [...m.entries()].map(([op, r]) => ({ op, ...r }));
+    return [...m.entries()].map(([op, r]) => ({ op, ...r })).sort((a, b) => b.v - a.v || a.op.localeCompare(b.op));
   }, [open]);
-  if (!items.length) return null;
-  const W = 330, H = 170;
-  const T = treemap(items, W, H);
+  if (!all.length) return null;
+  const top = all.slice(0, 8);
+  const max = top[0].v || 1;
   return (
-    <svg className="rb-tree" viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Stalls by operator, area is stalls">
-      {T.map((t) => {
-        const c = color(t.op);
-        const small = c === OTHER_COLOR;
-        const big = t.w > 60 && t.h > 34;
-        const nm = t.w < 110 ? t.op.split(" ")[0] : t.op;
-        return (
-          <g key={t.op} className="tile" role="button" tabIndex={0} onClick={() => jump({ kind: "operators", ops: [t.op] })} onKeyDown={(e) => e.key === "Enter" && jump({ kind: "operators", ops: [t.op] })}>
-            <title>{`${t.op}: ${nf(t.v)} stalls at ${nf(t.sites)} ${t.sites === 1 ? "site" : "sites"}. Show on the map`}</title>
-            <rect x={t.x + 1} y={t.y + 1} width={Math.max(0, t.w - 2)} height={Math.max(0, t.h - 2)} rx={5} fill={small ? undefined : c} className={small ? "sm" : undefined} />
-            {big && !small && (
-              <>
-                <text x={t.x + 8} y={t.y + 17} className="nm" aria-hidden="true">{nm}</text>
-                <text x={t.x + 8} y={t.y + 31} className="vl" aria-hidden="true">{`${nf(t.v)} stalls${t.w > 110 ? ` · ${nf(t.sites)} site${t.sites > 1 ? "s" : ""}` : ""}`}</text>
-              </>
-            )}
-          </g>
-        );
-      })}
-    </svg>
+    <>
+      <ol className="rb-rank">
+        {top.map((t) => (
+          <li key={t.op}>
+            <button type="button" onClick={() => jump({ kind: "operators", ops: [t.op] })} aria-label={`${t.op}: ${nf(t.v)} stalls at ${nf(t.sites)} ${t.sites === 1 ? "site" : "sites"}. Show on the map`}>
+              <span className="nm">{t.op}</span>
+              <span className="br" aria-hidden="true"><i style={{ width: `${Math.max(2, (t.v / max) * 100)}%` }} /></span>
+              <span className="vl" aria-hidden="true">{nf(t.v)}</span>
+            </button>
+            <a href={opHref(t.op)} aria-label={`${t.op}: operator page`} title="Operator page">
+              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.5 8.5l5-5M4.5 3.5h4v4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p className="rb-rankmore">
+        {all.length > top.length && <span>+ {all.length - top.length} more</span>}
+        <a href="/operators">
+          All {all.length} operators <span aria-hidden="true">→</span>
+        </a>
+      </p>
+    </>
   );
 }
 
@@ -524,25 +498,6 @@ function Changes({ eu, jump }: { eu: boolean; jump: ReturnType<typeof useJump> }
   );
 }
 
-/** The biggest operators by stalls, each to its profile page, then the index. */
-function OpLinks({ open }: { open: DSite[] }) {
-  const m = new Map<string, number>();
-  for (const s of open) if (s.operator) m.set(s.operator, (m.get(s.operator) ?? 0) + (s.stalls ?? 0));
-  const top = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 4);
-  return (
-    <p className="rb-oplinks">
-      {top.map(([op]) => (
-        <a key={op} href={opHref(op)}>
-          {op}
-        </a>
-      ))}
-      <a href="/operators" className="all">
-        All {m.size} operators <span aria-hidden="true">→</span>
-      </a>
-    </p>
-  );
-}
-
 /* ---------- the panel ---------- */
 
 export default function RecordsPanel() {
@@ -620,9 +575,8 @@ export default function RecordsPanel() {
 
       <section className="rb-panel rb-lower" aria-label="Operators, states and what is new">
         <div>
-          <h3 className="mt">Stalls by operator <small>area = stalls</small></h3>
-          <Treemap open={open} color={color} jump={jump} />
-          <OpLinks open={open} />
+          <h3 className="mt">Stalls by operator <small>open sites</small></h3>
+          <OpRank open={open} jump={jump} />
         </div>
         <div>
           {!eu && upcoming.length > 0 ? (
