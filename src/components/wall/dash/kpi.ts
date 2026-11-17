@@ -45,8 +45,9 @@ export function kpiItems(kpi: Kpis, f: Filters): KpiItem[] {
       label: "Stories covered by EVwire",
       short: "EVwire stories",
       value: nf(kpi.covered),
-      note: `${kpi.covered === 1 ? "site" : "sites"} with a story`,
-      cls: "cov",
+      note: `open ${kpi.covered === 1 ? "site" : "sites"} with a story`,
+      // a zero (Europe today) stays neutral; the accent is for a real count
+      cls: kpi.covered ? "cov" : undefined,
     },
   ];
 }

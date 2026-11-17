@@ -2,8 +2,8 @@
   "name": "evwire-sfb-map",
   "version": "0.1.0",
   "scripts": {
-    "geo": "node scripts/build-geo.mjs",
-    "prebuild": "node scripts/build-geo.mjs",
+    "geo": "node scripts/build-geo.mjs && node scripts/simplify-geo.mjs",
+    "prebuild": "node scripts/build-geo.mjs && node scripts/simplify-geo.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

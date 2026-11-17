@@ -55,7 +55,7 @@ export default function ChartCard({ model, host }: { model: ChartModel; host: st
       <div className="art" ref={art} dangerouslySetInnerHTML={{ __html: svg }} />
       <figcaption>
         <span>{model.source}</span>
-        <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label={`Download PNG: ${model.title}`}>
+        <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label={`Download PNG of the chart: ${model.title}`}>
           <DownloadIcon />
           {busy ? "Preparing…" : "Download PNG"}
         </button>

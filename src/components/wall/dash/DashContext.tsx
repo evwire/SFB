@@ -1,5 +1,6 @@
 "use client";
 
+import { hasStory } from "@/lib/storycounts";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DashData, DSite } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
@@ -133,7 +134,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
         if (f.host && s.hostType !== f.host) return false;
         if (f.state && s.state !== f.state) return false;
         if (f.minStalls && !(s.stalls != null && s.stalls >= f.minStalls)) return false;
-        if (f.covered && !s.articles.length) return false;
+        if (f.covered && !hasStory(s)) return false;
         if (f.wrapped && !s.wrapped) return false;
         if (f.isNew && !s.change) return false;
         return true;
@@ -161,7 +162,7 @@ export function DashProvider({ data, children }: { data: DashData; children: Rea
       rateLow: rates.length ? Math.min(...rates) : null,
       rateHigh: rates.length ? Math.max(...rates) : null,
       rateCur: open.find((s) => s.currency)?.currency ?? null,
-      covered: visible.filter((s) => s.articles.length).length,
+      covered: visible.filter(hasStory).length,
       isNew: visible.filter((s) => s.change).length,
     };
   }, [visible]);

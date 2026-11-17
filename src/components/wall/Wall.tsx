@@ -626,6 +626,9 @@ export default function Wall({
     };
   }, []);
 
+  // the first dozen photos (the top of the wall) are the only ones fetched up front
+  const eager = new Set(groups.flatMap((g) => g.photos.map((p) => p.id)).slice(0, 12));
+
   return (
     <section className="w-track" ref={trackRef} aria-label="Photos from our Supercharger reporting, flying to their places on the map">
       <svg className="w-lg-defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -672,6 +675,9 @@ export default function Wall({
                   height={p.h}
                   alt={p.alt}
                   decoding="async"
+                  // only the first dozen tiles load up front; the rest wait until they come near the screen
+                  loading={eager.has(p.id) ? undefined : "lazy"}
+                  fetchPriority={eager.has(p.id) ? "high" : undefined}
                   style={{ objectPosition: p.focus }}
                 />
                 <span className="w-tile-name">{p.name}</span>
@@ -697,7 +703,7 @@ export default function Wall({
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.src} width={p.w} height={p.h} alt="" decoding="async" style={{ objectPosition: p.focus }} />
+                <img src={p.src} width={p.w} height={p.h} alt="" decoding="async" loading={eager.has(p.id) ? undefined : "lazy"} style={{ objectPosition: p.focus }} />
                 <span className="w-tile-name">{p.name}</span>
               </span>
             ))

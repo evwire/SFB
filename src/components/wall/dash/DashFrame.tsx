@@ -175,7 +175,7 @@ function Rail({ onClose }: { onClose?: () => void }) {
         Wrapped stalls
       </Toggle>
       <Toggle on={f.isNew} onClick={() => set({ isNew: !f.isNew })} swatch={<em className="dz-newdot" />}>
-        {since ? `New since ${since}` : "Changed in the latest pull"}
+        {since ? `New since ${since}` : "Changed in the latest check"}
       </Toggle>
     </div>
   );

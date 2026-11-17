@@ -11,15 +11,22 @@ import { getChecks } from "@/lib/chart-history";
 import { getDashData, PHOTO_SITE } from "@/lib/mapdata";
 import { makeOpColor } from "@/lib/opcolor";
 import { getWallData } from "@/lib/wall";
+import { storyCounts } from "@/lib/storycounts";
+import { jsonLd } from "@/lib/jsonld";
 import { builderEntries, hostEntries, strategyEntries, link } from "@/lib/wall-content";
 import type { Entry } from "@/lib/wall-content";
 
 export const revalidate = 300;
 
+const TITLE = "Anyone can now own a Tesla Supercharger. Meet the first owners.";
+const DESCRIPTION =
+  "Every customer-owned Tesla Supercharger on Tesla's map, in the US and Europe, open and upcoming. Who hosts and builds them, what drivers pay, with real photos and the stories behind them.";
+
 export const metadata: Metadata = {
-  title: "Anyone can now own a Tesla Supercharger. Meet the first owners.",
-  description:
-    "Gas stations, a jeweller, a car dealer, a coffee truck, a city. Who hosts and builds Tesla Supercharger for Business sites, with real photos and the stories behind them.",
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION },
+  twitter: { title: TITLE, description: DESCRIPTION },
 };
 
 function Refs({ entry }: { entry: Entry }) {
@@ -64,9 +71,11 @@ export default async function Page() {
   const notClassified = st.openSites - d.hostClassified;
   const maxCount = Math.max(...d.hostTypes.map((r) => r.count), notClassified);
   const nf = (n: number) => n.toLocaleString("en-US");
+  const sc = storyCounts(dash);
 
   return (
     <DashProvider data={dash}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(dash, TITLE, DESCRIPTION) }} />
       <header className="w-top">
         <a className="w-brand" href="https://evwire.com" aria-label="EVwire">
           <i aria-hidden="true" />
@@ -124,7 +133,7 @@ export default async function Page() {
             <p className="w-note">
               Source: Tesla. Customer-owned Superchargers on Tesla&apos;s public map: open sites as of {st.openAsOf}, coming
               soon as of {st.upcomingAsOf}. Tesla publishes no official list of Supercharger for Business sites, so
-              treat these as a floor. EVwire has written about {st.covered} of the {st.openSites} open sites.
+              treat these as a floor. EVwire has written about {nf(sc.sitesWithStory.us)} of the {nf(st.openSites)} open sites.
             </p>
           </div>
         </section>
@@ -245,8 +254,8 @@ export default async function Page() {
               Every site we have written about<span>.</span>
             </h2>
             <p className="w-lede">
-              {d.cards.length} sites across {d.totalStories} published stories. Stall counts and prices come from
-              Tesla&apos;s public map (the price is for non-Tesla drivers). Another {d.otherStories} stories cover the
+              {d.cards.length} hosts from {nf(sc.articles)} published stories. Stall counts and prices come from
+              Tesla&apos;s public map (the price is for non-Tesla drivers). Another {nf(sc.otherArticles)} stories cover the
               programme, the market and the money.{" "}
               <a href="https://evwire.com/t/tesla-third-party-superchargers" target="_blank" rel="noopener">
                 All of them on evwire.com
@@ -330,8 +339,9 @@ export default async function Page() {
             EVwire
           </a>
           <nav aria-label="Footer">
-            <a href="/map">The map and dashboard</a>
-            <a href="/size">Site size</a>
+            <a href="#dashboard">The map and dashboard</a>
+            <a href="#charts">Charts</a>
+            <a href="#hosts">Hosts &amp; stories</a>
             <a href="https://evwire.com/t/tesla-third-party-superchargers" target="_blank" rel="noopener">
               Our Supercharger stories
             </a>

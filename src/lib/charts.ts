@@ -182,7 +182,7 @@ export function buildCharts(data: DashData, checks: Check[]): ChartModel[] {
     }
   }
 
-  // 4. open sites at each Tesla data pull
+  // 4. open sites at each check of Tesla's map
   if (checks.length >= 2) {
     const first = checks[0];
     const last = checks[checks.length - 1];
@@ -191,12 +191,12 @@ export function buildCharts(data: DashData, checks: Check[]): ChartModel[] {
     const d = last.open - first.open;
     out.push({
       id: "growth",
-      title: grew ? `Open sites went from ${nf(first.open)} to ${nf(last.open)} in ${word(weeks)} weeks` : `Open sites: ${nf(first.open)} at the first pull, ${nf(last.open)} at the latest`,
+      title: grew ? `Open sites went from ${nf(first.open)} to ${nf(last.open)} in ${word(weeks)} weeks` : `Open sites: ${nf(first.open)} at the first check, ${nf(last.open)} at the latest`,
       hl: grew ? `${nf(first.open)} to ${nf(last.open)}` : undefined,
-      subtitle: `US customer-owned Superchargers listed as open at each of ${checks.length} Tesla data pulls. Each dot is a pull, not an opening date.`,
+      subtitle: `US customer-owned Superchargers listed as open at each of our ${checks.length} checks of Tesla's map. Each point is a check, not an opening date.`,
       asOf: `Data from ${dayLabelY(first.date)} to ${dayLabelY(last.date)}`,
-      source: `Source: Tesla, ${checks.length} data pulls, ${dayLabelY(first.date)} to ${dayLabelY(last.date)}`,
-      alt: `Stepped area chart of open Supercharger for Business sites at each Tesla data pull, from ${first.open} to ${last.open}.`,
+      source: `Source: Tesla, ${checks.length} checks, ${dayLabelY(first.date)} to ${dayLabelY(last.date)}`,
+      alt: `Stepped area chart of open Supercharger for Business sites at each check of Tesla's map, from ${first.open} to ${last.open}.`,
       spec: {
         kind: "step",
         unit: "open sites",
@@ -244,9 +244,9 @@ export function buildCharts(data: DashData, checks: Check[]): ChartModel[] {
     const classified = t.reduce((a, [, n]) => a + n, 0);
     if (t.length) {
       const short = (k: string) => HOST_SHORT[k] ?? { label: data.hostTypes.find((h) => h.key === k)?.label ?? k, who: data.hostTypes.find((h) => h.key === k)?.label ?? k, nm: data.hostTypes.find((h) => h.key === k)?.label ?? k };
-      const rows: Track["rows"] = t.map(([k, value]) => ({ label: short(k).label, value, pct: pct(value, open.length) }));
+      const rows: Track["rows"] = t.map(([k, value]) => ({ label: short(k).label, value, pct: pct(value, classified) }));
       const rest = open.length - classified;
-      if (rest > 0) rows.push({ label: "Not classified yet", value: rest, pct: pct(rest, open.length), soft: true });
+      if (rest > 0) rows.push({ label: "Not classified yet", value: rest, pct: "", soft: true });
       const [topKey, topN] = t[0];
       const tied = t.filter(([, n]) => n === topN);
       rows.forEach((r, i) => (r.hi = i < tied.length));
@@ -255,7 +255,7 @@ export function buildCharts(data: DashData, checks: Check[]): ChartModel[] {
         id: "hosts",
         title: `${lead} ${nf(topN)} of the ${nf(classified)} open sites we have classified`,
         hl: `${nf(topN)} of the ${nf(classified)}`,
-        subtitle: `Host type is EVwire's own reading of the host's name. ${nf(rest)} of ${nf(open.length)} open sites are not classified yet.`,
+        subtitle: `Host type is EVwire's own reading of the host's name. Percentages are of the ${nf(classified)} classified sites; ${nf(rest)} of ${nf(open.length)} open sites are not classified yet.`,
         asOf: dataAsOf,
         source: `${srcTesla}; host types by EVwire`,
         alt: `Bar chart of open sites by host type. ${short(topKey).label} is first with ${topN}.`,

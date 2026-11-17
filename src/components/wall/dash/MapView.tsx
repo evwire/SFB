@@ -40,6 +40,9 @@ export default function MapView() {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const [fit, setFit] = useState(1);
+  // the basemap paths ship once, in the JS chunk; drawing them only after hydration keeps ~140 KB of path data out of the HTML
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [photoPx, setPhotoPx] = useState(PHOTO_PIN);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 760px)");
@@ -213,9 +216,10 @@ export default function MapView() {
       <svg ref={svg} className="dz-svg" viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet" role="group" aria-label="Map of customer-owned Superchargers">
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
           <g className="dz-land">
-            {shapes.map((st) => (
-              <path key={st.abbr} d={st.d} vectorEffect="non-scaling-stroke" />
-            ))}
+            {mounted &&
+              shapes.map((st) => (
+                <path key={st.abbr} d={st.d} vectorEffect="non-scaling-stroke" />
+              ))}
           </g>
           <g className="dz-pins">
             {order.map((site, i) => {

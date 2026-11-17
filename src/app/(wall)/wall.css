@@ -178,7 +178,7 @@ html.dark .w-brand i { background: var(--signal-bright); box-shadow: 0 0 12px rg
 .w-art-row figcaption { margin-top: 12px; display: grid; gap: 3px; }
 .w-art-row b { font: 600 14px/19px var(--sans); }
 .w-art-row span { font: 500 11.5px/16px var(--mono); color: #a6b1bc; }
-.w-art-row em { font: 400 11px/15px var(--sans); font-style: normal; color: #6b7680; }
+.w-art-row em { font: 400 11px/15px var(--sans); font-style: normal; color: #a9b4bd; }
 
 /* story cards */
 .w-cards { margin-top: 56px; columns: 3; column-gap: 22px; }
@@ -195,7 +195,7 @@ html.dark .w-brand i { background: var(--signal-bright); box-shadow: 0 0 12px rg
 .w-card-body li { display: grid; gap: 3px; }
 .w-card-body li a { font: 500 14px/20px var(--sans); text-decoration: none; color: var(--fg); }
 .w-card-body li a:hover { color: var(--acc); text-decoration: underline; }
-.w-card-body time { font: 500 11px/1 var(--mono); color: var(--faint); }
+.w-card-body time { font: 500 11px/1 var(--mono); color: var(--mut); }
 .w-cards > li.no-photo { background: transparent; }
 
 .w-next { padding-bottom: 120px; }

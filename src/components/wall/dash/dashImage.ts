@@ -47,7 +47,7 @@ export function buildDashImage(d: ReturnType<typeof useDash>, theme: Theme, phot
       toggles: [
         { label: "Stories covered by EVwire", on: f.covered },
         { label: "Wrapped stalls", on: f.wrapped },
-        { label: since ? `New since ${since}` : "Changed in the latest pull", on: f.isNew },
+        { label: since ? `New since ${since}` : "Changed in the latest check", on: f.isNew },
       ],
     },
     asOf: f.phase === "open" ? `Open sites as of ${asOf}` : f.phase === "upcoming" ? `Upcoming sites as of ${data.asOf.upcoming}` : `Open sites as of ${asOf} · upcoming as of ${data.asOf.upcoming}`,

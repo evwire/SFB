@@ -194,7 +194,7 @@ export function Coach() {
 
   const hints = on && geo ? geo.hints : [];
   return (
-    <div ref={root} className="dz-coach" data-on={on ? "1" : "0"} aria-hidden={on ? undefined : true}>
+    <div ref={root} className="dz-coach" data-on={on ? "1" : "0"}>
       {hints.length > 0 && (
         <svg className="dz-coach-svg" aria-hidden="true">
           {hints.map((h, i) => {

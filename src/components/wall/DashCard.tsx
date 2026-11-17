@@ -16,6 +16,16 @@ export default function DashCard() {
   const d = useDash();
   const [theme, setTheme] = useState<Theme>("light");
   const [busy, setBusy] = useState(false);
+  // the picture is a big SVG: draw it only once the Charts tab has been opened, never into the page HTML
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = document.documentElement;
+    const read = () => el.dataset.tab === "charts" && setShown(true);
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(el, { attributes: true, attributeFilter: ["data-tab"] });
+    return () => mo.disconnect();
+  }, []);
 
   useEffect(() => {
     const read = () => setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
@@ -28,9 +38,9 @@ export default function DashCard() {
   const { f, visible, viewRef, color, kpi, phaseCounts, active, since, regionSites, data } = d;
   // viewRef is a live ref the map writes; reading it on each render is enough because the map re-renders with the filters
   const svg = useMemo(
-    () => renderDash(buildDashImage(d, theme, photoOf, "pg")),
+    () => (shown ? renderDash(buildDashImage(d, theme, photoOf, "pg")) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [theme, f, visible, color, kpi, phaseCounts, active, since, regionSites, data, viewRef.current.k, viewRef.current.x, viewRef.current.y]
+    [shown, theme, f, visible, color, kpi, phaseCounts, active, since, regionSites, data, viewRef.current.k, viewRef.current.x, viewRef.current.y]
   );
 
   const download = async () => {
@@ -52,7 +62,7 @@ export default function DashCard() {
       <div className="art dz-dashart" dangerouslySetInnerHTML={{ __html: svg }} />
       <figcaption>
         <span>The dashboard as you have it now: {d.visible.length.toLocaleString("en-US")} sites on the map. Change the filters on the Dashboard tab and this follows.</span>
-        <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label="Download the dashboard picture as a PNG">
+        <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label="Download PNG of the dashboard picture">
           <DownloadIcon />
           {busy ? "Preparing…" : "Download PNG"}
         </button>

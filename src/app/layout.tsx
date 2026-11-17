@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   metadataBase: new URL("https://sfb.evwire.com"),
   title: {
-    default: "Tesla Supercharger for Business: every US site we have covered | EVwire",
+    default: "Tesla Supercharger for Business tracker | EVwire",
     template: "%s | EVwire",
   },
   description:
-    "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard, operator leaderboard, announced pipeline and the latest coverage.",
+    "Every customer-owned Tesla Supercharger on Tesla's map, in the US and Europe, open and upcoming, with charts and the stories behind the first owners.",
   keywords: [
     "Supercharger for Business",
     "third-party Tesla Supercharger",
@@ -20,21 +20,22 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "EVwire",
     url: "https://sfb.evwire.com",
-    title: "Tesla Supercharger for Business: every US site we have covered",
+    title: "Tesla Supercharger for Business tracker",
     description:
-      "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard and the latest coverage.",
+      "Every customer-owned Tesla Supercharger on Tesla's map, in the US and Europe, open and upcoming, with charts and the stories behind the first owners.",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "EVwire Supercharger for Business tracker" }],
   },
   twitter: {
     card: "summary_large_image",
     site: "@TheEVuniverse",
-    title: "Tesla Supercharger for Business: every US site we have covered",
+    title: "Tesla Supercharger for Business tracker",
     description:
-      "A live map of every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard and the latest coverage.",
+      "Every customer-owned Tesla Supercharger on Tesla's map, in the US and Europe, open and upcoming, with charts and the stories behind the first owners.",
     images: ["/og.png"],
   },
   alternates: { canonical: "https://sfb.evwire.com" },
-  robots: { index: false, follow: false },
+  // only the production deployment may be indexed; previews and branches stay out of search
+  robots: process.env.VERCEL_ENV === "production" ? { index: true, follow: true } : { index: false, follow: false },
 };
 
 /** Runs before paint: default Paper/light; dark only if user chose it. Never follows OS. */

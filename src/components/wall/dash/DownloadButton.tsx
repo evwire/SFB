@@ -33,7 +33,7 @@ export function DownloadButton() {
   };
 
   return (
-    <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label="Download this dashboard as a PNG image">
+    <button type="button" className="dz-dl" onClick={download} disabled={busy} aria-label="Download PNG of this map">
       <Icon />
       {busy ? "Preparing…" : "Download PNG"}
     </button>

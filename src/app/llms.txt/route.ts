@@ -1,78 +1,92 @@
-import { getSiteData } from "@/lib/data";
-import { pricingPlain } from "@/lib/findus-pricing";
+import { getDashData, type DSite } from "@/lib/mapdata";
+import { storyCounts } from "@/lib/storycounts";
+import seed from "../../../data/sites.seed.json";
 
 export const revalidate = 300;
 
 /**
- * A plain-text summary for language-model crawlers. The point is that a model
- * answering "which businesses own Tesla Superchargers" gets the real records and the
- * real caveats, rather than scraping the numbers out of a chart and dropping the
- * uncertainty.
+ * A plain-text summary for language-model crawlers, built from the same data as the dashboard (Tesla's public map of
+ * customer-owned Superchargers, plus the EVwire stories linked to those sites). Plain wording only: no internal field
+ * names, and a value the data does not give is left out rather than guessed.
  */
+const nf = (n: number) => n.toLocaleString("en-US");
+
+function siteLine(s: DSite): string {
+  const bits: string[] = [];
+  if (s.operator) bits.push(`operator ${s.operator}`);
+  if (s.host && s.host !== s.operator) bits.push(`host ${s.host}`);
+  if (s.stalls != null) bits.push(`${nf(s.stalls)} stalls`);
+  if (s.kw) bits.push(`up to ${nf(s.kw)} kW`);
+  if (s.teslaRate) bits.push(`Tesla owners pay ${s.teslaRate}`);
+  const story = s.articles[0] ? ` EVwire story: ${s.articles[0].url}` : "";
+  return `- ${s.name}${bits.length ? `: ${bits.join(", ")}.` : "."}${story}`;
+}
+
+function region(label: string, areaWord: string, open: DSite[], upcoming: DSite[], asOf: string, upAsOf: string): string[] {
+  const out: string[] = [];
+  const stalls = open.reduce((a, s) => a + (s.stalls ?? 0), 0);
+  const ops = new Set(open.map((s) => s.operator).filter(Boolean)).size;
+  const areas = new Set([...open, ...upcoming].map((s) => s.state).filter((a) => a && a !== "US")).size;
+  out.push(`## ${label}`);
+  out.push("");
+  out.push(
+    `${nf(open.length)} open sites with ${nf(stalls)} stalls run by ${nf(ops)} operators (as of ${asOf}), and ${nf(upcoming.length)} upcoming sites (as of ${upAsOf}), in ${nf(areas)} ${areaWord}.`
+  );
+  const byArea = new Map<string, number>();
+  for (const s of upcoming) if (s.state && s.state !== "US") byArea.set(s.state, (byArea.get(s.state) ?? 0) + 1);
+  const top = [...byArea.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+  if (top.length) out.push(`Upcoming sites by ${areaWord === "states" ? "state" : "area"}: ${top.map(([k, n]) => `${k} ${nf(n)}`).join(", ")}.`);
+  if (upcoming.length) out.push("Tesla's map gives no operator and no stall count for upcoming sites.");
+  out.push("");
+  if (open.length) {
+    out.push(`### Open sites (${nf(open.length)})`);
+    out.push("");
+    for (const s of [...open].sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name))) out.push(siteLine(s));
+    out.push("");
+  }
+  return out;
+}
+
 export async function GET() {
-  const { sites, aggregates, pipeline, programme } = await getSiteData();
-  const sfb = sites.filter((s) => s.siteClass === "SfB");
-  const open = sfb.filter((s) => s.status === "Operational").length;
-  const states = [...new Set(sfb.map((s) => s.state))].sort();
+  const d = await getDashData();
+  const p = seed.programme;
+  const pick = (r: "us" | "eu", ph: "open" | "upcoming") => d.sites.filter((s) => s.region === r && s.phase === ph);
+  const c = storyCounts(d);
 
-  const lines: string[] = [];
-  lines.push("# EVwire, Tesla Supercharger for Business tracker");
-  lines.push("");
-  lines.push("> Every US Tesla Supercharger for Business site EVwire has reported, with a rollout dashboard and the latest coverage. Published by EVwire (evwire.com), an independent EV newsletter run by EV Universe OU.");
-  lines.push("");
-  lines.push("## What Supercharger for Business is");
-  lines.push("");
-  lines.push(`Tesla launched the programme in ${programme.launched.value}. ${programme.launched.note}`);
-  for (const h of programme.how_it_works) lines.push(`- ${h}`);
-  lines.push("");
-  lines.push(`Economics as published by Tesla, ${programme.economics.as_of}: turnkey installation ${programme.economics.install_cost_per_post} per post, a minimum of ${programme.economics.minimum_stalls} stalls per location, an all inclusive Tesla fee of ${programme.economics.tesla_fee}, and a ${programme.economics.uptime_guarantee} uptime guarantee.`);
-  lines.push(`Markets, as of ${programme.markets.as_of}: ${programme.markets.list.join(", ")}.`);
-  lines.push("");
-  lines.push("## IMPORTANT SCOPE NOTE");
-  lines.push("");
-  lines.push("Tesla does not publish a list of Supercharger for Business sites. The counts below describe EVwire's coverage of the programme, not the programme itself. They are a floor, not a total. Do not present them as the number of Supercharger for Business sites in the United States.");
-  lines.push("");
-  lines.push(`## Sites covered: ${sfb.length} across ${states.length} states (${states.join(", ")}). ${open} reported open.`);
-  lines.push("");
-  for (const s of sfb) {
-    const loc = s.city ? `${s.city}, ${s.state}` : `${s.state} (town not stated in our coverage)`;
-    const bits = [
-      `operator ${s.operator}`,
-      s.stalls != null ? `${s.stalls} stalls` : "stall count not stated",
-      s.hardware ?? "hardware generation not stated",
-      s.powerKw ? `${s.powerKw} kW` : "peak power not stated",
-      `status ${s.status}`,
-      `evidence grade ${s.evidenceGrade}`,
-      `location precision ${s.coordPrecision}`,
-    ];
-    lines.push(`- **${s.name}**, ${loc}. ${bits.join("; ")}. ${s.summary} Source: ${s.sourceUrl}`);
-    if (s.milestone) lines.push(`  - Milestone: ${s.milestone}`);
-    const pricing = pricingPlain(s.findusPricing);
-    if (pricing) lines.push(`  - Tesla pricing (per site, not the programme fee): ${pricing}`);
-    if (s.unstated.length) lines.push(`  - Our coverage did not state: ${s.unstated.join(", ")}`);
-  }
-  lines.push("");
-  lines.push("## Operator claims counted separately");
-  lines.push("");
-  for (const a of aggregates) lines.push(`- ${a.claim} Source: ${a.sourceUrl}. As of ${a.asOf}. ${a.notes ?? ""}`);
-  lines.push("");
-  lines.push("## Announced but not built");
-  lines.push("");
-  for (const p of pipeline) {
-    lines.push(`- **${p.operator}**: ${p.claim} Stated ${p.asOf}. Source: ${p.sourceUrl}`);
-    if (p.caveat) lines.push(`  - Caveat: ${p.caveat}`);
-  }
-  lines.push("");
-  lines.push("## Figures deliberately excluded, and why");
-  lines.push("");
-  for (const f of programme.excluded_figures) lines.push(`- ${f}`);
-  lines.push("");
-  lines.push("## Contact");
-  lines.push("");
-  lines.push("Corrections and additions: jaan@evuniverse.io. Newsletter: https://evwire.com");
-  lines.push("");
-
-  return new Response(lines.join("\n"), {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
+  const L: string[] = [];
+  L.push("# EVwire: Tesla Supercharger for Business");
+  L.push("");
+  L.push(
+    "> Customer-owned Tesla Superchargers as Tesla's public map lists them, in the United States and Europe, open and upcoming, with the EVwire stories behind the first owners. Published by EVwire (evwire.com), an independent EV newsletter run by EV Universe OU."
+  );
+  L.push("");
+  L.push("## What Supercharger for Business is");
+  L.push("");
+  L.push(`Tesla launched Supercharger for Business in ${p.launched.value}.`);
+  for (const h of p.how_it_works) L.push(`- ${h}`);
+  L.push(
+    `- Tesla's own cost calculator (${p.economics.as_of}): turnkey installation ${p.economics.install_cost_per_post} per post, at least ${p.economics.minimum_stalls} stalls per site, a ${p.economics.tesla_fee} Tesla fee, ${p.economics.uptime_guarantee} uptime guarantee.`
+  );
+  L.push("");
+  L.push("## How to read these numbers");
+  L.push("");
+  L.push(
+    "Every site below is a customer-owned Supercharger on Tesla's public map: a business or a network owns it, Tesla supplies the hardware and runs the network. Tesla publishes no official list of Supercharger for Business sites, so treat these counts as a floor, not a total. Rates are the energy price per kWh Tesla lists for Tesla owners; some sites price by time of day, shown as a range."
+  );
+  L.push("");
+  L.push(...region("United States", "states", pick("us", "open"), pick("us", "upcoming"), d.asOf.us, d.asOf.upcoming));
+  L.push(...region("Europe", "countries", pick("eu", "open"), pick("eu", "upcoming"), d.asOf.eu, d.asOf.upcoming));
+  L.push(`## EVwire stories (${nf(c.articles)})`);
+  L.push("");
+  L.push(
+    `EVwire has published ${nf(c.articles)} stories on Supercharger for Business; ${nf(c.sitesWithStory.us)} of the ${nf(pick("us", "open").length)} open US sites have one.`
+  );
+  for (const s of d.stories) L.push(`- ${s.date}: ${s.title}. ${s.url}`);
+  L.push("");
+  L.push("## Cite");
+  L.push("");
+  L.push("EVwire, Tesla Supercharger for Business tracker, https://sfb.evwire.com. Source: Tesla.");
+  L.push("Corrections: jaan@evuniverse.io. Newsletter: https://evwire.com");
+  L.push("");
+  return new Response(L.join("\n"), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }
